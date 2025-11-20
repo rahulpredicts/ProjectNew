@@ -13,7 +13,12 @@ import {
   X,
   ChevronDown,
   ChevronUp,
-  SlidersHorizontal
+  SlidersHorizontal,
+  Fuel,
+  Gauge,
+  Settings2,
+  Calendar,
+  Palette
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -44,6 +49,7 @@ import {
 } from "@/components/ui/collapsible";
 import { INITIAL_DEALERSHIPS, Dealership, Car } from "@/lib/mock-data";
 import { useToast } from "@/hooks/use-toast";
+import { cn } from "@/lib/utils";
 
 export default function Inventory() {
   const { toast } = useToast();
@@ -53,8 +59,7 @@ export default function Inventory() {
   const [showAddCar, setShowAddCar] = useState(false);
   const [editingDealership, setEditingDealership] = useState<Dealership | null>(null);
   const [editingCar, setEditingCar] = useState<Car | null>(null);
-  const [loading, setLoading] = useState(false); // No real loading needed for mock
-
+  
   // Filters
   const [searchTerm, setSearchTerm] = useState("");
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
@@ -97,7 +102,7 @@ export default function Inventory() {
     listingLink: "",
     carfaxLink: "",
     notes: "",
-    dealershipId: "", // Added to support dealership selection
+    dealershipId: "",
   });
 
   // Mock CRUD Operations
@@ -163,7 +168,6 @@ export default function Inventory() {
 
     setDealerships(updatedDealerships);
     
-    // If we are currently viewing the dealership we added to, update the view
     if (selectedDealership?.id === targetDealershipId) {
         setSelectedDealership(updatedDealerships.find(d => d.id === targetDealershipId) || null);
     }
@@ -259,7 +263,7 @@ export default function Inventory() {
     if (filterKmsMax) cars = cars.filter(c => parseFloat(c.kilometers || "0") <= parseFloat(filterKmsMax));
 
     cars.sort((a, b) => {
-        // @ts-ignore - dynamic sort key access
+        // @ts-ignore
       let aVal = a[sortBy];
        // @ts-ignore
       let bVal = b[sortBy];
@@ -300,55 +304,61 @@ export default function Inventory() {
   const filteredCars = getFilteredCars();
 
   return (
-    <div className="min-h-screen bg-background p-6 font-sans">
-      <div className="max-w-[1600px] mx-auto space-y-6">
-        {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-card p-6 rounded-xl shadow-sm border border-border/50">
+    <div className="min-h-screen bg-gray-50/50 p-4 md:p-8 font-sans">
+      <div className="max-w-[1800px] mx-auto space-y-8">
+        
+        {/* Modern Header */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight flex items-center gap-3 text-foreground">
-              <CarIcon className="w-8 h-8 text-primary" />
-              Dealership Inventory
+            <h1 className="text-4xl font-bold tracking-tight text-gray-900 flex items-center gap-3">
+              Inventory
+              <Badge variant="secondary" className="rounded-full px-3 py-1 text-sm font-normal bg-gray-200 text-gray-700">
+                {filteredCars.length} Vehicles
+              </Badge>
             </h1>
-            <p className="text-muted-foreground mt-2 text-lg">
-              {dealerships.length} dealerships • <span className="font-semibold text-foreground">{totalInventory}</span> total cars • <span className="font-semibold text-foreground">{filteredCars.length}</span> filtered
+            <p className="text-gray-500 mt-2 text-lg font-medium">
+              Manage {dealerships.length} dealerships and {totalInventory} total cars across your network.
             </p>
           </div>
-          <Button onClick={() => setShowAddDealership(true)} size="lg" className="gap-2 shadow-md transition-all hover:scale-105">
-            <Plus className="w-5 h-5" />
-            Add Dealership
-          </Button>
+          <div className="flex gap-3">
+            <Button onClick={() => setShowAddDealership(true)} variant="outline" size="lg" className="rounded-full h-12 px-6 border-gray-200 hover:bg-white hover:border-gray-300 hover:shadow-sm transition-all">
+              <Building2 className="w-4 h-4 mr-2" />
+              New Dealership
+            </Button>
+            <Button onClick={() => setShowAddCar(true)} size="lg" className="rounded-full h-12 px-6 shadow-lg hover:shadow-xl transition-all bg-black hover:bg-gray-900">
+              <Plus className="w-4 h-4 mr-2" />
+              Add Vehicle
+            </Button>
+          </div>
         </div>
 
-        {/* Search & Filters */}
-        <Card>
-          <CardContent className="p-6 space-y-6">
-            <div className="flex gap-3">
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-5 h-5" />
-                <Input
-                  placeholder="Search by VIN, Make, Model, Transmission, Color, Dealership..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 h-12 text-lg bg-muted/30"
-                />
-              </div>
-               <Collapsible open={showAdvancedFilters} onOpenChange={setShowAdvancedFilters}>
-                   <CollapsibleTrigger asChild>
-                        <Button variant="outline" className="h-12 px-4 gap-2 border-input bg-background hover:bg-accent hover:text-accent-foreground">
-                            <SlidersHorizontal className="w-4 h-4" />
-                            Filters
-                            {showAdvancedFilters ? <ChevronUp className="w-4 h-4 ml-1" /> : <ChevronDown className="w-4 h-4 ml-1" />}
-                        </Button>
-                   </CollapsibleTrigger>
-               </Collapsible>
-            </div>
+        {/* Modern Search Bar */}
+        <div className="relative max-w-2xl">
+          <div className="relative group">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5 transition-colors group-focus-within:text-primary" />
+            <Input
+              placeholder="Search by VIN, make, model, or features..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-12 h-14 text-lg bg-white border-0 shadow-sm rounded-2xl focus-visible:ring-2 focus-visible:ring-primary/20 transition-all hover:shadow-md"
+            />
+             <Collapsible open={showAdvancedFilters} onOpenChange={setShowAdvancedFilters} className="absolute right-2 top-1/2 -translate-y-1/2">
+                <CollapsibleTrigger asChild>
+                    <Button variant="ghost" size="sm" className="h-10 px-3 rounded-xl hover:bg-gray-100 text-gray-500">
+                        <SlidersHorizontal className="w-4 h-4 mr-2" />
+                        Filters
+                    </Button>
+                </CollapsibleTrigger>
+            </Collapsible>
+          </div>
+        </div>
 
-            <Collapsible open={showAdvancedFilters}>
-                <CollapsibleContent className="space-y-6 animate-in slide-in-from-top-5 fade-in duration-200">
-                    <Separator />
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 pt-2">
-                        {/* Filter Inputs */}
-                        {['Make', 'Model', 'Year', 'Color', 'Trim', 'VIN'].map((placeholder, i) => {
+        {/* Expanded Filters */}
+        <Collapsible open={showAdvancedFilters}>
+            <CollapsibleContent className="animate-in slide-in-from-top-5 fade-in duration-200 pt-4">
+                <Card className="border-0 shadow-sm bg-white/80 backdrop-blur-sm">
+                    <CardContent className="p-6 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+                         {['Make', 'Model', 'Year', 'Color', 'Trim', 'VIN'].map((placeholder, i) => {
                             const stateMap = [filterMake, filterModel, filterYear, filterColor, filterTrim, filterVin];
                             const setterMap = [setFilterMake, setFilterModel, setFilterYear, setFilterColor, setFilterTrim, setFilterVin];
                             return (
@@ -357,327 +367,315 @@ export default function Inventory() {
                                     placeholder={placeholder}
                                     value={stateMap[i]}
                                     onChange={(e) => setterMap[i](e.target.value)}
-                                    className="h-9"
+                                    className="h-10 bg-white border-gray-200 rounded-lg"
                                 />
                             )
                         })}
-                    </div>
-                    
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                        {['Min Price', 'Max Price', 'Min KMs', 'Max KMs'].map((placeholder, i) => {
-                            const stateMap = [filterPriceMin, filterPriceMax, filterKmsMin, filterKmsMax];
-                            const setterMap = [setFilterPriceMin, setFilterPriceMax, setFilterKmsMin, setFilterKmsMax];
-                            return (
-                                <Input 
-                                    key={placeholder}
-                                    type="number"
-                                    placeholder={placeholder}
-                                    value={stateMap[i]}
-                                    onChange={(e) => setterMap[i](e.target.value)}
-                                    className="h-9"
-                                />
-                            )
-                        })}
-                    </div>
-
-                    <div className="flex flex-wrap gap-3 items-center justify-between">
-                        <div className="flex items-center gap-3">
-                            <Select value={sortBy} onValueChange={setSortBy}>
-                                <SelectTrigger className="w-[180px]">
-                                    <SelectValue placeholder="Sort by" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="addedDate">Date Added</SelectItem>
-                                    <SelectItem value="price">Price</SelectItem>
-                                    <SelectItem value="kilometers">Kilometers</SelectItem>
-                                    <SelectItem value="year">Year</SelectItem>
-                                    <SelectItem value="make">Make</SelectItem>
-                                    <SelectItem value="model">Model</SelectItem>
-                                </SelectContent>
-                            </Select>
-
-                            <Button variant="outline" onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')} className="gap-2">
-                                <ArrowUpDown className="w-4 h-4" />
-                                {sortOrder === 'asc' ? 'Low to High' : 'High to Low'}
-                            </Button>
-                        </div>
-                        
-                        <Button variant="ghost" onClick={clearFilters} className="text-muted-foreground hover:text-foreground">
-                            Clear All Filters
+                         <Button variant="ghost" onClick={clearFilters} className="text-gray-500 hover:text-gray-900">
+                            Reset All
                         </Button>
-                    </div>
-                </CollapsibleContent>
-            </Collapsible>
-          </CardContent>
-        </Card>
+                    </CardContent>
+                </Card>
+            </CollapsibleContent>
+        </Collapsible>
 
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 h-[calc(100vh-350px)]">
-          {/* Dealerships Sidebar */}
-          <Card className="lg:col-span-1 flex flex-col overflow-hidden border-border/60 shadow-sm">
-            <CardHeader className="pb-3 bg-muted/30 border-b border-border/40">
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <Building2 className="w-5 h-5 text-primary" />
-                Dealerships
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="flex-1 p-0 overflow-hidden flex flex-col">
-              <ScrollArea className="flex-1">
-                <div className="p-4 space-y-2">
-                  <button
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+          {/* Clean Sidebar */}
+          <div className="lg:col-span-3 space-y-6">
+            <div className="flex items-center justify-between px-2">
+                <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider">Dealerships</h3>
+                <Badge variant="secondary" className="bg-gray-100 text-gray-600">{dealerships.length}</Badge>
+            </div>
+            
+            <div className="space-y-3">
+                 <button
                     onClick={() => setSelectedDealership(null)}
-                    className={`w-full p-4 text-left transition-all rounded-lg border-2 group ${
-                      !selectedDealership
-                        ? "border-primary/20 bg-primary/5"
-                        : "border-transparent hover:bg-muted"
-                    }`}
+                    className={cn(
+                        "w-full p-4 text-left transition-all rounded-2xl border group relative overflow-hidden",
+                        !selectedDealership
+                        ? "bg-white border-gray-200 shadow-md ring-2 ring-black ring-offset-2"
+                        : "bg-white/50 border-transparent hover:bg-white hover:shadow-sm"
+                    )}
                   >
-                    <div className="font-semibold text-foreground group-hover:text-primary transition-colors">All Dealerships</div>
-                    <div className="text-sm text-muted-foreground">{totalInventory} cars total</div>
+                    <div className="relative z-10">
+                        <div className="font-bold text-gray-900">All Inventory</div>
+                        <div className="text-sm text-gray-500 mt-1">View all {totalInventory} vehicles</div>
+                    </div>
                   </button>
-                  
+
                   {dealerships.map(dealership => (
                     <div
                       key={dealership.id}
-                      className={`group relative p-4 rounded-lg border-2 transition-all cursor-pointer ${
+                      className={cn(
+                        "group relative p-4 rounded-2xl border transition-all cursor-pointer",
                         selectedDealership?.id === dealership.id
-                          ? "border-primary/20 bg-primary/5"
-                          : "border-transparent hover:bg-muted"
-                      }`}
+                          ? "bg-white border-gray-200 shadow-md ring-2 ring-black ring-offset-2"
+                          : "bg-white/50 border-transparent hover:bg-white hover:shadow-sm"
+                      )}
                       onClick={() => setSelectedDealership(dealership)}
                     >
-                      <div className="pr-16">
-                        <div className="font-semibold text-foreground group-hover:text-primary transition-colors">{dealership.name}</div>
-                        <div className="text-sm text-muted-foreground flex items-center gap-1 mt-1">
-                            <MapPin className="w-3 h-3" /> {dealership.location}
+                      <div className="pr-8">
+                        <div className="font-bold text-gray-900 mb-1">{dealership.name}</div>
+                        <div className="flex items-center gap-2 text-sm text-gray-500">
+                            <MapPin className="w-3 h-3" />
+                            <span className="truncate">{dealership.location}</span>
                         </div>
-                        <Badge variant="secondary" className="mt-2 text-xs font-normal">
-                            {dealership.inventory.length} cars
-                        </Badge>
+                        <div className="flex items-center gap-2 mt-3">
+                            <Badge variant="secondary" className="bg-gray-100 text-gray-600 hover:bg-gray-200">
+                                {dealership.inventory.length} Cars
+                            </Badge>
+                        </div>
                       </div>
                       
-                      <div className="absolute top-4 right-4 flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={(e) => { e.stopPropagation(); setEditingDealership(dealership); }}>
-                            <Edit2 className="w-4 h-4 text-blue-500" />
+                      <div className="absolute top-4 right-4 flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-all duration-200">
+                        <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full hover:bg-gray-100" onClick={(e) => { e.stopPropagation(); setEditingDealership(dealership); }}>
+                            <Edit2 className="w-4 h-4 text-gray-600" />
                         </Button>
-                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={(e) => deleteDealership(dealership.id, e)}>
-                            <Trash2 className="w-4 h-4 text-destructive" />
+                        <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full hover:bg-red-50" onClick={(e) => deleteDealership(dealership.id, e)}>
+                            <Trash2 className="w-4 h-4 text-red-500" />
                         </Button>
                       </div>
                     </div>
                   ))}
-                </div>
-              </ScrollArea>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
 
-          {/* Cars Grid */}
-          <Card className="lg:col-span-3 flex flex-col overflow-hidden border-border/60 shadow-sm">
-            <CardHeader className="pb-3 bg-muted/30 border-b border-border/40">
-                <div className="flex items-center justify-between">
-                    <CardTitle className="flex items-center gap-2 text-lg">
-                        <CarIcon className="w-5 h-5 text-primary" />
-                        {selectedDealership ? selectedDealership.name : "All Inventory"}
-                    </CardTitle>
-                    
-                    <Button onClick={() => setShowAddCar(true)} size="sm" className="gap-2">
-                        <Plus className="w-4 h-4" /> Add Car
-                    </Button>
-                </div>
-            </CardHeader>
-            <CardContent className="flex-1 p-0 overflow-hidden">
-                <ScrollArea className="h-full">
-                    <div className="p-6 grid grid-cols-1 xl:grid-cols-2 gap-4">
-                        {filteredCars.map(car => (
-                            <div key={`${car.dealershipId}-${car.id}`} className="group bg-card border border-border/60 rounded-xl p-5 hover:shadow-md hover:border-primary/30 transition-all">
-                                <div className="flex justify-between items-start mb-4">
-                                    <div>
-                                        <h3 className="font-bold text-xl tracking-tight text-foreground group-hover:text-primary transition-colors">
-                                            {car.year} {car.make} {car.model}
-                                        </h3>
-                                        {car.trim && <Badge variant="outline" className="mt-1 font-medium text-muted-foreground">{car.trim}</Badge>}
-                                        {!selectedDealership && (
-                                            <div className="flex items-center gap-1 text-xs text-primary mt-2 font-medium">
-                                                <Building2 className="w-3 h-3" /> {car.dealershipName} • {car.dealershipLocation}
-                                            </div>
-                                        )}
-                                    </div>
-                                    <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setEditingCar({ ...car, dealershipId: car.dealershipId }); }}>
-                                            <Edit2 className="w-4 h-4 text-blue-500" />
-                                        </Button>
-                                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => deleteCar(car.dealershipId!, car.id)}>
-                                            <Trash2 className="w-4 h-4 text-destructive" />
-                                        </Button>
+          {/* Modern Grid */}
+          <div className="lg:col-span-9">
+             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                {filteredCars.map(car => (
+                    <Card key={`${car.dealershipId}-${car.id}`} className="group border-0 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 bg-white overflow-hidden rounded-2xl">
+                        <CardHeader className="p-0">
+                            <div className="h-3 bg-gradient-to-r from-gray-100 to-gray-50 group-hover:from-blue-500 group-hover:to-purple-500 transition-all duration-500" />
+                        </CardHeader>
+                        <CardContent className="p-6">
+                            <div className="flex justify-between items-start mb-4">
+                                <div>
+                                    <div className="text-sm font-medium text-gray-500 mb-1">{car.year}</div>
+                                    <h3 className="font-bold text-xl text-gray-900 leading-tight">
+                                        {car.make} {car.model}
+                                    </h3>
+                                    <div className="text-sm text-gray-500 font-medium mt-1">{car.trim}</div>
+                                </div>
+                                <Badge variant="outline" className="font-mono text-xs tracking-wide border-gray-200 text-gray-500">
+                                    {car.vin.slice(-6)}
+                                </Badge>
+                            </div>
+
+                            <div className="flex flex-wrap gap-2 mb-6">
+                                <Badge variant="secondary" className="bg-gray-50 text-gray-600 hover:bg-gray-100 border-0">
+                                    <Palette className="w-3 h-3 mr-1" /> {car.color}
+                                </Badge>
+                                <Badge variant="secondary" className="bg-gray-50 text-gray-600 hover:bg-gray-100 border-0">
+                                    <Settings2 className="w-3 h-3 mr-1" /> {car.transmission}
+                                </Badge>
+                                <Badge variant="secondary" className="bg-gray-50 text-gray-600 hover:bg-gray-100 border-0">
+                                    <Fuel className="w-3 h-3 mr-1" /> {car.fuelType}
+                                </Badge>
+                            </div>
+
+                            <div className="flex items-end justify-between mt-auto pt-4 border-t border-gray-50">
+                                <div>
+                                    <div className="text-sm text-gray-400 font-medium mb-0.5">Price</div>
+                                    <div className="text-2xl font-bold text-gray-900 tracking-tight">
+                                        ${parseFloat(car.price).toLocaleString()}
                                     </div>
                                 </div>
-
-                                <div className="grid grid-cols-2 gap-y-2 gap-x-4 text-sm mb-4">
-                                    <div className="flex justify-between py-1 border-b border-border/30">
-                                        <span className="text-muted-foreground">Price</span>
-                                        <span className="font-bold text-green-600 text-base">${parseFloat(car.price).toLocaleString()}</span>
+                                <div className="text-right">
+                                    <div className="text-sm text-gray-400 font-medium mb-0.5">Mileage</div>
+                                    <div className="text-lg font-semibold text-gray-700 flex items-center justify-end gap-1">
+                                        <Gauge className="w-4 h-4 text-gray-400" />
+                                        {parseFloat(car.kilometers).toLocaleString()}
                                     </div>
-                                    <div className="flex justify-between py-1 border-b border-border/30">
-                                        <span className="text-muted-foreground">Kilometers</span>
-                                        <span className="font-medium">{parseFloat(car.kilometers).toLocaleString()} km</span>
-                                    </div>
-                                    <div className="flex justify-between py-1 border-b border-border/30">
-                                        <span className="text-muted-foreground">VIN</span>
-                                        <span className="font-mono text-xs">{car.vin}</span>
-                                    </div>
-                                    <div className="flex justify-between py-1 border-b border-border/30">
-                                        <span className="text-muted-foreground">Color</span>
-                                        <span>{car.color}</span>
-                                    </div>
-                                     <div className="flex justify-between py-1 border-b border-border/30">
-                                        <span className="text-muted-foreground">Fuel</span>
-                                        <span>{car.fuelType}</span>
-                                    </div>
-                                    <div className="flex justify-between py-1 border-b border-border/30">
-                                        <span className="text-muted-foreground">Trans</span>
-                                        <span>{car.transmission}</span>
-                                    </div>
-                                </div>
-
-                                {car.notes && (
-                                    <div className="text-sm text-amber-800 bg-amber-50 p-3 rounded-md border border-amber-100 mb-4">
-                                        <span className="font-semibold">Notes:</span> {car.notes}
-                                    </div>
-                                )}
-
-                                <div className="flex gap-3 mt-auto pt-2">
-                                    {car.listingLink && (
-                                        <Button variant="outline" size="sm" className="flex-1 text-xs h-8" asChild>
-                                            <a href={car.listingLink} target="_blank" rel="noopener noreferrer">View Listing</a>
-                                        </Button>
-                                    )}
-                                    {car.carfaxLink && (
-                                        <Button variant="outline" size="sm" className="flex-1 text-xs h-8" asChild>
-                                            <a href={car.carfaxLink} target="_blank" rel="noopener noreferrer">Carfax</a>
-                                        </Button>
-                                    )}
                                 </div>
                             </div>
-                        ))}
 
-                        {filteredCars.length === 0 && (
-                            <div className="col-span-full flex flex-col items-center justify-center py-20 text-muted-foreground">
-                                <CarIcon className="w-16 h-16 mb-4 opacity-20" />
-                                <p className="text-lg font-medium">No cars found</p>
-                                <p className="text-sm opacity-60">
-                                    {selectedDealership ? "Add a car to this dealership" : "Select a dealership or add a car"}
-                                </p>
-                                <Button variant="link" onClick={() => setShowAddCar(true)}>
-                                    Add New Car
+                             {/* Hover Actions */}
+                             <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-all duration-200 transform translate-x-2 group-hover:translate-x-0">
+                                <Button variant="secondary" size="icon" className="h-8 w-8 rounded-full bg-white/90 backdrop-blur shadow-sm hover:bg-blue-50" onClick={() => { setEditingCar({ ...car, dealershipId: car.dealershipId }); }}>
+                                    <Edit2 className="w-3.5 h-3.5 text-blue-600" />
+                                </Button>
+                                <Button variant="secondary" size="icon" className="h-8 w-8 rounded-full bg-white/90 backdrop-blur shadow-sm hover:bg-red-50" onClick={() => deleteCar(car.dealershipId!, car.id)}>
+                                    <Trash2 className="w-3.5 h-3.5 text-red-600" />
                                 </Button>
                             </div>
-                        )}
+
+                            {!selectedDealership && (
+                                <div className="mt-4 pt-3 border-t border-dashed border-gray-100 flex items-center gap-2 text-xs text-gray-400">
+                                    <Building2 className="w-3 h-3" />
+                                    {car.dealershipName}
+                                </div>
+                            )}
+                        </CardContent>
+                    </Card>
+                ))}
+
+                {filteredCars.length === 0 && (
+                    <div className="col-span-full flex flex-col items-center justify-center py-24 text-center">
+                        <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mb-6">
+                            <CarIcon className="w-10 h-10 text-gray-300" />
+                        </div>
+                        <h3 className="text-xl font-bold text-gray-900 mb-2">No vehicles found</h3>
+                        <p className="text-gray-500 max-w-md mx-auto mb-8">
+                            We couldn't find any cars matching your search criteria. Try adjusting your filters or add a new vehicle.
+                        </p>
+                        <Button onClick={() => setShowAddCar(true)} size="lg" className="rounded-full px-8">
+                            Add New Vehicle
+                        </Button>
                     </div>
-                </ScrollArea>
-            </CardContent>
-          </Card>
+                )}
+             </div>
+          </div>
         </div>
 
         {/* Add Dealership Modal */}
         <Dialog open={showAddDealership} onOpenChange={setShowAddDealership}>
-            <DialogContent>
-            <DialogHeader>
-                <DialogTitle>Add New Dealership</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4 py-4">
-                <Input placeholder="Dealership Name *" value={newDealership.name} onChange={(e) => setNewDealership({ ...newDealership, name: e.target.value })} />
-                <Input placeholder="Location (e.g., Montreal)" value={newDealership.location} onChange={(e) => setNewDealership({ ...newDealership, location: e.target.value })} />
-                <Input placeholder="Address *" value={newDealership.address} onChange={(e) => setNewDealership({ ...newDealership, address: e.target.value })} />
-                <Input placeholder="Postal Code" value={newDealership.postalCode} onChange={(e) => setNewDealership({ ...newDealership, postalCode: e.target.value })} />
-                <Input placeholder="Phone Number" value={newDealership.phone} onChange={(e) => setNewDealership({ ...newDealership, phone: e.target.value })} />
-            </div>
-            <DialogFooter>
-                <Button variant="outline" onClick={() => setShowAddDealership(false)}>Cancel</Button>
-                <Button onClick={addDealership}>Add Dealership</Button>
-            </DialogFooter>
+            <DialogContent className="sm:max-w-[500px] rounded-2xl p-0 overflow-hidden">
+                <DialogHeader className="p-6 bg-gray-50/50 border-b">
+                    <DialogTitle className="text-xl">Add New Dealership</DialogTitle>
+                </DialogHeader>
+                <div className="p-6 space-y-4">
+                    <div className="space-y-2">
+                        <Label>Dealership Name</Label>
+                        <Input placeholder="e.g. Downtown Toyota" value={newDealership.name} onChange={(e) => setNewDealership({ ...newDealership, name: e.target.value })} className="h-11 rounded-xl" />
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                            <Label>Location</Label>
+                            <Input placeholder="City" value={newDealership.location} onChange={(e) => setNewDealership({ ...newDealership, location: e.target.value })} className="h-11 rounded-xl" />
+                        </div>
+                         <div className="space-y-2">
+                            <Label>Postal Code</Label>
+                            <Input placeholder="ZIP/Postal" value={newDealership.postalCode} onChange={(e) => setNewDealership({ ...newDealership, postalCode: e.target.value })} className="h-11 rounded-xl" />
+                        </div>
+                    </div>
+                    <div className="space-y-2">
+                        <Label>Address</Label>
+                        <Input placeholder="Street Address" value={newDealership.address} onChange={(e) => setNewDealership({ ...newDealership, address: e.target.value })} className="h-11 rounded-xl" />
+                    </div>
+                    <div className="space-y-2">
+                        <Label>Phone</Label>
+                        <Input placeholder="(555) 000-0000" value={newDealership.phone} onChange={(e) => setNewDealership({ ...newDealership, phone: e.target.value })} className="h-11 rounded-xl" />
+                    </div>
+                </div>
+                <DialogFooter className="p-6 bg-gray-50/50 border-t">
+                    <Button variant="outline" onClick={() => setShowAddDealership(false)} className="rounded-xl h-11">Cancel</Button>
+                    <Button onClick={addDealership} className="rounded-xl h-11 px-8">Create Dealership</Button>
+                </DialogFooter>
             </DialogContent>
         </Dialog>
 
-       {/* Edit Dealership Modal */}
+       {/* Edit Dealership Modal - reusing styled content */}
        <Dialog open={!!editingDealership} onOpenChange={(open) => !open && setEditingDealership(null)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Edit Dealership</DialogTitle>
+        <DialogContent className="sm:max-w-[500px] rounded-2xl p-0 overflow-hidden">
+          <DialogHeader className="p-6 bg-gray-50/50 border-b">
+            <DialogTitle className="text-xl">Edit Dealership</DialogTitle>
           </DialogHeader>
           {editingDealership && (
-             <div className="space-y-4 py-4">
-                <Input placeholder="Dealership Name" value={editingDealership.name} onChange={(e) => setEditingDealership({ ...editingDealership, name: e.target.value })} />
-                <Input placeholder="Location" value={editingDealership.location} onChange={(e) => setEditingDealership({ ...editingDealership, location: e.target.value })} />
-                <Input placeholder="Address" value={editingDealership.address} onChange={(e) => setEditingDealership({ ...editingDealership, address: e.target.value })} />
-                <Input placeholder="Postal Code" value={editingDealership.postalCode} onChange={(e) => setEditingDealership({ ...editingDealership, postalCode: e.target.value })} />
-                <Input placeholder="Phone" value={editingDealership.phone} onChange={(e) => setEditingDealership({ ...editingDealership, phone: e.target.value })} />
+             <div className="p-6 space-y-4">
+                <div className="space-y-2">
+                    <Label>Name</Label>
+                    <Input value={editingDealership.name} onChange={(e) => setEditingDealership({ ...editingDealership, name: e.target.value })} className="h-11 rounded-xl" />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                        <Label>Location</Label>
+                        <Input value={editingDealership.location} onChange={(e) => setEditingDealership({ ...editingDealership, location: e.target.value })} className="h-11 rounded-xl" />
+                    </div>
+                    <div className="space-y-2">
+                        <Label>Postal Code</Label>
+                        <Input value={editingDealership.postalCode} onChange={(e) => setEditingDealership({ ...editingDealership, postalCode: e.target.value })} className="h-11 rounded-xl" />
+                    </div>
+                </div>
+                 <div className="space-y-2">
+                    <Label>Address</Label>
+                    <Input value={editingDealership.address} onChange={(e) => setEditingDealership({ ...editingDealership, address: e.target.value })} className="h-11 rounded-xl" />
+                </div>
+                 <div className="space-y-2">
+                    <Label>Phone</Label>
+                    <Input value={editingDealership.phone} onChange={(e) => setEditingDealership({ ...editingDealership, phone: e.target.value })} className="h-11 rounded-xl" />
+                </div>
             </div>
           )}
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setEditingDealership(null)}>Cancel</Button>
-            <Button onClick={updateDealership}>Save Changes</Button>
+          <DialogFooter className="p-6 bg-gray-50/50 border-t">
+            <Button variant="outline" onClick={() => setEditingDealership(null)} className="rounded-xl h-11">Cancel</Button>
+            <Button onClick={updateDealership} className="rounded-xl h-11 px-8">Save Changes</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
       {/* Add/Edit Car Modal */}
       <Dialog open={showAddCar || !!editingCar} onOpenChange={(open) => { if(!open) { setShowAddCar(false); setEditingCar(null); }}}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>{editingCar ? 'Edit Car' : 'Add Car'}</DialogTitle>
+        <DialogContent className="max-w-3xl rounded-2xl p-0 overflow-hidden">
+          <DialogHeader className="p-6 bg-gray-50/50 border-b">
+            <DialogTitle className="text-xl">{editingCar ? 'Edit Vehicle' : 'Add New Vehicle'}</DialogTitle>
           </DialogHeader>
-          <div className="grid grid-cols-2 gap-4 py-4">
-            {/* Dealership Selection if not editing and no dealership selected */}
-            {!editingCar && !selectedDealership && (
-                <div className="col-span-2 space-y-2">
-                    <Label>Select Dealership *</Label>
-                    <Select 
-                        value={newCar.dealershipId} 
-                        onValueChange={(val) => setNewCar({ ...newCar, dealershipId: val })}
-                    >
-                        <SelectTrigger>
-                            <SelectValue placeholder="Choose a dealership" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            {dealerships.map(d => (
-                                <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
-                </div>
-            )}
+          <ScrollArea className="max-h-[70vh]">
+            <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Dealership Selection if not editing and no dealership selected */}
+                {!editingCar && !selectedDealership && (
+                    <div className="col-span-2 space-y-2 bg-blue-50 p-4 rounded-xl border border-blue-100">
+                        <Label className="text-blue-900">Select Dealership *</Label>
+                        <Select 
+                            value={newCar.dealershipId} 
+                            onValueChange={(val) => setNewCar({ ...newCar, dealershipId: val })}
+                        >
+                            <SelectTrigger className="bg-white border-blue-200 h-11 rounded-lg">
+                                <SelectValue placeholder="Choose a dealership" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {dealerships.map(d => (
+                                    <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    </div>
+                )}
 
-            {(() => {
-                const target = editingCar || newCar;
-                const setTarget = editingCar ? setEditingCar : setNewCar;
-                // Helper to update field
-                const update = (field: string, val: string) => {
-                    // @ts-ignore
-                    setTarget({ ...target, [field]: val });
-                }
+                {(() => {
+                    const target = editingCar || newCar;
+                    const setTarget = editingCar ? setEditingCar : setNewCar;
+                    // Helper to update field
+                    const update = (field: string, val: string) => {
+                        // @ts-ignore
+                        setTarget({ ...target, [field]: val });
+                    }
 
-                return (
-                    <>
-                        <div className="space-y-2"><Input placeholder="VIN *" value={target.vin} onChange={(e) => update('vin', e.target.value)} /></div>
-                        <div className="space-y-2"><Input placeholder="Make *" value={target.make} onChange={(e) => update('make', e.target.value)} /></div>
-                        <div className="space-y-2"><Input placeholder="Model *" value={target.model} onChange={(e) => update('model', e.target.value)} /></div>
-                        <div className="space-y-2"><Input placeholder="Year" value={target.year} onChange={(e) => update('year', e.target.value)} /></div>
-                        <div className="space-y-2"><Input placeholder="Trim" value={target.trim} onChange={(e) => update('trim', e.target.value)} /></div>
-                        <div className="space-y-2"><Input placeholder="Color" value={target.color} onChange={(e) => update('color', e.target.value)} /></div>
-                        <div className="space-y-2"><Input placeholder="Price" type="number" value={target.price} onChange={(e) => update('price', e.target.value)} /></div>
-                        <div className="space-y-2"><Input placeholder="Kilometers" type="number" value={target.kilometers} onChange={(e) => update('kilometers', e.target.value)} /></div>
-                        <div className="space-y-2"><Input placeholder="Transmission" value={target.transmission} onChange={(e) => update('transmission', e.target.value)} /></div>
-                        <div className="space-y-2"><Input placeholder="Fuel Type" value={target.fuelType} onChange={(e) => update('fuelType', e.target.value)} /></div>
-                        <div className="space-y-2"><Input placeholder="Body Type" value={target.bodyType} onChange={(e) => update('bodyType', e.target.value)} /></div>
-                        <div className="space-y-2"><Input placeholder="Listing URL" value={target.listingLink} onChange={(e) => update('listingLink', e.target.value)} /></div>
-                        <div className="space-y-2"><Input placeholder="Carfax URL" value={target.carfaxLink} onChange={(e) => update('carfaxLink', e.target.value)} /></div>
-                        <div className="col-span-2 space-y-2"><Input placeholder="Notes" value={target.notes} onChange={(e) => update('notes', e.target.value)} /></div>
-                    </>
-                )
-            })()}
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => { setShowAddCar(false); setEditingCar(null); }}>Cancel</Button>
-            <Button onClick={editingCar ? updateCar : addCar}>{editingCar ? 'Save Changes' : 'Add Car'}</Button>
+                    return (
+                        <>
+                            <div className="space-y-2"><Label>VIN *</Label><Input placeholder="Vehicle Identification Number" value={target.vin} onChange={(e) => update('vin', e.target.value)} className="h-11 rounded-xl" /></div>
+                            
+                            <div className="col-span-2 grid grid-cols-3 gap-4">
+                                <div className="space-y-2"><Label>Make *</Label><Input placeholder="e.g. Toyota" value={target.make} onChange={(e) => update('make', e.target.value)} className="h-11 rounded-xl" /></div>
+                                <div className="space-y-2"><Label>Model *</Label><Input placeholder="e.g. Camry" value={target.model} onChange={(e) => update('model', e.target.value)} className="h-11 rounded-xl" /></div>
+                                <div className="space-y-2"><Label>Year</Label><Input placeholder="YYYY" value={target.year} onChange={(e) => update('year', e.target.value)} className="h-11 rounded-xl" /></div>
+                            </div>
+
+                            <div className="space-y-2"><Label>Trim</Label><Input placeholder="e.g. XLE" value={target.trim} onChange={(e) => update('trim', e.target.value)} className="h-11 rounded-xl" /></div>
+                            <div className="space-y-2"><Label>Color</Label><Input placeholder="Exterior Color" value={target.color} onChange={(e) => update('color', e.target.value)} className="h-11 rounded-xl" /></div>
+                            
+                            <div className="space-y-2"><Label>Price ($)</Label><Input type="number" placeholder="0.00" value={target.price} onChange={(e) => update('price', e.target.value)} className="h-11 rounded-xl font-mono" /></div>
+                            <div className="space-y-2"><Label>Mileage (km)</Label><Input type="number" placeholder="0" value={target.kilometers} onChange={(e) => update('kilometers', e.target.value)} className="h-11 rounded-xl font-mono" /></div>
+                            
+                            <div className="space-y-2"><Label>Transmission</Label><Input placeholder="e.g. Automatic" value={target.transmission} onChange={(e) => update('transmission', e.target.value)} className="h-11 rounded-xl" /></div>
+                            <div className="space-y-2"><Label>Fuel Type</Label><Input placeholder="e.g. Gasoline" value={target.fuelType} onChange={(e) => update('fuelType', e.target.value)} className="h-11 rounded-xl" /></div>
+                            
+                            <div className="space-y-2"><Label>Body Type</Label><Input placeholder="e.g. Sedan" value={target.bodyType} onChange={(e) => update('bodyType', e.target.value)} className="h-11 rounded-xl" /></div>
+                            <div className="space-y-2"><Label>Listing URL</Label><Input placeholder="https://..." value={target.listingLink} onChange={(e) => update('listingLink', e.target.value)} className="h-11 rounded-xl" /></div>
+                            <div className="space-y-2"><Label>Carfax URL</Label><Input placeholder="https://..." value={target.carfaxLink} onChange={(e) => update('carfaxLink', e.target.value)} className="h-11 rounded-xl" /></div>
+                            
+                            <div className="col-span-2 space-y-2">
+                                <Label>Notes</Label>
+                                <Input placeholder="Additional details..." value={target.notes} onChange={(e) => update('notes', e.target.value)} className="h-11 rounded-xl" />
+                            </div>
+                        </>
+                    )
+                })()}
+            </div>
+          </ScrollArea>
+          <DialogFooter className="p-6 bg-gray-50/50 border-t">
+            <Button variant="outline" onClick={() => { setShowAddCar(false); setEditingCar(null); }} className="rounded-xl h-11">Cancel</Button>
+            <Button onClick={editingCar ? updateCar : addCar} className="rounded-xl h-11 px-8">{editingCar ? 'Save Changes' : 'Add Vehicle'}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
