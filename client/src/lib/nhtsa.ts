@@ -127,3 +127,155 @@ export async function fetchCanadianTrims(year: string, make: string, model: stri
     return [];
   }
 }
+
+// Enhanced VIN Decoder Interface
+export interface EnhancedVINResult {
+  vin: string;
+  year?: string;
+  make?: string;
+  model?: string;
+  trim?: string;
+  series?: string;
+  bodyClass?: string;
+  vehicleType?: string;
+  doors?: string;
+  
+  // Engine details
+  engineDescription?: string;
+  engineCylinders?: string;
+  engineDisplacement?: string;
+  fuelType?: string;
+  
+  // Drivetrain
+  driveType?: string;
+  transmission?: string;
+  
+  // Manufacturing
+  manufacturer?: string;
+  plantCountry?: string;
+  plantState?: string;
+  plantCity?: string;
+  
+  // Canadian-specific
+  canadianTrims?: string[];
+  hasCanadianData?: boolean;
+  
+  // Status
+  error?: string;
+  errorCode?: string;
+}
+
+// VIN Decoder cache
+const vinCache = new Map<string, EnhancedVINResult>();
+
+/**
+ * Advanced VIN Decoder with enhanced NHTSA data extraction
+ * Combines NHTSA API with Canadian trim database
+ */
+export async function decodeVIN(vin: string): Promise<EnhancedVINResult> {
+  // Validate VIN
+  if (!vin || vin.length < 11) {
+    return {
+      vin,
+      error: "VIN must be at least 11 characters long",
+      errorCode: "INVALID_VIN"
+    };
+  }
+
+  const cleanVIN = vin.toUpperCase().trim();
+
+  // Check cache
+  if (vinCache.has(cleanVIN)) {
+    return vinCache.get(cleanVIN)!;
+  }
+
+  try {
+    // Call NHTSA API
+    const response = await fetch(
+      `https://vpic.nhtsa.dot.gov/api/vehicles/DecodeVinValues/${cleanVIN}?format=json`
+    );
+    
+    if (!response.ok) {
+      throw new Error(`NHTSA API returned status ${response.status}`);
+    }
+
+    const data = await response.json();
+
+    if (!data.Results || data.Results.length === 0) {
+      return {
+        vin: cleanVIN,
+        error: "VIN not found in NHTSA database",
+        errorCode: "VIN_NOT_FOUND"
+      };
+    }
+
+    const vehicle = data.Results[0];
+
+    // Check for errors from NHTSA
+    if (vehicle.ErrorCode && vehicle.ErrorCode !== "0") {
+      return {
+        vin: cleanVIN,
+        error: vehicle.ErrorText || "Error decoding VIN",
+        errorCode: vehicle.ErrorCode
+      };
+    }
+
+    // Extract comprehensive vehicle data
+    const result: EnhancedVINResult = {
+      vin: cleanVIN,
+      year: vehicle.ModelYear || undefined,
+      make: vehicle.Make || undefined,
+      model: vehicle.Model || undefined,
+      trim: vehicle.Trim || undefined,
+      series: vehicle.Series || undefined,
+      bodyClass: vehicle.BodyClass || undefined,
+      vehicleType: vehicle.VehicleType || undefined,
+      doors: vehicle.Doors || undefined,
+      
+      // Engine
+      engineDescription: vehicle.EngineModel || vehicle.EngineConfiguration || undefined,
+      engineCylinders: vehicle.EngineCylinders || undefined,
+      engineDisplacement: vehicle.DisplacementL || vehicle.DisplacementCC || undefined,
+      fuelType: vehicle.FuelTypePrimary || undefined,
+      
+      // Drivetrain
+      driveType: vehicle.DriveType || undefined,
+      transmission: vehicle.TransmissionStyle || undefined,
+      
+      // Manufacturing
+      manufacturer: vehicle.Manufacturer || undefined,
+      plantCountry: vehicle.PlantCountry || undefined,
+      plantState: vehicle.PlantState || undefined,
+      plantCity: vehicle.PlantCity || undefined,
+    };
+
+    // Add Canadian trims if available
+    if (result.make) {
+      const canadianTrims = getTrimsForMake(result.make);
+      if (canadianTrims && canadianTrims.length > 0) {
+        result.canadianTrims = canadianTrims;
+        result.hasCanadianData = true;
+      }
+    }
+
+    // Cache the result
+    vinCache.set(cleanVIN, result);
+
+    return result;
+
+  } catch (error) {
+    console.error("VIN decode error:", error);
+    return {
+      vin: cleanVIN,
+      error: error instanceof Error ? error.message : "Failed to decode VIN",
+      errorCode: "API_ERROR"
+    };
+  }
+}
+
+/**
+ * Clear VIN decoder cache
+ */
+export function clearVINCache() {
+  vinCache.clear();
+}

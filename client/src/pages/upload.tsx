@@ -18,7 +18,7 @@ import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { fetchCanadianTrims, getTrimsForMake, CANADIAN_TRIMS } from "@/lib/nhtsa";
+import { fetchCanadianTrims, getTrimsForMake, CANADIAN_TRIMS, decodeVIN } from "@/lib/nhtsa";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -117,119 +117,106 @@ export default function UploadPage() {
     setIsDecoding(true);
     
     try {
-        // Use NHTSA Public API for real decoding
-        const response = await fetch(`https://vpic.nhtsa.dot.gov/api/vehicles/decodevinvalues/${newCar.vin}?format=json`);
-        const data = await response.json();
+        // Use enhanced VIN decoder
+        const result = await decodeVIN(newCar.vin);
 
-        if (data.Results && data.Results.length > 0) {
-            const vehicle = data.Results[0];
-            
-            // Map API response to our form fields
-            const decoded: any = {
-                make: vehicle.Make || "",
-                model: vehicle.Model || "",
-                year: vehicle.ModelYear || "",
-                engineCylinders: vehicle.EngineCylinders || "",
-                engineDisplacement: vehicle.DisplacementL ? parseFloat(vehicle.DisplacementL).toFixed(1) : "",
-                // Trim is explicitly excluded per user request to keep it manual
-            };
-
-            // Try to decode transmission if available
-            if (vehicle.TransmissionStyle) {
-                const trans = vehicle.TransmissionStyle.toLowerCase();
-                if (trans.includes("auto") || trans.includes("cvt")) {
-                    decoded.transmission = "automatic";
-                } else if (trans.includes("manual") || trans.includes("stick")) {
-                    decoded.transmission = "manual";
-                }
-            }
-
-            // Decode Fuel Type
-             if (vehicle.FuelTypePrimary) {
-                const fuel = vehicle.FuelTypePrimary.toLowerCase();
-                if (fuel.includes("gas")) decoded.fuelType = "gasoline";
-                else if (fuel.includes("diesel")) decoded.fuelType = "diesel";
-                else if (fuel.includes("electric")) decoded.fuelType = "electric";
-                else if (fuel.includes("hybrid")) decoded.fuelType = "hybrid";
-            }
-
-            // Decode Drivetrain
-            if (vehicle.DriveType) {
-                const drive = vehicle.DriveType.toLowerCase();
-                if (drive.includes("awd") || drive.includes("all")) decoded.drivetrain = "awd";
-                else if (drive.includes("4wd") || drive.includes("4-wheel")) decoded.drivetrain = "4wd";
-                else if (drive.includes("rwd") || drive.includes("rear")) decoded.drivetrain = "rwd";
-                else if (drive.includes("fwd") || drive.includes("front")) decoded.drivetrain = "fwd";
-            }
-
-            // Decode Body Type
-             if (vehicle.BodyClass) {
-                const body = vehicle.BodyClass.toLowerCase();
-                if (body.includes("sedan")) decoded.bodyType = "sedan";
-                else if (body.includes("suv") || body.includes("sport utility")) decoded.bodyType = "suv";
-                else if (body.includes("truck") || body.includes("pickup")) decoded.bodyType = "truck";
-                else if (body.includes("van") || body.includes("minivan")) decoded.bodyType = "van";
-                else if (body.includes("coupe")) decoded.bodyType = "coupe";
-                else if (body.includes("hatch")) decoded.bodyType = "hatchback";
-            }
-
-            // Extract Extra Information for Notes
-            const extras = [];
-            if (vehicle.EngineHP) extras.push(`Power: ${vehicle.EngineHP} HP`);
-            if (vehicle.Doors) extras.push(`Doors: ${vehicle.Doors}`);
-            if (vehicle.PlantCountry) extras.push(`Origin: ${vehicle.PlantCountry}`);
-            if (vehicle.DriveType) extras.push(`Drive: ${vehicle.DriveType}`); // Full text
-            if (vehicle.TransmissionStyle) extras.push(`Trans: ${vehicle.TransmissionStyle}`); // Full text
-            
-            const notes = extras.length > 0 ? `Specs: ${extras.join(", ")}` : "";
-
-            // Extract Features
-            const detectedFeatures: string[] = [];
-            // Map common NHTSA feature fields to our list
-            // Note: NHTSA fields vary but often include these keys for Yes/No/Optional values
-            
-            // Helper to check positive values
-            const hasFeature = (val: string) => val && (val.toLowerCase().includes("yes") || val.toLowerCase().includes("std") || val.toLowerCase().includes("opt"));
-
-            if (hasFeature(vehicle.AdaptiveCruiseControl)) detectedFeatures.push("Adaptive Cruise Control");
-            if (hasFeature(vehicle.BackupCam)) detectedFeatures.push("Backup Camera");
-            if (hasFeature(vehicle.BlindSpotMon)) detectedFeatures.push("Blind Spot Monitor");
-            if (hasFeature(vehicle.LaneDepartureWarning)) detectedFeatures.push("Lane Departure Warning");
-            if (hasFeature(vehicle.Navi)) detectedFeatures.push("Navigation");
-            if (hasFeature(vehicle.KeylessIgnition)) detectedFeatures.push("Remote Start"); // Approximation
-            if (hasFeature(vehicle.ParkAssist)) detectedFeatures.push("Backup Camera"); // Often related
-
-            // Check if we got valid data
-            if (!decoded.make && !decoded.model) {
-                 throw new Error("Could not decode vehicle details");
-            }
-
-            setNewCar(prev => ({
-                ...prev,
-                ...decoded,
-                notes: prev.notes ? prev.notes + "\n" + notes : notes
-            }));
-            
-            if (detectedFeatures.length > 0) {
-                // Add unique features
-                setFeatures(prev => Array.from(new Set([...prev, ...detectedFeatures])));
-            }
-            
-            // Auto open advanced section to show decoded details
-            setShowAdvanced(true);
-            
-            toast({ 
-                title: "VIN Decoded Successfully", 
-                description: `Identified: ${decoded.year} ${decoded.make} ${decoded.model}` 
-            });
-        } else {
-            throw new Error("No results found");
+        if (result.error) {
+            throw new Error(result.error);
         }
+            
+        // Map API response to our form fields
+        const decoded: any = {
+            make: result.make || "",
+            model: result.model || "",
+            year: result.year || "",
+            engineCylinders: result.engineCylinders || "",
+            engineDisplacement: result.engineDisplacement || "",
+            // Trim is explicitly excluded per user request to keep it manual
+        };
+
+        // Try to decode transmission if available
+        if (result.transmission) {
+            const trans = result.transmission.toLowerCase();
+            if (trans.includes("auto") || trans.includes("cvt")) {
+                decoded.transmission = "automatic";
+            } else if (trans.includes("manual") || trans.includes("stick")) {
+                decoded.transmission = "manual";
+            }
+        }
+
+        // Decode Fuel Type
+        if (result.fuelType) {
+            const fuel = result.fuelType.toLowerCase();
+            if (fuel.includes("gas")) decoded.fuelType = "gasoline";
+            else if (fuel.includes("diesel")) decoded.fuelType = "diesel";
+            else if (fuel.includes("electric")) decoded.fuelType = "electric";
+            else if (fuel.includes("hybrid")) decoded.fuelType = "hybrid";
+        }
+
+        // Decode Drivetrain
+        if (result.driveType) {
+            const drive = result.driveType.toLowerCase();
+            if (drive.includes("awd") || drive.includes("all")) decoded.drivetrain = "awd";
+            else if (drive.includes("4wd") || drive.includes("4-wheel")) decoded.drivetrain = "4wd";
+            else if (drive.includes("rwd") || drive.includes("rear")) decoded.drivetrain = "rwd";
+            else if (drive.includes("fwd") || drive.includes("front")) decoded.drivetrain = "fwd";
+        }
+
+        // Decode Body Type
+        if (result.bodyClass) {
+            const body = result.bodyClass.toLowerCase();
+            if (body.includes("sedan")) decoded.bodyType = "sedan";
+            else if (body.includes("suv") || body.includes("sport utility")) decoded.bodyType = "suv";
+            else if (body.includes("truck") || body.includes("pickup")) decoded.bodyType = "truck";
+            else if (body.includes("van") || body.includes("minivan")) decoded.bodyType = "van";
+            else if (body.includes("coupe")) decoded.bodyType = "coupe";
+            else if (body.includes("hatch")) decoded.bodyType = "hatchback";
+        }
+
+        // Extract Extra Information for Notes
+        const extras = [];
+        if (result.engineDescription) extras.push(`Engine: ${result.engineDescription}`);
+        if (result.doors) extras.push(`Doors: ${result.doors}`);
+        if (result.plantCountry) extras.push(`Origin: ${result.plantCountry}`);
+        if (result.series) extras.push(`Series: ${result.series}`);
+        
+        const notes = extras.length > 0 ? `Specs: ${extras.join(", ")}` : "";
+
+        // Extract Features
+        const detectedFeatures: string[] = [];
+        
+        if (result.fuelType?.toLowerCase().includes("hybrid")) {
+            detectedFeatures.push("Hybrid");
+        }
+
+        // Check if we got valid data
+        if (!decoded.make && !decoded.model) {
+             throw new Error("Could not decode vehicle details");
+        }
+
+        setNewCar(prev => ({
+            ...prev,
+            ...decoded,
+            notes: prev.notes ? prev.notes + "\n" + notes : notes
+        }));
+        
+        if (detectedFeatures.length > 0) {
+            // Add unique features
+            setFeatures(prev => Array.from(new Set([...prev, ...detectedFeatures])));
+        }
+        
+        // Auto open advanced section to show decoded details
+        setShowAdvanced(true);
+        
+        toast({ 
+            title: "VIN Decoded Successfully", 
+            description: `Identified: ${decoded.year} ${decoded.make} ${decoded.model}${result.series ? ` ${result.series}` : ''}` 
+        });
     } catch (error) {
         console.error("VIN Decode Error:", error);
         toast({ 
             title: "Decoding Failed", 
-            description: "Could not fetch vehicle details. Please enter manually.", 
+            description: error instanceof Error ? error.message : "Could not fetch vehicle details. Please enter manually.", 
             variant: "destructive" 
         });
     } finally {
