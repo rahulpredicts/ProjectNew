@@ -484,142 +484,140 @@ export default function Inventory() {
                     </div>
                   </button>
 
-                  {dealerships.map(dealership => (
-                    <div
-                      key={dealership.id}
-                      className={cn(
-                        "group relative p-4 rounded-2xl border transition-all cursor-pointer",
+              {dealerships.map(dealership => (
+                <div 
+                    key={dealership.id} 
+                    className={cn(
+                        "group relative w-full p-4 text-left transition-all rounded-2xl border hover:shadow-md",
                         selectedDealership?.id === dealership.id
-                          ? "bg-white border-gray-200 shadow-md ring-2 ring-black ring-offset-2"
-                          : "bg-white/50 border-transparent hover:bg-white hover:shadow-sm"
-                      )}
-                      onClick={() => setSelectedDealership(dealership)}
-                    >
-                      <div className="pr-8">
-                        <div className="font-bold text-gray-900 mb-1">{dealership.name}</div>
-                        <div className="flex items-center gap-2 text-sm text-gray-500">
-                            <MapPin className="w-3 h-3" />
-                            <span className="truncate">{dealership.location}, {dealership.province}</span>
-                        </div>
-                        <div className="flex items-center gap-2 mt-3">
-                            <Badge variant="secondary" className="bg-gray-100 text-gray-600 hover:bg-gray-200">
-                                {dealership.inventory.length} Cars
-                            </Badge>
-                        </div>
-                      </div>
-                      
-                      <div className="absolute top-4 right-4 flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-all duration-200">
-                        <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full hover:bg-gray-100" onClick={(e) => { e.stopPropagation(); setEditingDealership(dealership); }}>
-                            <Edit2 className="w-4 h-4 text-gray-600" />
-                        </Button>
-                        <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full hover:bg-red-50" onClick={(e) => handleDeleteDealership(dealership.id, e)}>
-                            <Trash2 className="w-4 h-4 text-red-500" />
-                        </Button>
-                      </div>
+                        ? "bg-white border-gray-200 shadow-md ring-2 ring-blue-600 ring-offset-2"
+                        : "bg-white border-gray-100 hover:border-gray-200"
+                    )}
+                    onClick={() => setSelectedDealership(dealership)}
+                >
+                  <div className="flex justify-between items-start mb-2">
+                    <div className="font-bold text-gray-900 line-clamp-1">{dealership.name}</div>
+                    <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button className="p-1.5 hover:bg-gray-100 rounded-full" onClick={(e) => { e.stopPropagation(); setEditingDealership(dealership); }}>
+                            <Edit2 className="w-3.5 h-3.5 text-gray-500" />
+                        </button>
+                        <button className="p-1.5 hover:bg-red-50 rounded-full" onClick={(e) => handleDeleteDealership(dealership.id, e)}>
+                            <Trash2 className="w-3.5 h-3.5 text-red-500" />
+                        </button>
                     </div>
-                  ))}
+                  </div>
+                  
+                  <div className="flex items-center text-xs text-gray-500 mb-3">
+                    <MapPin className="w-3 h-3 mr-1" />
+                    {dealership.location}, {dealership.province}
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-100 font-normal">
+                        {dealership.inventory.length} Cars
+                    </Badge>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
 
-          {/* Modern Grid */}
-          <div className="lg:col-span-9">
+          {/* Main Content */}
+          <div className="lg:col-span-9 space-y-6">
              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                 {filteredCars.map(car => (
-                    <Card key={`${car.dealershipId}-${car.id}`} className={cn(
-                        "group border-0 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 bg-white overflow-hidden rounded-2xl relative",
-                        car.status === 'sold' && "opacity-80 hover:opacity-100"
-                    )}>
-                        {car.status === 'sold' && (
-                            <div className="absolute top-0 right-0 z-20 p-4">
-                                <div className="bg-red-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg transform rotate-0 uppercase tracking-wider">
-                                    Sold
-                                </div>
+                    <Card key={car.id} className="group overflow-hidden border-0 shadow-sm hover:shadow-xl transition-all duration-300 bg-white">
+                        <div className="aspect-[16/10] bg-gray-100 relative overflow-hidden">
+                            {/* Status Badge */}
+                            <div className="absolute top-3 left-3 z-10 flex gap-2">
+                                {car.status === 'sold' && (
+                                    <Badge className="bg-red-500 text-white shadow-sm">SOLD</Badge>
+                                )}
+                                {car.status === 'pending' && (
+                                    <Badge className="bg-yellow-500 text-white shadow-sm">PENDING</Badge>
+                                )}
+                                {car.status === 'available' && (
+                                    <Badge className="bg-green-500/90 backdrop-blur-sm text-white shadow-sm">AVAILABLE</Badge>
+                                )}
                             </div>
-                        )}
-                        
-                        <CardHeader className="p-0">
-                            <div className={cn(
-                                "h-3 transition-all duration-500",
-                                car.status === 'sold' 
-                                    ? "bg-gray-200" 
-                                    : "bg-gradient-to-r from-gray-100 to-gray-50 group-hover:from-blue-500 group-hover:to-purple-500"
-                            )} />
-                        </CardHeader>
-                        <CardContent className="p-6">
-                            <div className="flex justify-between items-start mb-4">
+                            
+                            {/* Image Placeholder */}
+                            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200 group-hover:scale-105 transition-transform duration-500">
+                                <CarIcon className="w-16 h-16 text-gray-300" />
+                            </div>
+                            
+                            {/* Quick Actions Overlay */}
+                            <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex justify-end gap-2">
+                                <Button size="sm" variant="secondary" className="h-8 text-xs bg-white/90 backdrop-blur">
+                                    View Details
+                                </Button>
+                            </div>
+                        </div>
+
+                        <CardContent className="p-5">
+                            <div className="flex justify-between items-start mb-2">
                                 <div>
-                                    <div className="text-sm font-medium text-gray-500 mb-1">{car.year}</div>
-                                    <h3 className="font-bold text-xl text-gray-900 leading-tight">
-                                        {car.make} {car.model}
+                                    <h3 className="font-bold text-lg text-gray-900 leading-tight">
+                                        {car.year} {car.make} {car.model}
                                     </h3>
                                     <div className="text-sm text-gray-500 font-medium mt-1">{car.trim}</div>
                                 </div>
-                                <Badge variant="outline" className="font-mono text-xs tracking-wide border-gray-200 text-gray-500">
-                                    {car.vin.slice(-6)}
-                                </Badge>
-                            </div>
-
-                            <div className="flex flex-wrap gap-2 mb-6">
-                                <Badge variant="secondary" className="bg-gray-50 text-gray-600 hover:bg-gray-100 border-0">
-                                    <Palette className="w-3 h-3 mr-1" /> {car.color}
-                                </Badge>
-                                <Badge variant="secondary" className="bg-gray-50 text-gray-600 hover:bg-gray-100 border-0">
-                                    <Settings2 className="w-3 h-3 mr-1" /> {car.transmission}
-                                </Badge>
-                                <Badge variant="secondary" className="bg-gray-50 text-gray-600 hover:bg-gray-100 border-0">
-                                    <Fuel className="w-3 h-3 mr-1" /> {car.fuelType}
-                                </Badge>
-                                {car.drivetrain && (
-                                    <Badge variant="secondary" className="bg-gray-50 text-gray-600 hover:bg-gray-100 border-0 uppercase">
-                                        {car.drivetrain}
-                                    </Badge>
-                                )}
-                            </div>
-
-                            <div className="flex items-end justify-between mt-auto pt-4 border-t border-gray-50">
-                                <div>
-                                    <div className="text-sm text-gray-400 font-medium mb-0.5">Price</div>
-                                    <div className={cn(
-                                        "text-2xl font-bold tracking-tight",
-                                        car.status === 'sold' ? "text-gray-400 line-through decoration-2" : "text-gray-900"
-                                    )}>
-                                        ${parseFloat(car.price).toLocaleString()}
-                                    </div>
-                                </div>
                                 <div className="text-right">
-                                    <div className="text-sm text-gray-400 font-medium mb-0.5">Mileage</div>
-                                    <div className="text-lg font-semibold text-gray-700 flex items-center justify-end gap-1">
-                                        <Gauge className="w-4 h-4 text-gray-400" />
-                                        {parseFloat(car.kilometers).toLocaleString()}
+                                    <div className="font-bold text-xl text-blue-600">
+                                        ${parseInt(car.price).toLocaleString()}
                                     </div>
                                 </div>
                             </div>
 
-                             {/* Hover Actions */}
-                             <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-all duration-200 transform translate-x-2 group-hover:translate-x-0 z-30">
+                            <div className="grid grid-cols-2 gap-y-2 gap-x-4 my-4 text-sm text-gray-600">
+                                <div className="flex items-center gap-2">
+                                    <Gauge className="w-4 h-4 text-gray-400" />
+                                    {parseInt(car.kilometers).toLocaleString()} km
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <Settings2 className="w-4 h-4 text-gray-400" />
+                                    <span className="capitalize">{car.transmission}</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <Fuel className="w-4 h-4 text-gray-400" />
+                                    <span className="capitalize">{car.fuelType}</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <Palette className="w-4 h-4 text-gray-400" />
+                                    {car.color}
+                                </div>
+                            </div>
+
+                            <div className="flex gap-2 pt-4 border-t border-gray-100">
                                 <Button 
-                                    variant="secondary" 
-                                    size="sm" 
+                                    variant={car.status === 'sold' ? "outline" : "default"} 
                                     className={cn(
-                                        "h-8 px-3 rounded-full backdrop-blur shadow-sm text-xs font-medium",
+                                        "flex-1 h-9 text-xs font-medium",
                                         car.status === 'sold' 
-                                            ? "bg-green-50 text-green-700 hover:bg-green-100" 
-                                            : "bg-gray-900 text-white hover:bg-black"
+                                            ? "bg-transparent border-green-600 text-green-600 hover:bg-green-50" 
+                                            : "bg-green-600 hover:bg-green-700 text-white"
                                     )}
                                     onClick={() => toggleSoldStatus(car)}
                                 >
-                                    {car.status === 'sold' ? 'Mark Available' : 'Mark Sold'}
+                                    {car.status === 'sold' ? (
+                                        <>Mark Available</>
+                                    ) : (
+                                        <>
+                                            <CheckCircle2 className="w-3.5 h-3.5 mr-1.5" />
+                                            Mark Sold
+                                        </>
+                                    )}
                                 </Button>
-                                <Button variant="secondary" size="icon" className="h-8 w-8 rounded-full bg-white/90 backdrop-blur shadow-sm hover:bg-blue-50" onClick={() => { setEditingCar({ ...car, dealershipId: car.dealershipId }); }}>
-                                    <Edit2 className="w-3.5 h-3.5 text-blue-600" />
+                                <Button variant="secondary" size="icon" className="h-9 w-9 rounded-md bg-gray-100 hover:bg-blue-50 hover:text-blue-600 transition-colors" onClick={() => { setEditingCar({ ...car, dealershipId: car.dealershipId }); }}>
+                                    <Edit2 className="w-4 h-4" />
                                 </Button>
-                                <Button variant="secondary" size="icon" className="h-8 w-8 rounded-full bg-white/90 backdrop-blur shadow-sm hover:bg-red-50" onClick={() => handleDeleteCar(car.dealershipId!, car.id)}>
-                                    <Trash2 className="w-3.5 h-3.5 text-red-600" />
+                                <Button variant="secondary" size="icon" className="h-9 w-9 rounded-md bg-gray-100 hover:bg-red-50 hover:text-red-600 transition-colors" onClick={() => handleDeleteCar(car.dealershipId!, car.id)}>
+                                    <Trash2 className="w-4 h-4" />
                                 </Button>
                             </div>
 
                             {!selectedDealership && (
-                                <div className="mt-4 pt-3 border-t border-dashed border-gray-100 flex items-center gap-2 text-xs text-gray-400">
+                                <div className="mt-4 pt-3 border-t border-dashed border-gray-100 flex items-center gap-2 text-xs text-gray-400 font-medium">
                                     <Building2 className="w-3 h-3" />
                                     {car.dealershipName}
                                 </div>
@@ -631,6 +629,218 @@ export default function Inventory() {
           </div>
         </div>
       </div>
+
+      {/* Add Dealership Dialog */}
+      <Dialog open={showAddDealership} onOpenChange={setShowAddDealership}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Add New Dealership</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label>Name</Label>
+              <Input
+                value={newDealership.name}
+                onChange={(e) => setNewDealership({ ...newDealership, name: e.target.value })}
+                placeholder="Dealership Name"
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label>Location/City</Label>
+              <Input
+                value={newDealership.location}
+                onChange={(e) => setNewDealership({ ...newDealership, location: e.target.value })}
+                placeholder="City"
+              />
+            </div>
+             <div className="grid gap-2">
+              <Label>Province</Label>
+              <Input
+                value={newDealership.province}
+                onChange={(e) => setNewDealership({ ...newDealership, province: e.target.value })}
+                placeholder="Province (e.g. ON, BC)"
+                maxLength={2}
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label>Address</Label>
+              <Input
+                value={newDealership.address}
+                onChange={(e) => setNewDealership({ ...newDealership, address: e.target.value })}
+                placeholder="Full Address"
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label>Postal Code</Label>
+              <Input
+                value={newDealership.postalCode}
+                onChange={(e) => setNewDealership({ ...newDealership, postalCode: e.target.value })}
+                placeholder="A1A 1A1"
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label>Phone</Label>
+              <Input
+                value={newDealership.phone}
+                onChange={(e) => setNewDealership({ ...newDealership, phone: e.target.value })}
+                placeholder="(555) 555-5555"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowAddDealership(false)}>Cancel</Button>
+            <Button onClick={handleAddDealership}>Create Dealership</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Dealership Dialog */}
+      <Dialog open={!!editingDealership} onOpenChange={(open) => !open && setEditingDealership(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Dealership</DialogTitle>
+          </DialogHeader>
+          {editingDealership && (
+            <div className="grid gap-4 py-4">
+              <div className="grid gap-2">
+                <Label>Name</Label>
+                <Input
+                  value={editingDealership.name}
+                  onChange={(e) => setEditingDealership({ ...editingDealership, name: e.target.value })}
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label>Location</Label>
+                <Input
+                  value={editingDealership.location}
+                  onChange={(e) => setEditingDealership({ ...editingDealership, location: e.target.value })}
+                />
+              </div>
+               <div className="grid gap-2">
+                <Label>Province</Label>
+                <Input
+                  value={editingDealership.province}
+                  onChange={(e) => setEditingDealership({ ...editingDealership, province: e.target.value })}
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label>Address</Label>
+                <Input
+                  value={editingDealership.address}
+                  onChange={(e) => setEditingDealership({ ...editingDealership, address: e.target.value })}
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label>Phone</Label>
+                <Input
+                  value={editingDealership.phone}
+                  onChange={(e) => setEditingDealership({ ...editingDealership, phone: e.target.value })}
+                />
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditingDealership(null)}>Cancel</Button>
+            <Button onClick={handleUpdateDealership}>Save Changes</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Car Dialog */}
+      <Dialog open={!!editingCar} onOpenChange={(open) => !open && setEditingCar(null)}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Edit Vehicle</DialogTitle>
+          </DialogHeader>
+          {editingCar && (
+            <div className="grid gap-4 py-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="grid gap-2">
+                  <Label>Make</Label>
+                  <Input
+                    value={editingCar.make}
+                    onChange={(e) => setEditingCar({ ...editingCar, make: e.target.value })}
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label>Model</Label>
+                  <Input
+                    value={editingCar.model}
+                    onChange={(e) => setEditingCar({ ...editingCar, model: e.target.value })}
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label>Year</Label>
+                  <Input
+                    value={editingCar.year}
+                    onChange={(e) => setEditingCar({ ...editingCar, year: e.target.value })}
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label>Trim</Label>
+                  <Input
+                    value={editingCar.trim}
+                    onChange={(e) => setEditingCar({ ...editingCar, trim: e.target.value })}
+                  />
+                </div>
+                 <div className="grid gap-2">
+                  <Label>Price</Label>
+                  <Input
+                    value={editingCar.price}
+                    onChange={(e) => setEditingCar({ ...editingCar, price: e.target.value })}
+                  />
+                </div>
+                 <div className="grid gap-2">
+                  <Label>Kilometers</Label>
+                  <Input
+                    value={editingCar.kilometers}
+                    onChange={(e) => setEditingCar({ ...editingCar, kilometers: e.target.value })}
+                  />
+                </div>
+                 <div className="grid gap-2">
+                  <Label>Color</Label>
+                  <Input
+                    value={editingCar.color}
+                    onChange={(e) => setEditingCar({ ...editingCar, color: e.target.value })}
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label>Status</Label>
+                  <Select value={editingCar.status} onValueChange={(val: any) => setEditingCar({ ...editingCar, status: val })}>
+                    <SelectTrigger>
+                        <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="available">Available</SelectItem>
+                        <SelectItem value="sold">Sold</SelectItem>
+                        <SelectItem value="pending">Pending</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="grid gap-2">
+                <Label>Listing URL</Label>
+                <Input
+                  value={editingCar.listingLink}
+                  onChange={(e) => setEditingCar({ ...editingCar, listingLink: e.target.value })}
+                />
+              </div>
+               <div className="grid gap-2">
+                <Label>Notes</Label>
+                <Input
+                  value={editingCar.notes}
+                  onChange={(e) => setEditingCar({ ...editingCar, notes: e.target.value })}
+                />
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditingCar(null)}>Cancel</Button>
+            <Button onClick={handleUpdateCar}>Save Changes</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
     </div>
   );
 }
