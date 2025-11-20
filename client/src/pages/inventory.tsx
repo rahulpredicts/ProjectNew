@@ -53,11 +53,21 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Dealership, Car } from "@/lib/mock-data";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
-import { useInventory } from "@/lib/inventory-context";
 import { useLocation } from "wouter";
+import { 
+  useDealerships, 
+  useCars, 
+  useCreateDealership,
+  useUpdateDealership,
+  useDeleteDealership,
+  useUpdateCar,
+  useDeleteCar,
+  useToggleSoldStatus,
+  type Car,
+  type Dealership
+} from "@/lib/api-hooks";
 
 const COMMON_COLORS = [
   "Black", "White", "Silver", "Gray", "Red", "Blue", 
@@ -66,7 +76,14 @@ const COMMON_COLORS = [
 ];
 
 export default function Inventory() {
-  const { dealerships, addDealership, updateDealership, deleteDealership, updateCar, deleteCar, toggleSoldStatus } = useInventory();
+  const { data: dealerships = [], isLoading: dealershipsLoading } = useDealerships();
+  const { data: allCars = [], isLoading: carsLoading } = useCars();
+  const createDealershipMutation = useCreateDealership();
+  const updateDealershipMutation = useUpdateDealership();
+  const deleteDealershipMutation = useDeleteDealership();
+  const updateCarMutation = useUpdateCar();
+  const deleteCarMutation = useDeleteCar();
+  const toggleSoldStatusMutation = useToggleSoldStatus();
   const { toast } = useToast();
   const [_, setLocation] = useLocation();
   
@@ -118,53 +135,73 @@ export default function Inventory() {
         toast({ title: "Error", description: "Required fields missing", variant: "destructive" });
         return;
     }
-    addDealership({
-        ...newDealership as Dealership,
-        id: Math.random().toString(36).substr(2, 9),
-        inventory: []
+    createDealershipMutation.mutate({
+        name: newDealership.name!,
+        location: newDealership.location!,
+        province: newDealership.province!,
+        address: newDealership.address!,
+        postalCode: newDealership.postalCode!,
+        phone: newDealership.phone!,
+    }, {
+        onSuccess: () => {
+            setNewDealership({ name: "", location: "", province: "", address: "", postalCode: "", phone: "" });
+            setShowAddDealership(false);
+        }
     });
-    setNewDealership({ name: "", location: "", province: "", address: "", postalCode: "", phone: "" });
-    setShowAddDealership(false);
   };
 
   const handleUpdateDealership = () => {
     if (!editingDealership) return;
-    updateDealership(editingDealership);
-    if (selectedDealership?.id === editingDealership.id) {
-        setSelectedDealership(editingDealership);
-    }
-    setEditingDealership(null);
+    updateDealershipMutation.mutate({
+        id: editingDealership.id,
+        data: editingDealership
+    }, {
+        onSuccess: () => {
+            if (selectedDealership?.id === editingDealership.id) {
+                setSelectedDealership(editingDealership);
+            }
+            setEditingDealership(null);
+        }
+    });
   };
 
   const handleDeleteDealership = (id: string, e: React.MouseEvent) => {
       e.stopPropagation();
       if (!window.confirm("Delete this dealership and all its cars?")) return;
-      deleteDealership(id);
-      if (selectedDealership?.id === id) setSelectedDealership(null);
+      deleteDealershipMutation.mutate(id, {
+          onSuccess: () => {
+              if (selectedDealership?.id === id) setSelectedDealership(null);
+          }
+      });
   };
 
   const handleUpdateCar = () => {
       if (!editingCar) return;
-      updateCar(editingCar);
-      setEditingCar(null);
+      updateCarMutation.mutate({
+          id: editingCar.id,
+          data: editingCar
+      }, {
+          onSuccess: () => {
+              setEditingCar(null);
+          }
+      });
   };
 
-  const handleDeleteCar = (dealershipId: string, carId: string) => {
+  const handleDeleteCar = (carId: string) => {
       if (!window.confirm("Delete this car?")) return;
-      deleteCar(dealershipId, carId);
+      deleteCarMutation.mutate(carId);
   };
-
 
   const getAllCars = () => {
-    return dealerships.flatMap(d =>
-      d.inventory.map(car => ({
+    return allCars.map(car => {
+      const dealership = dealerships.find(d => d.id === car.dealershipId);
+      return {
         ...car,
-        dealershipName: d.name,
-        dealershipId: d.id,
-        dealershipLocation: d.location,
-        dealershipProvince: d.province
-      }))
-    );
+        dealershipName: dealership?.name,
+        dealershipLocation: dealership?.location,
+        dealershipProvince: dealership?.province
+      };
+    });
   };
 
   const getFilteredCars = () => {
@@ -264,7 +301,7 @@ export default function Inventory() {
     setFilterEngineCylinders("");
   };
 
-  const totalInventory = dealerships.reduce((sum, d) => sum + d.inventory.length, 0);
+  const totalInventory = allCars.length;
   const filteredCars = getFilteredCars();
 
   return (
@@ -538,7 +575,7 @@ export default function Inventory() {
 
                   <div className="flex items-center gap-2">
                     <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-100 font-normal">
-                        {dealership.inventory.length} Cars
+                        {allCars.filter(c => c.dealershipId === dealership.id).length} Cars
                     </Badge>
                   </div>
                 </div>
@@ -638,7 +675,7 @@ export default function Inventory() {
                                             ? "bg-transparent border-green-600 text-green-600 hover:bg-green-50" 
                                             : "bg-green-600 hover:bg-green-700 text-white"
                                     )}
-                                    onClick={() => toggleSoldStatus(car)}
+                                    onClick={() => toggleSoldStatusMutation.mutate(car)}
                                 >
                                     {car.status === 'sold' ? (
                                         <>Mark Available</>
@@ -652,7 +689,7 @@ export default function Inventory() {
                                 <Button variant="secondary" size="icon" className="h-9 w-9 rounded-md bg-gray-100 hover:bg-blue-50 hover:text-blue-600 transition-colors" onClick={() => { setEditingCar({ ...car, dealershipId: car.dealershipId }); }}>
                                     <Edit2 className="w-4 h-4" />
                                 </Button>
-                                <Button variant="secondary" size="icon" className="h-9 w-9 rounded-md bg-gray-100 hover:bg-red-50 hover:text-red-600 transition-colors" onClick={() => handleDeleteCar(car.dealershipId!, car.id)}>
+                                <Button variant="secondary" size="icon" className="h-9 w-9 rounded-md bg-gray-100 hover:bg-red-50 hover:text-red-600 transition-colors" onClick={() => handleDeleteCar(car.id)}>
                                     <Trash2 className="w-4 h-4" />
                                 </Button>
                             </div>

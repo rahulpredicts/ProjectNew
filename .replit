@@ -7,9 +7,10 @@ channel = "stable-24_05"
 packages = ["unzip"]
 
 [deployment]
-deploymentTarget = "static"
+deploymentTarget = "autoscale"
 build = ["npm", "run", "build"]
 publicDir = "dist/public"
+run = ["npm", "run", "start"]
 
 [[ports]]
 localPort = 5000
@@ -20,7 +21,7 @@ localPort = 5001
 externalPort = 3000
 
 [[ports]]
-localPort = 34515
+localPort = 42087
 externalPort = 3001
 
 [env]
@@ -44,8 +45,8 @@ author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "npm run dev:client"
+args = "npm run dev"
 waitForPort = 5000
 
 [agent]
-mockupState = "MOCKUP"
+mockupState = "FULLSTACK"

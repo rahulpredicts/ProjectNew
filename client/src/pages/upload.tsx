@@ -1,6 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { useInventory } from "@/lib/inventory-context";
-import { Car, Dealership } from "@/lib/mock-data";
+import { useDealerships, useCreateCar, useCarByVin, type Car, type Dealership, useCars } from "@/lib/api-hooks";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -48,7 +47,9 @@ const FEATURES_LIST = [
 ];
 
 export default function UploadPage() {
-  const { dealerships, addCar } = useInventory();
+  const { data: dealerships = [], isLoading: dealershipsLoading } = useDealerships();
+  const { data: allCars = [] } = useCars();
+  const createCarMutation = useCreateCar();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState("manual");
@@ -66,7 +67,7 @@ export default function UploadPage() {
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [availableTrims, setAvailableTrims] = useState<string[]>([]);
   const [isLoadingTrims, setIsLoadingTrims] = useState(false);
-  const [duplicateCar, setDuplicateCar] = useState<Car | null>(null);
+  const [duplicateCar, setDuplicateCar] = useState<(Car & { dealershipName?: string }) | null>(null);
   const [showDuplicateAlert, setShowDuplicateAlert] = useState(false);
 
   // Bulk CSV State
@@ -247,10 +248,11 @@ export default function UploadPage() {
   const checkDuplicateVin = (vin: string): Car | null => {
       if (!vin || vin.length < 11) return null;
       
-      // Check all dealerships for this VIN
-      for (const dealer of dealerships) {
-          const found = dealer.inventory.find(car => car.vin.toUpperCase() === vin.toUpperCase());
-          if (found) return { ...found, dealershipName: dealer.name } as Car & { dealershipName: string };
+      // Check all cars for this VIN
+      const found = allCars.find(car => car.vin.toUpperCase() === vin.toUpperCase());
+      if (found) {
+          const dealership = dealerships.find(d => d.id === found.dealershipId);
+          return { ...found, dealershipName: dealership?.name } as Car & { dealershipName?: string };
       }
       return null;
   };
@@ -275,26 +277,44 @@ export default function UploadPage() {
         }
     }
     
-    const car: Car = {
-        ...newCar as Car,
-        id: Math.random().toString(36).substr(2, 9),
-        status: 'available',
+    const carData = {
+        dealershipId: newCar.dealershipId!,
+        vin: newCar.vin || "",
+        make: newCar.make || "",
+        model: newCar.model || "",
+        trim: newCar.trim || "",
+        year: newCar.year || "",
+        color: newCar.color || "",
+        price: newCar.price || "",
+        kilometers: newCar.kilometers || "",
+        transmission: newCar.transmission || "",
+        fuelType: newCar.fuelType || "",
+        bodyType: newCar.bodyType || "",
+        drivetrain: newCar.drivetrain,
+        engineCylinders: newCar.engineCylinders,
+        engineDisplacement: newCar.engineDisplacement,
         features: features,
-        notes: newCar.notes || ""
+        listingLink: newCar.listingLink || "",
+        carfaxLink: newCar.carfaxLink || "",
+        carfaxStatus: newCar.carfaxStatus,
+        notes: newCar.notes || "",
+        status: 'available' as const,
     };
     
-    addCar(car);
-    setNewCar({
-        vin: "", make: "", model: "", trim: "", year: "", color: "",
-        price: "", kilometers: "", transmission: "", fuelType: "", bodyType: "",
-        listingLink: "", carfaxLink: "", notes: "", dealershipId: newCar.dealershipId, status: 'available',
-        engineCylinders: "", engineDisplacement: "", drivetrain: "fwd", carfaxStatus: "unavailable"
+    createCarMutation.mutate(carData, {
+        onSuccess: () => {
+            setNewCar({
+                vin: "", make: "", model: "", trim: "", year: "", color: "",
+                price: "", kilometers: "", transmission: "", fuelType: "", bodyType: "",
+                listingLink: "", carfaxLink: "", notes: "", dealershipId: newCar.dealershipId, status: 'available',
+                engineCylinders: "", engineDisplacement: "", drivetrain: "fwd", carfaxStatus: "unavailable"
+            });
+            setFeatures([]);
+            setShowAdvanced(false);
+            setShowDuplicateAlert(false);
+            setDuplicateCar(null);
+        }
     });
-    setFeatures([]);
-    setShowAdvanced(false);
-    setShowDuplicateAlert(false);
-    setDuplicateCar(null);
-    toast({ title: "Success", description: "Vehicle added to inventory" });
   };
 
   const handleCsvUpload = () => {

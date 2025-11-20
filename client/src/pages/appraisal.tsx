@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
-import { useInventory } from "@/lib/inventory-context";
+import { useCars, useDealerships, type Car, type Dealership } from "@/lib/api-hooks";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -48,7 +48,8 @@ const FEATURES_LIST = [
 ];
 
 export default function AppraisalPage() {
-  const { dealerships } = useInventory();
+  const { data: dealerships = [] } = useDealerships();
+  const { data: allCars = [] } = useCars();
   const { toast } = useToast();
   const [formData, setFormData] = useState({
     vin: "",
@@ -88,10 +89,6 @@ export default function AppraisalPage() {
   const [isDecoding, setIsDecoding] = useState(false);
   const [availableTrims, setAvailableTrims] = useState<string[]>([]);
   const [isLoadingTrims, setIsLoadingTrims] = useState(false);
-
-  const allCars = useMemo(() => 
-    dealerships.flatMap(d => d.inventory), 
-  [dealerships]);
 
   useEffect(() => {
     const loadTrims = async () => {
