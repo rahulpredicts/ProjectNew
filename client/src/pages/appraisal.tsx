@@ -26,6 +26,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { Switch } from "@/components/ui/switch";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
 const CANADIAN_TRIMS = [
   "CE", "LE", "XLE", "SE", "XSE", "Limited", "Platinum", // Toyota
@@ -56,6 +57,7 @@ export default function AppraisalPage() {
     year: "",
     kilometers: "",
     trim: "",
+    transmission: "automatic", // Default or decoded
     postalCode: "",
     province: "",
     radius: "50"
@@ -92,12 +94,22 @@ export default function AppraisalPage() {
             const vehicle = data.Results[0];
             
             // Map API response to our form fields
-            const decoded = {
+            const decoded: any = {
                 make: vehicle.Make || "",
                 model: vehicle.Model || "",
                 year: vehicle.ModelYear || "",
                 // Trim is explicitly excluded per user request to keep it manual
             };
+
+            // Try to decode transmission if available
+            if (vehicle.TransmissionStyle) {
+                const trans = vehicle.TransmissionStyle.toLowerCase();
+                if (trans.includes("auto") || trans.includes("cvt")) {
+                    decoded.transmission = "automatic";
+                } else if (trans.includes("manual") || trans.includes("stick")) {
+                    decoded.transmission = "manual";
+                }
+            }
 
             // Check if we got valid data
             if (!decoded.make && !decoded.model) {
@@ -169,7 +181,10 @@ export default function AppraisalPage() {
         const regionFactor = formData.postalCode ? (formData.postalCode.length * 100) : 0;
         const provinceFactor = formData.province === 'ON' || formData.province === 'BC' ? 1000 : 0;
         
-        estimatedRetail = basePrice + yearFactor + kmFactor + regionFactor + provinceFactor;
+        // Small adjustment for transmission (manuals often worth less on mass market cars, more on sports cars - keep simple for now)
+        const transmissionFactor = formData.transmission === 'manual' ? -500 : 0;
+
+        estimatedRetail = basePrice + yearFactor + kmFactor + regionFactor + provinceFactor + transmissionFactor;
     } else {
         // Calculate based on real data
         const prices = similar.map(c => parseFloat(c.price));
@@ -286,6 +301,25 @@ export default function AppraisalPage() {
                             </Select>
                         </div>
                     </div>
+
+                    <div className="space-y-2">
+                        <Label>Transmission</Label>
+                        <RadioGroup 
+                            value={formData.transmission} 
+                            onValueChange={(val) => setFormData({...formData, transmission: val})}
+                            className="flex gap-4"
+                        >
+                            <div className="flex items-center space-x-2">
+                                <RadioGroupItem value="automatic" id="trans-auto" />
+                                <Label htmlFor="trans-auto" className="cursor-pointer font-normal">Automatic</Label>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                                <RadioGroupItem value="manual" id="trans-manual" />
+                                <Label htmlFor="trans-manual" className="cursor-pointer font-normal">Manual</Label>
+                            </div>
+                        </RadioGroup>
+                    </div>
+
                     <div className="space-y-2">
                         <Label>Kilometers</Label>
                         <Input 
