@@ -124,9 +124,18 @@ export default function UploadPage() {
             throw new Error(result.error);
         }
             
+        // Normalize Make to match POPULAR_MAKES (case-insensitive)
+        let normalizedMake = result.make || "";
+        if (normalizedMake) {
+            const matchedMake = POPULAR_MAKES.find(m => m.toLowerCase() === normalizedMake.toLowerCase());
+            if (matchedMake) {
+                normalizedMake = matchedMake;
+            }
+        }
+        
         // Map API response to our form fields
         const decoded: any = {
-            make: result.make || "",
+            make: normalizedMake,
             model: result.model || "",
             year: result.year || "",
             trim: result.trim || "",
