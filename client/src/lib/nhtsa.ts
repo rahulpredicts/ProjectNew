@@ -52,6 +52,7 @@ export const CANADIAN_TRIMS_BY_MAKE: Record<string, string[]> = {
     "Avantgarde Edition", "AMG Line", "Night Package", "Premium Package", "Intelligent Drive Package"
   ],
   "Audi": ["Komfort", "Progressiv", "Technik", "S Line", "RS"],
+  "Infiniti": ["PURE", "LUXE", "LUXE BLACK EDITION", "ESSENTIAL", "SENSORY", "SPORT", "AUTOGRAPH"],
   "Lexus": ["Base", "Premium", "Luxury", "Ultra Luxury", "Executive", "F Sport 1", "F Sport 2", "F Sport 3"],
   "Tesla": ["Standard Range", "Standard Range Plus", "Long Range", "Performance", "Plaid"],
   "Other": ["Base", "S", "SE", "LE", "XLE", "Limited", "Premium", "Sport", "Touring", "Platinum"]

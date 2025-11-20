@@ -1,0 +1,15 @@
+model_id,model_name,year,type,rows,seats,engine,horsepower,torque_lbft,transmission,drive_type,country,trim_id,trim_name,trim_level,trim_description
+1,QX80,2026,Full-Size Luxury SUV,3,8,3.5L Twin-Turbo V6,450,516,Automatic,AWD,Canada,101,LUXE,base,Essential QX80 luxury experience
+1,QX80,2026,Full-Size Luxury SUV,3,8,3.5L Twin-Turbo V6,450,516,Automatic,AWD,Canada,102,SPORT,mid,Bolder appearance with enhanced luxury
+1,QX80,2026,Full-Size Luxury SUV,3,8,3.5L Twin-Turbo V6,450,516,Automatic,AWD,Canada,103,AUTOGRAPH,premium,Premier trim with massaging seats and quilted leather
+2,QX60,2026,Midsize Luxury SUV,3,7,2.0L Variable Compression Turbo (VC-Turbo),268,286,9-Speed Automatic,AWD,Canada,201,PURE,base,Entry-level luxury SUV
+2,QX60,2026,Midsize Luxury SUV,3,7,2.0L Variable Compression Turbo (VC-Turbo),268,286,9-Speed Automatic,AWD,Canada,202,LUXE,mid,Standard midsize luxury
+2,QX60,2026,Midsize Luxury SUV,3,7,2.0L Variable Compression Turbo (VC-Turbo),268,286,9-Speed Automatic,AWD,Canada,203,LUXE BLACK EDITION,mid-special,Gloss black wheels and exterior details
+2,QX60,2026,Midsize Luxury SUV,3,7,2.0L Variable Compression Turbo (VC-Turbo),268,286,9-Speed Automatic,AWD,Canada,204,SPORT,mid-sport,Sporty styling with gloss black accents
+2,QX60,2026,Midsize Luxury SUV,3,7,2.0L Variable Compression Turbo (VC-Turbo),268,286,9-Speed Automatic,AWD,Canada,205,AUTOGRAPH,premium,Top-tier luxury trim
+3,QX55,2025,Luxury Crossover Coupe,1,5,2.0L Variable Compression Turbo (VC-Turbo),268,286,CVT,AWD,Canada,301,LUXE,base,Base luxury crossover coupe
+3,QX55,2025,Luxury Crossover Coupe,1,5,2.0L Variable Compression Turbo (VC-Turbo),268,286,CVT,AWD,Canada,302,ESSENTIAL,mid,Mid-range trim with enhanced features
+3,QX55,2025,Luxury Crossover Coupe,1,5,2.0L Variable Compression Turbo (VC-Turbo),268,286,CVT,AWD,Canada,303,SENSORY,premium,Premium crossover coupe trim
+4,QX50,2025,Compact Luxury SUV,1,5,2.0L Variable Compression Turbo (VC-Turbo),268,286,CVT,AWD,Canada,401,PURE,base,Entry-level compact luxury SUV
+4,QX50,2025,Compact Luxury SUV,1,5,2.0L Variable Compression Turbo (VC-Turbo),268,286,CVT,AWD,Canada,402,LUXE,mid,Mid-range compact luxury SUV
+4,QX50,2025,Compact Luxury SUV,1,5,2.0L Variable Compression Turbo (VC-Turbo),268,286,CVT,AWD,Canada,403,SPORT,premium,Sport-focused compact luxury SUV

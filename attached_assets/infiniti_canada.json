@@ -1,0 +1,166 @@
+{
+  "models": [
+    {
+      "model_id": 1,
+      "model_name": "QX80",
+      "year": 2026,
+      "type": "Full-Size Luxury SUV",
+      "rows": 3,
+      "seats": 8,
+      "engine": "3.5L Twin-Turbo V6",
+      "horsepower": 450,
+      "torque_lbft": 516,
+      "transmission": "Automatic",
+      "drive_type": "AWD",
+      "country": "Canada",
+      "trims": [
+        {
+          "trim_id": 101,
+          "model_id": 1,
+          "trim_name": "LUXE",
+          "trim_level": "base",
+          "description": "Essential QX80 luxury experience"
+        },
+        {
+          "trim_id": 102,
+          "model_id": 1,
+          "trim_name": "SPORT",
+          "trim_level": "mid",
+          "description": "Bolder appearance with enhanced luxury"
+        },
+        {
+          "trim_id": 103,
+          "model_id": 1,
+          "trim_name": "AUTOGRAPH",
+          "trim_level": "premium",
+          "description": "Premier trim with massaging seats and quilted leather"
+        }
+      ]
+    },
+    {
+      "model_id": 2,
+      "model_name": "QX60",
+      "year": 2026,
+      "type": "Midsize Luxury SUV",
+      "rows": 3,
+      "seats": 7,
+      "engine": "2.0L Variable Compression Turbo (VC-Turbo)",
+      "horsepower": 268,
+      "torque_lbft": 286,
+      "transmission": "9-Speed Automatic",
+      "drive_type": "AWD",
+      "country": "Canada",
+      "trims": [
+        {
+          "trim_id": 201,
+          "model_id": 2,
+          "trim_name": "PURE",
+          "trim_level": "base",
+          "description": "Entry-level luxury SUV"
+        },
+        {
+          "trim_id": 202,
+          "model_id": 2,
+          "trim_name": "LUXE",
+          "trim_level": "mid",
+          "description": "Standard midsize luxury"
+        },
+        {
+          "trim_id": 203,
+          "model_id": 2,
+          "trim_name": "LUXE BLACK EDITION",
+          "trim_level": "mid-special",
+          "description": "Gloss black wheels and exterior details"
+        },
+        {
+          "trim_id": 204,
+          "model_id": 2,
+          "trim_name": "SPORT",
+          "trim_level": "mid-sport",
+          "description": "Sporty styling with gloss black accents"
+        },
+        {
+          "trim_id": 205,
+          "model_id": 2,
+          "trim_name": "AUTOGRAPH",
+          "trim_level": "premium",
+          "description": "Top-tier luxury trim"
+        }
+      ]
+    },
+    {
+      "model_id": 3,
+      "model_name": "QX55",
+      "year": 2025,
+      "type": "Luxury Crossover Coupe",
+      "rows": 1,
+      "seats": 5,
+      "engine": "2.0L Variable Compression Turbo (VC-Turbo)",
+      "horsepower": 268,
+      "torque_lbft": 286,
+      "transmission": "CVT",
+      "drive_type": "AWD",
+      "country": "Canada",
+      "trims": [
+        {
+          "trim_id": 301,
+          "model_id": 3,
+          "trim_name": "LUXE",
+          "trim_level": "base",
+          "description": "Base luxury crossover coupe"
+        },
+        {
+          "trim_id": 302,
+          "model_id": 3,
+          "trim_name": "ESSENTIAL",
+          "trim_level": "mid",
+          "description": "Mid-range trim with enhanced features"
+        },
+        {
+          "trim_id": 303,
+          "model_id": 3,
+          "trim_name": "SENSORY",
+          "trim_level": "premium",
+          "description": "Premium crossover coupe trim"
+        }
+      ]
+    },
+    {
+      "model_id": 4,
+      "model_name": "QX50",
+      "year": 2025,
+      "type": "Compact Luxury SUV",
+      "rows": 1,
+      "seats": 5,
+      "engine": "2.0L Variable Compression Turbo (VC-Turbo)",
+      "horsepower": 268,
+      "torque_lbft": 286,
+      "transmission": "CVT",
+      "drive_type": "AWD",
+      "country": "Canada",
+      "trims": [
+        {
+          "trim_id": 401,
+          "model_id": 4,
+          "trim_name": "PURE",
+          "trim_level": "base",
+          "description": "Entry-level compact luxury SUV"
+        },
+        {
+          "trim_id": 402,
+          "model_id": 4,
+          "trim_name": "LUXE",
+          "trim_level": "mid",
+          "description": "Mid-range compact luxury SUV"
+        },
+        {
+          "trim_id": 403,
+          "model_id": 4,
+          "trim_name": "SPORT",
+          "trim_level": "premium",
+          "description": "Sport-focused compact luxury SUV"
+        }
+      ]
+    }
+  ]
+}
