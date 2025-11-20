@@ -19,7 +19,7 @@ import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { fetchCanadianTrims, CANADIAN_TRIMS } from "@/lib/nhtsa";
+import { fetchCanadianTrims, getTrimsForMake, CANADIAN_TRIMS } from "@/lib/nhtsa";
 
 const POPULAR_MAKES = [
   "Acura", "Audi", "BMW", "Buick", "Cadillac", "Chevrolet", "Chrysler", "Dodge", "Fiat", "Ford", "GMC", "Honda", "Hyundai", "Infiniti", "Jaguar", "Jeep", "Kia", "Land Rover", "Lexus", "Lincoln", "Mazda", "Mercedes-Benz", "Mini", "Mitsubishi", "Nissan", "Porsche", "Ram", "Subaru", "Tesla", "Toyota", "Volkswagen", "Volvo"
@@ -48,7 +48,7 @@ export default function UploadPage() {
   const [features, setFeatures] = useState<string[]>([]);
   const [isDecoding, setIsDecoding] = useState(false);
   const [showAdvanced, setShowAdvanced] = useState(false);
-  const [availableTrims, setAvailableTrims] = useState<string[]>(CANADIAN_TRIMS);
+  const [availableTrims, setAvailableTrims] = useState<string[]>([]);
   const [isLoadingTrims, setIsLoadingTrims] = useState(false);
 
   // Bulk CSV State
@@ -63,19 +63,28 @@ export default function UploadPage() {
 
   useEffect(() => {
     const loadTrims = async () => {
-        if (newCar.year && newCar.make && newCar.model && newCar.make !== "Other") {
+        if (newCar.make && newCar.make !== "Other") {
              setIsLoadingTrims(true);
-             const trims = await fetchCanadianTrims(newCar.year, newCar.make, newCar.model);
-             if (trims.length > 0) {
-                 setAvailableTrims(trims);
-             } else {
-                 setAvailableTrims(CANADIAN_TRIMS);
+             
+             // 1. Try to get Model specific trims from API if we have year/model
+             let trims: string[] = [];
+             if (newCar.year && newCar.model) {
+                 trims = await fetchCanadianTrims(newCar.year, newCar.make, newCar.model);
              }
+             
+             // 2. If no API results, fall back to Make specific trims
+             if (trims.length === 0) {
+                 trims = getTrimsForMake(newCar.make);
+             }
+             
+             setAvailableTrims(trims);
              setIsLoadingTrims(false);
+        } else {
+            setAvailableTrims(CANADIAN_TRIMS); // Fallback to everything if no make selected
         }
     };
     
-    const timer = setTimeout(loadTrims, 1000);
+    const timer = setTimeout(loadTrims, 500);
     return () => clearTimeout(timer);
   }, [newCar.year, newCar.make, newCar.model]);
 

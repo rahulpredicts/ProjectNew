@@ -31,7 +31,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { fetchCanadianTrims, CANADIAN_TRIMS } from "@/lib/nhtsa";
+import { fetchCanadianTrims, getTrimsForMake, CANADIAN_TRIMS } from "@/lib/nhtsa";
 
 const POPULAR_MAKES = [
   "Acura", "Audi", "BMW", "Buick", "Cadillac", "Chevrolet", "Chrysler", "Dodge", "Fiat", "Ford", "GMC", "Honda", "Hyundai", "Infiniti", "Jaguar", "Jeep", "Kia", "Land Rover", "Lexus", "Lincoln", "Mazda", "Mercedes-Benz", "Mini", "Mitsubishi", "Nissan", "Porsche", "Ram", "Subaru", "Tesla", "Toyota", "Volkswagen", "Volvo"
@@ -86,7 +86,7 @@ export default function AppraisalPage() {
   } | null>(null);
 
   const [isDecoding, setIsDecoding] = useState(false);
-  const [availableTrims, setAvailableTrims] = useState<string[]>(CANADIAN_TRIMS);
+  const [availableTrims, setAvailableTrims] = useState<string[]>([]);
   const [isLoadingTrims, setIsLoadingTrims] = useState(false);
 
   const allCars = useMemo(() => 
@@ -95,21 +95,29 @@ export default function AppraisalPage() {
 
   useEffect(() => {
     const loadTrims = async () => {
-        if (formData.year && formData.make && formData.model && formData.make !== "Other") {
+        if (formData.make && formData.make !== "Other") {
              setIsLoadingTrims(true);
-             const trims = await fetchCanadianTrims(formData.year, formData.make, formData.model);
-             if (trims.length > 0) {
-                 setAvailableTrims(trims);
-                 // Optional: toast({ description: `Found ${trims.length} trims for ${formData.model}` });
-             } else {
-                 setAvailableTrims(CANADIAN_TRIMS);
+             
+             // 1. Try to get Model specific trims from API if we have year/model
+             let trims: string[] = [];
+             if (formData.year && formData.model) {
+                 trims = await fetchCanadianTrims(formData.year, formData.make, formData.model);
              }
+             
+             // 2. If no API results, fall back to Make specific trims
+             if (trims.length === 0) {
+                 trims = getTrimsForMake(formData.make);
+             }
+             
+             setAvailableTrims(trims);
              setIsLoadingTrims(false);
+        } else {
+            setAvailableTrims(CANADIAN_TRIMS); // Fallback to everything if no make selected
         }
     };
     
     // Debounce slightly to avoid spamming while typing year
-    const timer = setTimeout(loadTrims, 1000);
+    const timer = setTimeout(loadTrims, 500);
     return () => clearTimeout(timer);
   }, [formData.year, formData.make, formData.model]);
 
