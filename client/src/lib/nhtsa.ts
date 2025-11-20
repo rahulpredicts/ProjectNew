@@ -211,15 +211,6 @@ export async function decodeVIN(vin: string): Promise<EnhancedVINResult> {
 
     const vehicle = data.Results[0];
 
-    // Check for errors from NHTSA
-    if (vehicle.ErrorCode && vehicle.ErrorCode !== "0") {
-      return {
-        vin: cleanVIN,
-        error: vehicle.ErrorText || "Error decoding VIN",
-        errorCode: vehicle.ErrorCode
-      };
-    }
-
     // Extract comprehensive vehicle data
     const result: EnhancedVINResult = {
       vin: cleanVIN,
@@ -248,6 +239,15 @@ export async function decodeVIN(vin: string): Promise<EnhancedVINResult> {
       plantState: vehicle.PlantState || undefined,
       plantCity: vehicle.PlantCity || undefined,
     };
+
+    // Check if we got any useful data
+    if (!result.make && !result.model && !result.year) {
+      return {
+        vin: cleanVIN,
+        error: vehicle.ErrorText || "Could not decode VIN - no vehicle data returned",
+        errorCode: vehicle.ErrorCode || "NO_DATA"
+      };
+    }
 
     // Add Canadian trims if available
     if (result.make) {
