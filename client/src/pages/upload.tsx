@@ -129,9 +129,9 @@ export default function UploadPage() {
             make: result.make || "",
             model: result.model || "",
             year: result.year || "",
+            trim: result.trim || "",
             engineCylinders: result.engineCylinders || "",
             engineDisplacement: result.engineDisplacement || "",
-            // Trim is explicitly excluded per user request to keep it manual
         };
 
         // Try to decode transmission if available

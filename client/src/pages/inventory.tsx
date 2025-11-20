@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import {
   Search,
   Plus,
@@ -71,6 +71,8 @@ import {
   type Car,
   type Dealership
 } from "@/lib/api-hooks";
+import { decodeVIN, getTrimsForMake } from "@/lib/nhtsa";
+import { Loader2, QrCode } from "lucide-react";
 
 const COMMON_COLORS = [
   "Black", "White", "Silver", "Gray", "Red", "Blue", 
@@ -123,6 +125,10 @@ export default function Inventory() {
 
   const [sortBy, setSortBy] = useState("addedDate");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
+  
+  // VIN Decoder state for edit dialog
+  const [isDecodingEditCar, setIsDecodingEditCar] = useState(false);
+  const [availableEditTrims, setAvailableEditTrims] = useState<string[]>([]);
 
   // Form states
   const [newDealership, setNewDealership] = useState<Partial<Dealership>>({
@@ -187,8 +193,63 @@ export default function Inventory() {
       }, {
           onSuccess: () => {
               setEditingCar(null);
+              setAvailableEditTrims([]);
           }
       });
+  };
+  
+  // Auto-populate trims when make changes in edit dialog
+  useEffect(() => {
+    if (editingCar && editingCar.make) {
+      const trims = getTrimsForMake(editingCar.make);
+      setAvailableEditTrims(trims);
+    } else {
+      setAvailableEditTrims([]);
+    }
+  }, [editingCar?.make]);
+  
+  const handleDecodeEditCarVin = async () => {
+    if (!editingCar || !editingCar.vin || editingCar.vin.length < 11) {
+        toast({ title: "Invalid VIN", description: "Please enter a valid 17-character VIN", variant: "destructive" });
+        return;
+    }
+
+    setIsDecodingEditCar(true);
+    
+    try {
+        const result = await decodeVIN(editingCar.vin);
+
+        if (result.error) {
+            throw new Error(result.error);
+        }
+            
+        // Map API response to car fields
+        const decoded: any = {
+            make: result.make || "",
+            model: result.model || "",
+            year: result.year || "",
+            trim: result.trim || "",
+        };
+
+        setEditingCar(prev => prev ? ({
+            ...prev,
+            ...decoded
+        }) : null);
+        
+        toast({ 
+            title: "VIN Decoded Successfully", 
+            description: `Identified: ${decoded.year} ${decoded.make} ${decoded.model}${result.series ? ` ${result.series}` : ''}${decoded.trim ? ` ${decoded.trim}` : ''}` 
+        });
+    } catch (error) {
+        console.error("VIN Decode Error:", error);
+        toast({ 
+            title: "Decoding Failed", 
+            description: error instanceof Error ? error.message : "Could not fetch vehicle details. Please enter manually.", 
+            variant: "destructive" 
+        });
+    } finally {
+        setIsDecodingEditCar(false);
+    }
   };
 
   const handleDeleteCar = (carId: string) => {
@@ -940,6 +1001,21 @@ export default function Inventory() {
           </DialogHeader>
           {editingCar && (
             <div className="grid gap-4 py-4">
+              <div className="grid gap-2">
+                <Label>VIN</Label>
+                <div className="flex gap-2">
+                  <Input
+                    placeholder="17-digit VIN" 
+                    value={editingCar.vin || ""} 
+                    onChange={(e) => setEditingCar({ ...editingCar, vin: e.target.value.toUpperCase() })} 
+                    maxLength={17}
+                  />
+                  <Button variant="secondary" size="icon" onClick={handleDecodeEditCarVin} disabled={isDecodingEditCar}>
+                    {isDecodingEditCar ? <Loader2 className="w-4 h-4 animate-spin" /> : <QrCode className="w-4 h-4" />}
+                  </Button>
+                </div>
+              </div>
+              
               <div className="grid grid-cols-2 gap-4">
                 <div className="grid gap-2">
                   <Label>Make</Label>
@@ -964,10 +1040,20 @@ export default function Inventory() {
                 </div>
                 <div className="grid gap-2">
                   <Label>Trim</Label>
-                  <Input
-                    value={editingCar.trim}
-                    onChange={(e) => setEditingCar({ ...editingCar, trim: e.target.value })}
-                  />
+                  <Select value={editingCar.trim} onValueChange={(val) => setEditingCar({ ...editingCar, trim: val })}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select Trim" />
+                    </SelectTrigger>
+                    <SelectContent className="max-h-[300px]">
+                      {availableEditTrims.length > 0 ? (
+                        availableEditTrims.map(trim => (
+                          <SelectItem key={trim} value={trim}>{trim}</SelectItem>
+                        ))
+                      ) : (
+                        <SelectItem value="Base">Base</SelectItem>
+                      )}
+                    </SelectContent>
+                  </Select>
                 </div>
                  <div className="grid gap-2">
                   <Label>Price</Label>
