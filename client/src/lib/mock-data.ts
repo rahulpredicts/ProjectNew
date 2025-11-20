@@ -22,7 +22,7 @@ export interface Car {
   dealershipName?: string;
   dealershipLocation?: string;
   dealershipProvince?: string; // Added to match usage in inventory.tsx
-  status: 'available' | 'sold';
+  status: 'available' | 'sold' | 'pending';
 }
 
 export interface Dealership {
