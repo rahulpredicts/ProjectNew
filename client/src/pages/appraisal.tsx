@@ -17,12 +17,15 @@ import {
   MapPin,
   QrCode,
   Eye,
-  EyeOff
+  EyeOff,
+  ExternalLink,
+  FileText
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { Switch } from "@/components/ui/switch";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 const CANADIAN_TRIMS = [
   "CE", "LE", "XLE", "SE", "XSE", "Limited", "Platinum", // Toyota
@@ -390,9 +393,51 @@ export default function AppraisalPage() {
                                                         <span>{car.trim}</span>
                                                     </div>
                                                 </div>
-                                                <div className="text-right">
-                                                    <div className="font-bold text-lg">${parseFloat(car.price).toLocaleString()}</div>
-                                                    <Badge variant="outline" className="text-xs font-normal">Match</Badge>
+                                                <div className="flex items-center gap-4">
+                                                    <div className="text-right">
+                                                        <div className="font-bold text-lg">${parseFloat(car.price).toLocaleString()}</div>
+                                                        <Badge variant="outline" className="text-xs font-normal">Match</Badge>
+                                                    </div>
+                                                    
+                                                    <div className="flex gap-1">
+                                                        <TooltipProvider>
+                                                            <Tooltip>
+                                                                <TooltipTrigger asChild>
+                                                                    <Button 
+                                                                        variant="ghost" 
+                                                                        size="icon" 
+                                                                        className="h-8 w-8 rounded-full hover:bg-blue-50 hover:text-blue-600"
+                                                                        onClick={() => car.listingLink && window.open(car.listingLink, '_blank')}
+                                                                        disabled={!car.listingLink}
+                                                                    >
+                                                                        <ExternalLink className="w-4 h-4" />
+                                                                    </Button>
+                                                                </TooltipTrigger>
+                                                                <TooltipContent>
+                                                                    <p>{car.listingLink ? "View Listing" : "No Listing Link"}</p>
+                                                                </TooltipContent>
+                                                            </Tooltip>
+                                                        </TooltipProvider>
+
+                                                        <TooltipProvider>
+                                                            <Tooltip>
+                                                                <TooltipTrigger asChild>
+                                                                    <Button 
+                                                                        variant="ghost" 
+                                                                        size="icon" 
+                                                                        className="h-8 w-8 rounded-full hover:bg-yellow-50 hover:text-yellow-600"
+                                                                        onClick={() => car.carfaxLink && window.open(car.carfaxLink, '_blank')}
+                                                                        disabled={!car.carfaxLink}
+                                                                    >
+                                                                        <FileText className="w-4 h-4" />
+                                                                    </Button>
+                                                                </TooltipTrigger>
+                                                                <TooltipContent>
+                                                                    <p>{car.carfaxLink ? "View Carfax" : "No Carfax Report"}</p>
+                                                                </TooltipContent>
+                                                            </Tooltip>
+                                                        </TooltipProvider>
+                                                    </div>
                                                 </div>
                                             </div>
                                         ))}
