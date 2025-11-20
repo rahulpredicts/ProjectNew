@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import {
   Search,
   Plus,
@@ -6,10 +6,7 @@ import {
   Edit2,
   Car as CarIcon,
   Building2,
-  Filter,
-  ArrowUpDown,
   MapPin,
-  Phone,
   X,
   ChevronDown,
   ChevronUp,
@@ -17,32 +14,21 @@ import {
   Fuel,
   Gauge,
   Settings2,
-  Calendar,
   Palette,
-  CheckCircle2,
-  DollarSign
+  CheckCircle2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
   DialogFooter
 } from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Separator } from "@/components/ui/separator";
 import { Label } from "@/components/ui/label";
 import {
   Collapsible,
@@ -56,7 +42,7 @@ import { useInventory } from "@/lib/inventory-context";
 import { useLocation } from "wouter";
 
 export default function Inventory() {
-  const { dealerships, addDealership, updateDealership, deleteDealership, addCar, updateCar, deleteCar, toggleSoldStatus } = useInventory();
+  const { dealerships, addDealership, updateDealership, deleteDealership, updateCar, deleteCar, toggleSoldStatus } = useInventory();
   const { toast } = useToast();
   const [_, setLocation] = useLocation();
   
@@ -551,7 +537,7 @@ export default function Inventory() {
         </DialogContent>
       </Dialog>
 
-      {/* Edit Car Modal (Only Edit now, Add is on separate page) */}
+      {/* Edit Car Modal */}
       <Dialog open={!!editingCar} onOpenChange={(open) => !open && setEditingCar(null)}>
         <DialogContent className="max-w-3xl rounded-2xl p-0 overflow-hidden">
           <DialogHeader className="p-6 bg-gray-50/50 border-b">
@@ -560,7 +546,6 @@ export default function Inventory() {
           <ScrollArea className="max-h-[70vh]">
             <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
                 {editingCar && (() => {
-                    // Helper to update field
                     const update = (field: string, val: string) => {
                         // @ts-ignore
                         setEditingCar({ ...editingCar, [field]: val });
