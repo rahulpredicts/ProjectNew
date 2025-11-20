@@ -14,9 +14,36 @@ import {
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Upload as UploadIcon, FileText, Image as ImageIcon, Plus, Loader2, CheckCircle2, AlertCircle, Link as LinkIcon } from "lucide-react";
+import { Upload as UploadIcon, FileText, Image as ImageIcon, Plus, Loader2, CheckCircle2, AlertCircle, Link as LinkIcon, QrCode, CheckSquare } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+
+const CANADIAN_TRIMS = [
+  "CE", "LE", "XLE", "SE", "XSE", "Limited", "Platinum", // Toyota
+  "DX", "LX", "EX", "EX-L", "Touring", "Sport", "Si", "Type R", // Honda
+  "S", "SV", "SL", "SR", "Platinum", // Nissan
+  "Trendline", "Comfortline", "Highline", "Execline", "GTI", "R", // VW
+  "Essential", "Preferred", "Luxury", "Ultimate", "N Line", // Hyundai
+  "LX", "EX", "EX Premium", "SX", "SX Limited", // Kia
+  "GX", "GS", "GT", "GT-Line", "Signature", // Mazda
+  "Base", "Premium", "Limited", "Wilderness", "Premier", // Subaru
+  "WT", "LS", "LT", "RST", "LTZ", "High Country", // GM/Chevy
+  "XL", "XLT", "Lariat", "King Ranch", "Platinum", "Limited", // Ford
+  "Tradesman", "Big Horn", "Sport", "Rebel", "Laramie", "Limited", // Ram
+  "Other"
+];
+
+const POPULAR_MAKES = [
+  "Acura", "Audi", "BMW", "Buick", "Cadillac", "Chevrolet", "Chrysler", "Dodge", "Fiat", "Ford", "GMC", "Honda", "Hyundai", "Infiniti", "Jaguar", "Jeep", "Kia", "Land Rover", "Lexus", "Lincoln", "Mazda", "Mercedes-Benz", "Mini", "Mitsubishi", "Nissan", "Porsche", "Ram", "Subaru", "Tesla", "Toyota", "Volkswagen", "Volvo"
+];
+
+const FEATURES_LIST = [
+    "Navigation", "Sunroof/Moonroof", "Leather Seats", "Heated Seats", "Backup Camera", 
+    "Bluetooth", "Apple CarPlay", "Android Auto", "Blind Spot Monitor", "Adaptive Cruise Control",
+    "Lane Departure Warning", "Third Row Seating", "Tow Package", "Remote Start"
+];
 
 export default function UploadPage() {
   const { dealerships, addCar } = useInventory();
@@ -30,6 +57,9 @@ export default function UploadPage() {
     price: "", kilometers: "", transmission: "", fuelType: "", bodyType: "",
     listingLink: "", carfaxLink: "", notes: "", dealershipId: "", status: 'available'
   });
+  
+  const [features, setFeatures] = useState<string[]>([]);
+  const [isDecoding, setIsDecoding] = useState(false);
 
   // Bulk CSV State
   const [csvData, setCsvData] = useState("");
@@ -40,6 +70,97 @@ export default function UploadPage() {
   // AI Scan State
   const [scannedFile, setScannedFile] = useState<File | null>(null);
   const [scanResult, setScanResult] = useState<Partial<Car> | null>(null);
+
+  const handleDecodeVin = async () => {
+    if (!newCar.vin || newCar.vin.length < 11) {
+        toast({ title: "Invalid VIN", description: "Please enter a valid 17-character VIN", variant: "destructive" });
+        return;
+    }
+
+    setIsDecoding(true);
+    
+    try {
+        // Use NHTSA Public API for real decoding
+        const response = await fetch(`https://vpic.nhtsa.dot.gov/api/vehicles/decodevinvalues/${newCar.vin}?format=json`);
+        const data = await response.json();
+
+        if (data.Results && data.Results.length > 0) {
+            const vehicle = data.Results[0];
+            
+            // Map API response to our form fields
+            const decoded: any = {
+                make: vehicle.Make || "",
+                model: vehicle.Model || "",
+                year: vehicle.ModelYear || "",
+                // Trim is explicitly excluded per user request to keep it manual
+            };
+
+            // Try to decode transmission if available
+            if (vehicle.TransmissionStyle) {
+                const trans = vehicle.TransmissionStyle.toLowerCase();
+                if (trans.includes("auto") || trans.includes("cvt")) {
+                    decoded.transmission = "automatic";
+                } else if (trans.includes("manual") || trans.includes("stick")) {
+                    decoded.transmission = "manual";
+                }
+            }
+
+            // Decode Fuel Type
+             if (vehicle.FuelTypePrimary) {
+                const fuel = vehicle.FuelTypePrimary.toLowerCase();
+                if (fuel.includes("gas")) decoded.fuelType = "gasoline";
+                else if (fuel.includes("diesel")) decoded.fuelType = "diesel";
+                else if (fuel.includes("electric")) decoded.fuelType = "electric";
+                else if (fuel.includes("hybrid")) decoded.fuelType = "hybrid";
+            }
+
+            // Decode Body Type
+             if (vehicle.BodyClass) {
+                const body = vehicle.BodyClass.toLowerCase();
+                if (body.includes("sedan")) decoded.bodyType = "sedan";
+                else if (body.includes("suv") || body.includes("sport utility")) decoded.bodyType = "suv";
+                else if (body.includes("truck") || body.includes("pickup")) decoded.bodyType = "truck";
+                else if (body.includes("van") || body.includes("minivan")) decoded.bodyType = "van";
+                else if (body.includes("coupe")) decoded.bodyType = "coupe";
+                else if (body.includes("hatch")) decoded.bodyType = "hatchback";
+            }
+
+            // Check if we got valid data
+            if (!decoded.make && !decoded.model) {
+                 throw new Error("Could not decode vehicle details");
+            }
+
+            setNewCar(prev => ({
+                ...prev,
+                ...decoded
+            }));
+            
+            toast({ 
+                title: "VIN Decoded Successfully", 
+                description: `Identified: ${decoded.year} ${decoded.make} ${decoded.model}` 
+            });
+        } else {
+            throw new Error("No results found");
+        }
+    } catch (error) {
+        console.error("VIN Decode Error:", error);
+        toast({ 
+            title: "Decoding Failed", 
+            description: "Could not fetch vehicle details. Please enter manually.", 
+            variant: "destructive" 
+        });
+    } finally {
+        setIsDecoding(false);
+    }
+  };
+
+  const toggleFeature = (feature: string) => {
+    if (features.includes(feature)) {
+        setFeatures(features.filter(f => f !== feature));
+    } else {
+        setFeatures([...features, feature]);
+    }
+  };
 
   const handleManualSubmit = () => {
     if (!newCar.dealershipId) {
@@ -54,7 +175,9 @@ export default function UploadPage() {
     const car: Car = {
         ...newCar as Car,
         id: Math.random().toString(36).substr(2, 9),
-        status: 'available'
+        status: 'available',
+        // Store features in notes or separate field if mock data supported it, for now just mock usage
+        notes: (newCar.notes ? newCar.notes + "\n" : "") + "Features: " + features.join(", ")
     };
     
     addCar(car);
@@ -63,6 +186,8 @@ export default function UploadPage() {
         price: "", kilometers: "", transmission: "", fuelType: "", bodyType: "",
         listingLink: "", carfaxLink: "", notes: "", dealershipId: newCar.dealershipId, status: 'available'
     });
+    setFeatures([]);
+    toast({ title: "Success", description: "Vehicle added to inventory" });
   };
 
   const handleCsvUpload = () => {
@@ -181,19 +306,120 @@ export default function UploadPage() {
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <div className="space-y-2"><Label>VIN</Label><Input placeholder="Vehicle Identification Number" value={newCar.vin} onChange={(e) => setNewCar({...newCar, vin: e.target.value})} /></div>
-                <div className="space-y-2"><Label>Make *</Label><Input placeholder="e.g. Toyota" value={newCar.make} onChange={(e) => setNewCar({...newCar, make: e.target.value})} /></div>
-                <div className="space-y-2"><Label>Model *</Label><Input placeholder="e.g. Camry" value={newCar.model} onChange={(e) => setNewCar({...newCar, model: e.target.value})} /></div>
-                <div className="space-y-2"><Label>Year</Label><Input placeholder="YYYY" value={newCar.year} onChange={(e) => setNewCar({...newCar, year: e.target.value})} /></div>
-                <div className="space-y-2"><Label>Trim</Label><Input placeholder="e.g. XLE" value={newCar.trim} onChange={(e) => setNewCar({...newCar, trim: e.target.value})} /></div>
+                <div className="space-y-2">
+                    <Label>VIN</Label>
+                    <div className="flex gap-2">
+                        <Input 
+                            placeholder="17-digit VIN" 
+                            value={newCar.vin} 
+                            onChange={(e) => setNewCar({...newCar, vin: e.target.value.toUpperCase()})}
+                            maxLength={17}
+                        />
+                         <Button variant="secondary" size="icon" onClick={handleDecodeVin} disabled={isDecoding}>
+                            {isDecoding ? <Loader2 className="w-4 h-4 animate-spin" /> : <QrCode className="w-4 h-4" />}
+                        </Button>
+                    </div>
+                </div>
+                
+                <div className="space-y-2">
+                    <Label>Make *</Label>
+                    <Select value={newCar.make} onValueChange={(val) => setNewCar({...newCar, make: val})}>
+                        <SelectTrigger>
+                            <SelectValue placeholder="Select Make" />
+                        </SelectTrigger>
+                        <SelectContent className="max-h-[300px]">
+                            {POPULAR_MAKES.map(make => (
+                                <SelectItem key={make} value={make}>{make}</SelectItem>
+                            ))}
+                            <SelectItem value="Other">Other</SelectItem>
+                        </SelectContent>
+                    </Select>
+                </div>
+
+                <div className="space-y-2">
+                    <Label>Model *</Label>
+                    {/* Kept as Input for now as Model list is huge, but could be mocked if Make is selected */}
+                    <Input placeholder="e.g. Camry" value={newCar.model} onChange={(e) => setNewCar({...newCar, model: e.target.value})} />
+                </div>
+                
+                <div className="space-y-2"><Label>Year</Label><Input placeholder="YYYY" type="number" value={newCar.year} onChange={(e) => setNewCar({...newCar, year: e.target.value})} /></div>
+                
+                <div className="space-y-2">
+                    <Label>Trim</Label>
+                    <Select value={newCar.trim} onValueChange={(val) => setNewCar({...newCar, trim: val})}>
+                        <SelectTrigger>
+                            <SelectValue placeholder="Select Trim" />
+                        </SelectTrigger>
+                        <SelectContent className="max-h-[300px]">
+                            {CANADIAN_TRIMS.map(trim => (
+                                <SelectItem key={trim} value={trim}>{trim}</SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                </div>
+                
                 <div className="space-y-2"><Label>Color</Label><Input placeholder="Exterior Color" value={newCar.color} onChange={(e) => setNewCar({...newCar, color: e.target.value})} /></div>
                 <div className="space-y-2"><Label>Price ($)</Label><Input type="number" placeholder="0.00" value={newCar.price} onChange={(e) => setNewCar({...newCar, price: e.target.value})} /></div>
                 <div className="space-y-2"><Label>Kilometers</Label><Input type="number" placeholder="0" value={newCar.kilometers} onChange={(e) => setNewCar({...newCar, kilometers: e.target.value})} /></div>
-                <div className="space-y-2"><Label>Transmission</Label><Input placeholder="e.g. Automatic" value={newCar.transmission} onChange={(e) => setNewCar({...newCar, transmission: e.target.value})} /></div>
-                <div className="space-y-2"><Label>Fuel Type</Label><Input placeholder="e.g. Gasoline" value={newCar.fuelType} onChange={(e) => setNewCar({...newCar, fuelType: e.target.value})} /></div>
-                <div className="space-y-2"><Label>Body Type</Label><Input placeholder="e.g. Sedan" value={newCar.bodyType} onChange={(e) => setNewCar({...newCar, bodyType: e.target.value})} /></div>
+                
+                <div className="space-y-2">
+                    <Label>Transmission</Label>
+                    <Select value={newCar.transmission} onValueChange={(val) => setNewCar({...newCar, transmission: val})}>
+                        <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="automatic">Automatic</SelectItem>
+                            <SelectItem value="manual">Manual</SelectItem>
+                        </SelectContent>
+                    </Select>
+                </div>
+                
+                <div className="space-y-2">
+                    <Label>Fuel Type</Label>
+                    <Select value={newCar.fuelType} onValueChange={(val) => setNewCar({...newCar, fuelType: val})}>
+                        <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="gasoline">Gasoline</SelectItem>
+                            <SelectItem value="diesel">Diesel</SelectItem>
+                            <SelectItem value="hybrid">Hybrid</SelectItem>
+                            <SelectItem value="electric">Electric</SelectItem>
+                        </SelectContent>
+                    </Select>
+                </div>
+                
+                <div className="space-y-2">
+                    <Label>Body Type</Label>
+                     <Select value={newCar.bodyType} onValueChange={(val) => setNewCar({...newCar, bodyType: val})}>
+                        <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="sedan">Sedan</SelectItem>
+                            <SelectItem value="suv">SUV</SelectItem>
+                            <SelectItem value="truck">Truck</SelectItem>
+                            <SelectItem value="coupe">Coupe</SelectItem>
+                            <SelectItem value="hatchback">Hatchback</SelectItem>
+                            <SelectItem value="van">Van</SelectItem>
+                        </SelectContent>
+                    </Select>
+                </div>
               </div>
                
+               <div className="space-y-2">
+                    <Label>Key Features</Label>
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 p-4 border rounded-xl bg-gray-50/50">
+                        {FEATURES_LIST.map(feature => (
+                            <div key={feature} className="flex items-center space-x-2">
+                                <Checkbox 
+                                    id={`upload-${feature}`} 
+                                    checked={features.includes(feature)}
+                                    onCheckedChange={() => toggleFeature(feature)}
+                                />
+                                <label htmlFor={`upload-${feature}`} className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer">
+                                    {feature}
+                                </label>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                  <div className="space-y-2"><Label>Listing URL</Label><Input placeholder="https://..." value={newCar.listingLink} onChange={(e) => setNewCar({...newCar, listingLink: e.target.value})} /></div>
                  <div className="space-y-2"><Label>Carfax URL</Label><Input placeholder="https://..." value={newCar.carfaxLink} onChange={(e) => setNewCar({...newCar, carfaxLink: e.target.value})} /></div>

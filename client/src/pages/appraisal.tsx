@@ -47,6 +47,10 @@ const CANADIAN_TRIMS = [
   "Other"
 ];
 
+const POPULAR_MAKES = [
+  "Acura", "Audi", "BMW", "Buick", "Cadillac", "Chevrolet", "Chrysler", "Dodge", "Fiat", "Ford", "GMC", "Honda", "Hyundai", "Infiniti", "Jaguar", "Jeep", "Kia", "Land Rover", "Lexus", "Lincoln", "Mazda", "Mercedes-Benz", "Mini", "Mitsubishi", "Nissan", "Porsche", "Ram", "Subaru", "Tesla", "Toyota", "Volkswagen", "Volvo"
+];
+
 const PROVINCES = [
   "AB", "BC", "MB", "NB", "NL", "NS", "NT", "NU", "ON", "PE", "QC", "SK", "YT"
 ];
@@ -339,11 +343,17 @@ export default function AppraisalPage() {
 
                     <div className="space-y-2">
                         <Label>Make *</Label>
-                        <Input 
-                            placeholder="e.g. Toyota" 
-                            value={formData.make} 
-                            onChange={e => setFormData({...formData, make: e.target.value})} 
-                        />
+                        <Select value={formData.make} onValueChange={(val) => setFormData({...formData, make: val})}>
+                            <SelectTrigger>
+                                <SelectValue placeholder="Select Make" />
+                            </SelectTrigger>
+                            <SelectContent className="max-h-[300px]">
+                                {POPULAR_MAKES.map(make => (
+                                    <SelectItem key={make} value={make}>{make}</SelectItem>
+                                ))}
+                                <SelectItem value="Other">Other</SelectItem>
+                            </SelectContent>
+                        </Select>
                     </div>
                     <div className="space-y-2">
                         <Label>Model *</Label>
