@@ -589,7 +589,7 @@ export default function Inventory() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-
+      </div>
     </div>
   );
 }
