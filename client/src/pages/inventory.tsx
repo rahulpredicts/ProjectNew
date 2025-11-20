@@ -49,16 +49,19 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import { INITIAL_DEALERSHIPS, Dealership, Car } from "@/lib/mock-data";
+import { Dealership, Car } from "@/lib/mock-data";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { useInventory } from "@/lib/inventory-context";
+import { useLocation } from "wouter";
 
 export default function Inventory() {
+  const { dealerships, addDealership, updateDealership, deleteDealership, addCar, updateCar, deleteCar, toggleSoldStatus } = useInventory();
   const { toast } = useToast();
-  const [dealerships, setDealerships] = useState<Dealership[]>(INITIAL_DEALERSHIPS);
+  const [_, setLocation] = useLocation();
+  
   const [selectedDealership, setSelectedDealership] = useState<Dealership | null>(null);
   const [showAddDealership, setShowAddDealership] = useState(false);
-  const [showAddCar, setShowAddCar] = useState(false);
   const [editingDealership, setEditingDealership] = useState<Dealership | null>(null);
   const [editingCar, setEditingCar] = useState<Car | null>(null);
   
@@ -89,163 +92,47 @@ export default function Inventory() {
     phone: "",
   });
 
-  const [newCar, setNewCar] = useState<Partial<Car>>({
-    vin: "",
-    make: "",
-    model: "",
-    trim: "",
-    year: "",
-    color: "",
-    price: "",
-    kilometers: "",
-    transmission: "",
-    fuelType: "",
-    bodyType: "",
-    listingLink: "",
-    carfaxLink: "",
-    notes: "",
-    dealershipId: "",
-    status: 'available'
-  });
-
-  // Mock CRUD Operations
-  const addDealership = () => {
+  const handleAddDealership = () => {
     if (!newDealership.name || !newDealership.address) {
-      toast({ title: "Error", description: "Please fill in required fields: name and address", variant: "destructive" });
-      return;
-    }
-    const dealership: Dealership = {
-      ...newDealership as Dealership,
-      id: Math.random().toString(36).substr(2, 9),
-      inventory: []
-    };
-    setDealerships([...dealerships, dealership]);
-    setNewDealership({ name: "", location: "", address: "", postalCode: "", phone: "" });
-    setShowAddDealership(false);
-    toast({ title: "Success", description: "Dealership added successfully" });
-  };
-
-  const updateDealership = () => {
-    if (!editingDealership) return;
-    setDealerships(dealerships.map(d => d.id === editingDealership.id ? editingDealership : d));
-    if (selectedDealership?.id === editingDealership.id) {
-      setSelectedDealership(editingDealership);
-    }
-    setEditingDealership(null);
-    toast({ title: "Success", description: "Dealership updated" });
-  };
-
-  const deleteDealership = (id: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (!window.confirm("Are you sure? This will delete all cars in this dealership.")) return;
-    setDealerships(dealerships.filter(d => d.id !== id));
-    if (selectedDealership?.id === id) setSelectedDealership(null);
-    toast({ title: "Deleted", description: "Dealership removed" });
-  };
-
-  const addCar = () => {
-    const targetDealershipId = selectedDealership?.id || newCar.dealershipId;
-
-    if (!targetDealershipId) {
-        toast({ title: "Error", description: "Please select a dealership first", variant: "destructive" });
+        toast({ title: "Error", description: "Required fields missing", variant: "destructive" });
         return;
     }
-
-    if (!newCar.vin || !newCar.make || !newCar.model) {
-      toast({ title: "Error", description: "Please fill in VIN, Make, and Model", variant: "destructive" });
-      return;
-    }
-    
-    const car: Car = {
-      ...newCar as Car,
-      id: Math.random().toString(36).substr(2, 9),
-      dealershipId: targetDealershipId,
-      status: 'available'
-    };
-
-    const updatedDealerships = dealerships.map(d => {
-      if (d.id === targetDealershipId) {
-        return { ...d, inventory: [...d.inventory, car] };
-      }
-      return d;
+    addDealership({
+        ...newDealership as Dealership,
+        id: Math.random().toString(36).substr(2, 9),
+        inventory: []
     });
-
-    setDealerships(updatedDealerships);
-    
-    if (selectedDealership?.id === targetDealershipId) {
-        setSelectedDealership(updatedDealerships.find(d => d.id === targetDealershipId) || null);
-    }
-
-    setNewCar({
-      vin: "", make: "", model: "", trim: "", year: "", color: "",
-      price: "", kilometers: "", transmission: "", fuelType: "", bodyType: "",
-      listingLink: "", carfaxLink: "", notes: "", dealershipId: "", status: 'available'
-    });
-    setShowAddCar(false);
-    toast({ title: "Success", description: "Car added to inventory" });
+    setNewDealership({ name: "", location: "", address: "", postalCode: "", phone: "" });
+    setShowAddDealership(false);
   };
 
-  const updateCar = () => {
-    if (!editingCar || !editingCar.dealershipId) return;
-    
-    const updatedDealerships = dealerships.map(d => {
-      if (d.id === editingCar.dealershipId) {
-        return {
-          ...d,
-          inventory: d.inventory.map(c => c.id === editingCar.id ? editingCar : c)
-        };
-      }
-      return d;
-    });
-
-    setDealerships(updatedDealerships);
-    if (selectedDealership?.id === editingCar.dealershipId) {
-      setSelectedDealership(updatedDealerships.find(d => d.id === editingCar.dealershipId) || null);
+  const handleUpdateDealership = () => {
+    if (!editingDealership) return;
+    updateDealership(editingDealership);
+    if (selectedDealership?.id === editingDealership.id) {
+        setSelectedDealership(editingDealership);
     }
-    setEditingCar(null);
-    toast({ title: "Success", description: "Car updated" });
+    setEditingDealership(null);
   };
 
-  const deleteCar = (dealershipId: string, carId: string) => {
-    if (!window.confirm("Are you sure you want to delete this car?")) return;
-    
-    const updatedDealerships = dealerships.map(d => {
-      if (d.id === dealershipId) {
-        return { ...d, inventory: d.inventory.filter(c => c.id !== carId) };
-      }
-      return d;
-    });
-
-    setDealerships(updatedDealerships);
-    if (selectedDealership?.id === dealershipId) {
-      setSelectedDealership(updatedDealerships.find(d => d.id === dealershipId) || null);
-    }
-    toast({ title: "Deleted", description: "Car removed from inventory" });
+  const handleDeleteDealership = (id: string, e: React.MouseEvent) => {
+      e.stopPropagation();
+      if (!window.confirm("Delete this dealership and all its cars?")) return;
+      deleteDealership(id);
+      if (selectedDealership?.id === id) setSelectedDealership(null);
   };
 
-  const toggleSoldStatus = (car: Car) => {
-    const newStatus = car.status === 'sold' ? 'available' : 'sold';
-    const updatedCar = { ...car, status: newStatus };
-    
-    const updatedDealerships = dealerships.map(d => {
-        if (d.id === car.dealershipId) {
-            return {
-                ...d,
-                inventory: d.inventory.map(c => c.id === car.id ? updatedCar : c)
-            };
-        }
-        return d;
-    });
-
-    setDealerships(updatedDealerships);
-    if (selectedDealership?.id === car.dealershipId) {
-        setSelectedDealership(updatedDealerships.find(d => d.id === car.dealershipId) || null);
-    }
-    toast({ 
-        title: newStatus === 'sold' ? "Marked as Sold" : "Marked as Available", 
-        description: `${car.year} ${car.make} ${car.model} is now ${newStatus}.` 
-    });
+  const handleUpdateCar = () => {
+      if (!editingCar) return;
+      updateCar(editingCar);
+      setEditingCar(null);
   };
+
+  const handleDeleteCar = (dealershipId: string, carId: string) => {
+      if (!window.confirm("Delete this car?")) return;
+      deleteCar(dealershipId, carId);
+  };
+
 
   const getAllCars = () => {
     return dealerships.flatMap(d =>
@@ -332,7 +219,7 @@ export default function Inventory() {
   const filteredCars = getFilteredCars();
 
   return (
-    <div className="min-h-screen bg-gray-50/50 p-4 md:p-8 font-sans">
+    <div className="p-4 md:p-8 font-sans animate-in fade-in duration-500">
       <div className="max-w-[1800px] mx-auto space-y-8">
         
         {/* Modern Header */}
@@ -353,7 +240,7 @@ export default function Inventory() {
               <Building2 className="w-4 h-4 mr-2" />
               New Dealership
             </Button>
-            <Button onClick={() => setShowAddCar(true)} size="lg" className="rounded-full h-12 px-6 shadow-lg hover:shadow-xl transition-all bg-black hover:bg-gray-900">
+            <Button onClick={() => setLocation("/upload")} size="lg" className="rounded-full h-12 px-6 shadow-lg hover:shadow-xl transition-all bg-black hover:bg-gray-900">
               <Plus className="w-4 h-4 mr-2" />
               Add Vehicle
             </Button>
@@ -459,7 +346,7 @@ export default function Inventory() {
                         <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full hover:bg-gray-100" onClick={(e) => { e.stopPropagation(); setEditingDealership(dealership); }}>
                             <Edit2 className="w-4 h-4 text-gray-600" />
                         </Button>
-                        <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full hover:bg-red-50" onClick={(e) => deleteDealership(dealership.id, e)}>
+                        <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full hover:bg-red-50" onClick={(e) => handleDeleteDealership(dealership.id, e)}>
                             <Trash2 className="w-4 h-4 text-red-500" />
                         </Button>
                       </div>
@@ -555,7 +442,7 @@ export default function Inventory() {
                                 <Button variant="secondary" size="icon" className="h-8 w-8 rounded-full bg-white/90 backdrop-blur shadow-sm hover:bg-blue-50" onClick={() => { setEditingCar({ ...car, dealershipId: car.dealershipId }); }}>
                                     <Edit2 className="w-3.5 h-3.5 text-blue-600" />
                                 </Button>
-                                <Button variant="secondary" size="icon" className="h-8 w-8 rounded-full bg-white/90 backdrop-blur shadow-sm hover:bg-red-50" onClick={() => deleteCar(car.dealershipId!, car.id)}>
+                                <Button variant="secondary" size="icon" className="h-8 w-8 rounded-full bg-white/90 backdrop-blur shadow-sm hover:bg-red-50" onClick={() => handleDeleteCar(car.dealershipId!, car.id)}>
                                     <Trash2 className="w-3.5 h-3.5 text-red-600" />
                                 </Button>
                             </div>
@@ -579,7 +466,7 @@ export default function Inventory() {
                         <p className="text-gray-500 max-w-md mx-auto mb-8">
                             We couldn't find any cars matching your search criteria. Try adjusting your filters or add a new vehicle.
                         </p>
-                        <Button onClick={() => setShowAddCar(true)} size="lg" className="rounded-full px-8">
+                        <Button onClick={() => setLocation("/upload")} size="lg" className="rounded-full px-8">
                             Add New Vehicle
                         </Button>
                     </div>
@@ -620,12 +507,12 @@ export default function Inventory() {
                 </div>
                 <DialogFooter className="p-6 bg-gray-50/50 border-t">
                     <Button variant="outline" onClick={() => setShowAddDealership(false)} className="rounded-xl h-11">Cancel</Button>
-                    <Button onClick={addDealership} className="rounded-xl h-11 px-8">Create Dealership</Button>
+                    <Button onClick={handleAddDealership} className="rounded-xl h-11 px-8">Create Dealership</Button>
                 </DialogFooter>
             </DialogContent>
         </Dialog>
 
-       {/* Edit Dealership Modal - reusing styled content */}
+       {/* Edit Dealership Modal */}
        <Dialog open={!!editingDealership} onOpenChange={(open) => !open && setEditingDealership(null)}>
         <DialogContent className="sm:max-w-[500px] rounded-2xl p-0 overflow-hidden">
           <DialogHeader className="p-6 bg-gray-50/50 border-b">
@@ -659,74 +546,52 @@ export default function Inventory() {
           )}
           <DialogFooter className="p-6 bg-gray-50/50 border-t">
             <Button variant="outline" onClick={() => setEditingDealership(null)} className="rounded-xl h-11">Cancel</Button>
-            <Button onClick={updateDealership} className="rounded-xl h-11 px-8">Save Changes</Button>
+            <Button onClick={handleUpdateDealership} className="rounded-xl h-11 px-8">Save Changes</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* Add/Edit Car Modal */}
-      <Dialog open={showAddCar || !!editingCar} onOpenChange={(open) => { if(!open) { setShowAddCar(false); setEditingCar(null); }}}>
+      {/* Edit Car Modal (Only Edit now, Add is on separate page) */}
+      <Dialog open={!!editingCar} onOpenChange={(open) => !open && setEditingCar(null)}>
         <DialogContent className="max-w-3xl rounded-2xl p-0 overflow-hidden">
           <DialogHeader className="p-6 bg-gray-50/50 border-b">
-            <DialogTitle className="text-xl">{editingCar ? 'Edit Vehicle' : 'Add New Vehicle'}</DialogTitle>
+            <DialogTitle className="text-xl">Edit Vehicle</DialogTitle>
           </DialogHeader>
           <ScrollArea className="max-h-[70vh]">
             <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Dealership Selection if not editing and no dealership selected */}
-                {!editingCar && !selectedDealership && (
-                    <div className="col-span-2 space-y-2 bg-blue-50 p-4 rounded-xl border border-blue-100">
-                        <Label className="text-blue-900">Select Dealership *</Label>
-                        <Select 
-                            value={newCar.dealershipId} 
-                            onValueChange={(val) => setNewCar({ ...newCar, dealershipId: val })}
-                        >
-                            <SelectTrigger className="bg-white border-blue-200 h-11 rounded-lg">
-                                <SelectValue placeholder="Choose a dealership" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {dealerships.map(d => (
-                                    <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-                    </div>
-                )}
-
-                {(() => {
-                    const target = editingCar || newCar;
-                    const setTarget = editingCar ? setEditingCar : setNewCar;
+                {editingCar && (() => {
                     // Helper to update field
                     const update = (field: string, val: string) => {
                         // @ts-ignore
-                        setTarget({ ...target, [field]: val });
+                        setEditingCar({ ...editingCar, [field]: val });
                     }
 
                     return (
                         <>
-                            <div className="space-y-2"><Label>VIN *</Label><Input placeholder="Vehicle Identification Number" value={target.vin} onChange={(e) => update('vin', e.target.value)} className="h-11 rounded-xl" /></div>
+                            <div className="space-y-2"><Label>VIN *</Label><Input placeholder="Vehicle Identification Number" value={editingCar.vin} onChange={(e) => update('vin', e.target.value)} className="h-11 rounded-xl" /></div>
                             
                             <div className="col-span-2 grid grid-cols-3 gap-4">
-                                <div className="space-y-2"><Label>Make *</Label><Input placeholder="e.g. Toyota" value={target.make} onChange={(e) => update('make', e.target.value)} className="h-11 rounded-xl" /></div>
-                                <div className="space-y-2"><Label>Model *</Label><Input placeholder="e.g. Camry" value={target.model} onChange={(e) => update('model', e.target.value)} className="h-11 rounded-xl" /></div>
-                                <div className="space-y-2"><Label>Year</Label><Input placeholder="YYYY" value={target.year} onChange={(e) => update('year', e.target.value)} className="h-11 rounded-xl" /></div>
+                                <div className="space-y-2"><Label>Make *</Label><Input placeholder="e.g. Toyota" value={editingCar.make} onChange={(e) => update('make', e.target.value)} className="h-11 rounded-xl" /></div>
+                                <div className="space-y-2"><Label>Model *</Label><Input placeholder="e.g. Camry" value={editingCar.model} onChange={(e) => update('model', e.target.value)} className="h-11 rounded-xl" /></div>
+                                <div className="space-y-2"><Label>Year</Label><Input placeholder="YYYY" value={editingCar.year} onChange={(e) => update('year', e.target.value)} className="h-11 rounded-xl" /></div>
                             </div>
 
-                            <div className="space-y-2"><Label>Trim</Label><Input placeholder="e.g. XLE" value={target.trim} onChange={(e) => update('trim', e.target.value)} className="h-11 rounded-xl" /></div>
-                            <div className="space-y-2"><Label>Color</Label><Input placeholder="Exterior Color" value={target.color} onChange={(e) => update('color', e.target.value)} className="h-11 rounded-xl" /></div>
+                            <div className="space-y-2"><Label>Trim</Label><Input placeholder="e.g. XLE" value={editingCar.trim} onChange={(e) => update('trim', e.target.value)} className="h-11 rounded-xl" /></div>
+                            <div className="space-y-2"><Label>Color</Label><Input placeholder="Exterior Color" value={editingCar.color} onChange={(e) => update('color', e.target.value)} className="h-11 rounded-xl" /></div>
                             
-                            <div className="space-y-2"><Label>Price ($)</Label><Input type="number" placeholder="0.00" value={target.price} onChange={(e) => update('price', e.target.value)} className="h-11 rounded-xl font-mono" /></div>
-                            <div className="space-y-2"><Label>Mileage (km)</Label><Input type="number" placeholder="0" value={target.kilometers} onChange={(e) => update('kilometers', e.target.value)} className="h-11 rounded-xl font-mono" /></div>
+                            <div className="space-y-2"><Label>Price ($)</Label><Input type="number" placeholder="0.00" value={editingCar.price} onChange={(e) => update('price', e.target.value)} className="h-11 rounded-xl font-mono" /></div>
+                            <div className="space-y-2"><Label>Mileage (km)</Label><Input type="number" placeholder="0" value={editingCar.kilometers} onChange={(e) => update('kilometers', e.target.value)} className="h-11 rounded-xl font-mono" /></div>
                             
-                            <div className="space-y-2"><Label>Transmission</Label><Input placeholder="e.g. Automatic" value={target.transmission} onChange={(e) => update('transmission', e.target.value)} className="h-11 rounded-xl" /></div>
-                            <div className="space-y-2"><Label>Fuel Type</Label><Input placeholder="e.g. Gasoline" value={target.fuelType} onChange={(e) => update('fuelType', e.target.value)} className="h-11 rounded-xl" /></div>
+                            <div className="space-y-2"><Label>Transmission</Label><Input placeholder="e.g. Automatic" value={editingCar.transmission} onChange={(e) => update('transmission', e.target.value)} className="h-11 rounded-xl" /></div>
+                            <div className="space-y-2"><Label>Fuel Type</Label><Input placeholder="e.g. Gasoline" value={editingCar.fuelType} onChange={(e) => update('fuelType', e.target.value)} className="h-11 rounded-xl" /></div>
                             
-                            <div className="space-y-2"><Label>Body Type</Label><Input placeholder="e.g. Sedan" value={target.bodyType} onChange={(e) => update('bodyType', e.target.value)} className="h-11 rounded-xl" /></div>
-                            <div className="space-y-2"><Label>Listing URL</Label><Input placeholder="https://..." value={target.listingLink} onChange={(e) => update('listingLink', e.target.value)} className="h-11 rounded-xl" /></div>
-                            <div className="space-y-2"><Label>Carfax URL</Label><Input placeholder="https://..." value={target.carfaxLink} onChange={(e) => update('carfaxLink', e.target.value)} className="h-11 rounded-xl" /></div>
+                            <div className="space-y-2"><Label>Body Type</Label><Input placeholder="e.g. Sedan" value={editingCar.bodyType} onChange={(e) => update('bodyType', e.target.value)} className="h-11 rounded-xl" /></div>
+                            <div className="space-y-2"><Label>Listing URL</Label><Input placeholder="https://..." value={editingCar.listingLink} onChange={(e) => update('listingLink', e.target.value)} className="h-11 rounded-xl" /></div>
+                            <div className="space-y-2"><Label>Carfax URL</Label><Input placeholder="https://..." value={editingCar.carfaxLink} onChange={(e) => update('carfaxLink', e.target.value)} className="h-11 rounded-xl" /></div>
                             
                             <div className="col-span-2 space-y-2">
                                 <Label>Notes</Label>
-                                <Input placeholder="Additional details..." value={target.notes} onChange={(e) => update('notes', e.target.value)} className="h-11 rounded-xl" />
+                                <Input placeholder="Additional details..." value={editingCar.notes} onChange={(e) => update('notes', e.target.value)} className="h-11 rounded-xl" />
                             </div>
                         </>
                     )
@@ -734,8 +599,8 @@ export default function Inventory() {
             </div>
           </ScrollArea>
           <DialogFooter className="p-6 bg-gray-50/50 border-t">
-            <Button variant="outline" onClick={() => { setShowAddCar(false); setEditingCar(null); }} className="rounded-xl h-11">Cancel</Button>
-            <Button onClick={editingCar ? updateCar : addCar} className="rounded-xl h-11 px-8">{editingCar ? 'Save Changes' : 'Add Vehicle'}</Button>
+            <Button variant="outline" onClick={() => setEditingCar(null)} className="rounded-xl h-11">Cancel</Button>
+            <Button onClick={handleUpdateCar} className="rounded-xl h-11 px-8">Save Changes</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
