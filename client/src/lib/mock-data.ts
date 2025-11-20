@@ -17,6 +17,7 @@ export interface Car {
   dealershipId?: string;
   dealershipName?: string;
   dealershipLocation?: string;
+  status: 'available' | 'sold';
 }
 
 export interface Dealership {
@@ -54,7 +55,8 @@ export const INITIAL_DEALERSHIPS: Dealership[] = [
         listingLink: '',
         carfaxLink: '',
         notes: 'One owner, clean Carfax',
-        dealershipId: '1'
+        dealershipId: '1',
+        status: 'available'
       },
       {
         id: 'c2',
@@ -72,7 +74,8 @@ export const INITIAL_DEALERSHIPS: Dealership[] = [
         listingLink: '',
         carfaxLink: '',
         notes: 'Winter tires included',
-        dealershipId: '1'
+        dealershipId: '1',
+        status: 'available'
       }
     ]
   },
@@ -100,7 +103,8 @@ export const INITIAL_DEALERSHIPS: Dealership[] = [
         listingLink: '',
         carfaxLink: '',
         notes: 'Demo vehicle, low mileage',
-        dealershipId: '2'
+        dealershipId: '2',
+        status: 'available'
       }
     ]
   },
@@ -128,7 +132,8 @@ export const INITIAL_DEALERSHIPS: Dealership[] = [
         listingLink: '',
         carfaxLink: '',
         notes: 'Full Self-Driving included',
-        dealershipId: '3'
+        dealershipId: '3',
+        status: 'sold'
       }
     ]
   }

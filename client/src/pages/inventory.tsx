@@ -18,7 +18,9 @@ import {
   Gauge,
   Settings2,
   Calendar,
-  Palette
+  Palette,
+  CheckCircle2,
+  DollarSign
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -103,6 +105,7 @@ export default function Inventory() {
     carfaxLink: "",
     notes: "",
     dealershipId: "",
+    status: 'available'
   });
 
   // Mock CRUD Operations
@@ -156,7 +159,8 @@ export default function Inventory() {
     const car: Car = {
       ...newCar as Car,
       id: Math.random().toString(36).substr(2, 9),
-      dealershipId: targetDealershipId
+      dealershipId: targetDealershipId,
+      status: 'available'
     };
 
     const updatedDealerships = dealerships.map(d => {
@@ -175,7 +179,7 @@ export default function Inventory() {
     setNewCar({
       vin: "", make: "", model: "", trim: "", year: "", color: "",
       price: "", kilometers: "", transmission: "", fuelType: "", bodyType: "",
-      listingLink: "", carfaxLink: "", notes: "", dealershipId: ""
+      listingLink: "", carfaxLink: "", notes: "", dealershipId: "", status: 'available'
     });
     setShowAddCar(false);
     toast({ title: "Success", description: "Car added to inventory" });
@@ -217,6 +221,30 @@ export default function Inventory() {
       setSelectedDealership(updatedDealerships.find(d => d.id === dealershipId) || null);
     }
     toast({ title: "Deleted", description: "Car removed from inventory" });
+  };
+
+  const toggleSoldStatus = (car: Car) => {
+    const newStatus = car.status === 'sold' ? 'available' : 'sold';
+    const updatedCar = { ...car, status: newStatus };
+    
+    const updatedDealerships = dealerships.map(d => {
+        if (d.id === car.dealershipId) {
+            return {
+                ...d,
+                inventory: d.inventory.map(c => c.id === car.id ? updatedCar : c)
+            };
+        }
+        return d;
+    });
+
+    setDealerships(updatedDealerships);
+    if (selectedDealership?.id === car.dealershipId) {
+        setSelectedDealership(updatedDealerships.find(d => d.id === car.dealershipId) || null);
+    }
+    toast({ 
+        title: newStatus === 'sold' ? "Marked as Sold" : "Marked as Available", 
+        description: `${car.year} ${car.make} ${car.model} is now ${newStatus}.` 
+    });
   };
 
   const getAllCars = () => {
@@ -444,9 +472,25 @@ export default function Inventory() {
           <div className="lg:col-span-9">
              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                 {filteredCars.map(car => (
-                    <Card key={`${car.dealershipId}-${car.id}`} className="group border-0 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 bg-white overflow-hidden rounded-2xl">
+                    <Card key={`${car.dealershipId}-${car.id}`} className={cn(
+                        "group border-0 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 bg-white overflow-hidden rounded-2xl relative",
+                        car.status === 'sold' && "opacity-80 hover:opacity-100"
+                    )}>
+                        {car.status === 'sold' && (
+                            <div className="absolute top-0 right-0 z-20 p-4">
+                                <div className="bg-red-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg transform rotate-0 uppercase tracking-wider">
+                                    Sold
+                                </div>
+                            </div>
+                        )}
+                        
                         <CardHeader className="p-0">
-                            <div className="h-3 bg-gradient-to-r from-gray-100 to-gray-50 group-hover:from-blue-500 group-hover:to-purple-500 transition-all duration-500" />
+                            <div className={cn(
+                                "h-3 transition-all duration-500",
+                                car.status === 'sold' 
+                                    ? "bg-gray-200" 
+                                    : "bg-gradient-to-r from-gray-100 to-gray-50 group-hover:from-blue-500 group-hover:to-purple-500"
+                            )} />
                         </CardHeader>
                         <CardContent className="p-6">
                             <div className="flex justify-between items-start mb-4">
@@ -477,7 +521,10 @@ export default function Inventory() {
                             <div className="flex items-end justify-between mt-auto pt-4 border-t border-gray-50">
                                 <div>
                                     <div className="text-sm text-gray-400 font-medium mb-0.5">Price</div>
-                                    <div className="text-2xl font-bold text-gray-900 tracking-tight">
+                                    <div className={cn(
+                                        "text-2xl font-bold tracking-tight",
+                                        car.status === 'sold' ? "text-gray-400 line-through decoration-2" : "text-gray-900"
+                                    )}>
                                         ${parseFloat(car.price).toLocaleString()}
                                     </div>
                                 </div>
@@ -491,7 +538,20 @@ export default function Inventory() {
                             </div>
 
                              {/* Hover Actions */}
-                             <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-all duration-200 transform translate-x-2 group-hover:translate-x-0">
+                             <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-all duration-200 transform translate-x-2 group-hover:translate-x-0 z-30">
+                                <Button 
+                                    variant="secondary" 
+                                    size="sm" 
+                                    className={cn(
+                                        "h-8 px-3 rounded-full backdrop-blur shadow-sm text-xs font-medium",
+                                        car.status === 'sold' 
+                                            ? "bg-green-50 text-green-700 hover:bg-green-100" 
+                                            : "bg-gray-900 text-white hover:bg-black"
+                                    )}
+                                    onClick={() => toggleSoldStatus(car)}
+                                >
+                                    {car.status === 'sold' ? 'Mark Available' : 'Mark Sold'}
+                                </Button>
                                 <Button variant="secondary" size="icon" className="h-8 w-8 rounded-full bg-white/90 backdrop-blur shadow-sm hover:bg-blue-50" onClick={() => { setEditingCar({ ...car, dealershipId: car.dealershipId }); }}>
                                     <Edit2 className="w-3.5 h-3.5 text-blue-600" />
                                 </Button>
