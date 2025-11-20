@@ -10,7 +10,10 @@ import {
   ArrowUpDown,
   MapPin,
   Phone,
-  X
+  X,
+  ChevronDown,
+  ChevronUp,
+  SlidersHorizontal
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -34,6 +37,11 @@ import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Label } from "@/components/ui/label";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import { INITIAL_DEALERSHIPS, Dealership, Car } from "@/lib/mock-data";
 import { useToast } from "@/hooks/use-toast";
 
@@ -49,6 +57,9 @@ export default function Inventory() {
 
   // Filters
   const [searchTerm, setSearchTerm] = useState("");
+  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
+  
+  // Advanced Filters
   const [filterMake, setFilterMake] = useState("");
   const [filterModel, setFilterModel] = useState("");
   const [filterVin, setFilterVin] = useState("");
@@ -229,7 +240,10 @@ export default function Inventory() {
         car.make?.toLowerCase().includes(term) ||
         car.model?.toLowerCase().includes(term) ||
         car.color?.toLowerCase().includes(term) ||
-        car.dealershipName?.toLowerCase().includes(term)
+        car.dealershipName?.toLowerCase().includes(term) ||
+        car.transmission?.toLowerCase().includes(term) || 
+        car.year?.toString().includes(term) ||
+        car.trim?.toLowerCase().includes(term)
       );
     }
 
@@ -308,76 +322,92 @@ export default function Inventory() {
         {/* Search & Filters */}
         <Card>
           <CardContent className="p-6 space-y-6">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-5 h-5" />
-              <Input
-                placeholder="Search VIN, Make, Model, Color, Dealership..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 h-12 text-lg bg-muted/30"
-              />
+            <div className="flex gap-3">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-5 h-5" />
+                <Input
+                  placeholder="Search by VIN, Make, Model, Transmission, Color, Dealership..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10 h-12 text-lg bg-muted/30"
+                />
+              </div>
+               <Collapsible open={showAdvancedFilters} onOpenChange={setShowAdvancedFilters}>
+                   <CollapsibleTrigger asChild>
+                        <Button variant="outline" className="h-12 px-4 gap-2 border-input bg-background hover:bg-accent hover:text-accent-foreground">
+                            <SlidersHorizontal className="w-4 h-4" />
+                            Filters
+                            {showAdvancedFilters ? <ChevronUp className="w-4 h-4 ml-1" /> : <ChevronDown className="w-4 h-4 ml-1" />}
+                        </Button>
+                   </CollapsibleTrigger>
+               </Collapsible>
             </div>
 
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-                {/* Filter Inputs */}
-                {['Make', 'Model', 'Year', 'Color', 'Trim', 'VIN'].map((placeholder, i) => {
-                    const stateMap = [filterMake, filterModel, filterYear, filterColor, filterTrim, filterVin];
-                    const setterMap = [setFilterMake, setFilterModel, setFilterYear, setFilterColor, setFilterTrim, setFilterVin];
-                    return (
-                        <Input 
-                            key={placeholder}
-                            placeholder={placeholder}
-                            value={stateMap[i]}
-                            onChange={(e) => setterMap[i](e.target.value)}
-                            className="h-9"
-                        />
-                    )
-                })}
-            </div>
-            
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                 {['Min Price', 'Max Price', 'Min KMs', 'Max KMs'].map((placeholder, i) => {
-                    const stateMap = [filterPriceMin, filterPriceMax, filterKmsMin, filterKmsMax];
-                    const setterMap = [setFilterPriceMin, setFilterPriceMax, setFilterKmsMin, setFilterKmsMax];
-                    return (
-                        <Input 
-                            key={placeholder}
-                            type="number"
-                            placeholder={placeholder}
-                            value={stateMap[i]}
-                            onChange={(e) => setterMap[i](e.target.value)}
-                            className="h-9"
-                        />
-                    )
-                })}
-            </div>
+            <Collapsible open={showAdvancedFilters}>
+                <CollapsibleContent className="space-y-6 animate-in slide-in-from-top-5 fade-in duration-200">
+                    <Separator />
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 pt-2">
+                        {/* Filter Inputs */}
+                        {['Make', 'Model', 'Year', 'Color', 'Trim', 'VIN'].map((placeholder, i) => {
+                            const stateMap = [filterMake, filterModel, filterYear, filterColor, filterTrim, filterVin];
+                            const setterMap = [setFilterMake, setFilterModel, setFilterYear, setFilterColor, setFilterTrim, setFilterVin];
+                            return (
+                                <Input 
+                                    key={placeholder}
+                                    placeholder={placeholder}
+                                    value={stateMap[i]}
+                                    onChange={(e) => setterMap[i](e.target.value)}
+                                    className="h-9"
+                                />
+                            )
+                        })}
+                    </div>
+                    
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                        {['Min Price', 'Max Price', 'Min KMs', 'Max KMs'].map((placeholder, i) => {
+                            const stateMap = [filterPriceMin, filterPriceMax, filterKmsMin, filterKmsMax];
+                            const setterMap = [setFilterPriceMin, setFilterPriceMax, setFilterKmsMin, setFilterKmsMax];
+                            return (
+                                <Input 
+                                    key={placeholder}
+                                    type="number"
+                                    placeholder={placeholder}
+                                    value={stateMap[i]}
+                                    onChange={(e) => setterMap[i](e.target.value)}
+                                    className="h-9"
+                                />
+                            )
+                        })}
+                    </div>
 
-            <div className="flex flex-wrap gap-3 items-center justify-between">
-                <div className="flex items-center gap-3">
-                    <Select value={sortBy} onValueChange={setSortBy}>
-                        <SelectTrigger className="w-[180px]">
-                            <SelectValue placeholder="Sort by" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="addedDate">Date Added</SelectItem>
-                            <SelectItem value="price">Price</SelectItem>
-                            <SelectItem value="kilometers">Kilometers</SelectItem>
-                            <SelectItem value="year">Year</SelectItem>
-                            <SelectItem value="make">Make</SelectItem>
-                            <SelectItem value="model">Model</SelectItem>
-                        </SelectContent>
-                    </Select>
+                    <div className="flex flex-wrap gap-3 items-center justify-between">
+                        <div className="flex items-center gap-3">
+                            <Select value={sortBy} onValueChange={setSortBy}>
+                                <SelectTrigger className="w-[180px]">
+                                    <SelectValue placeholder="Sort by" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="addedDate">Date Added</SelectItem>
+                                    <SelectItem value="price">Price</SelectItem>
+                                    <SelectItem value="kilometers">Kilometers</SelectItem>
+                                    <SelectItem value="year">Year</SelectItem>
+                                    <SelectItem value="make">Make</SelectItem>
+                                    <SelectItem value="model">Model</SelectItem>
+                                </SelectContent>
+                            </Select>
 
-                    <Button variant="outline" onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')} className="gap-2">
-                        <ArrowUpDown className="w-4 h-4" />
-                        {sortOrder === 'asc' ? 'Low to High' : 'High to Low'}
-                    </Button>
-                </div>
-                
-                <Button variant="ghost" onClick={clearFilters} className="text-muted-foreground hover:text-foreground">
-                    Clear All Filters
-                </Button>
-            </div>
+                            <Button variant="outline" onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')} className="gap-2">
+                                <ArrowUpDown className="w-4 h-4" />
+                                {sortOrder === 'asc' ? 'Low to High' : 'High to Low'}
+                            </Button>
+                        </div>
+                        
+                        <Button variant="ghost" onClick={clearFilters} className="text-muted-foreground hover:text-foreground">
+                            Clear All Filters
+                        </Button>
+                    </div>
+                </CollapsibleContent>
+            </Collapsible>
           </CardContent>
         </Card>
 
