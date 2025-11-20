@@ -19,7 +19,9 @@ import {
   Eye,
   EyeOff,
   ExternalLink,
-  FileText
+  FileText,
+  Filter,
+  CheckSquare
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -27,6 +29,8 @@ import { useToast } from "@/hooks/use-toast";
 import { Switch } from "@/components/ui/switch";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 const CANADIAN_TRIMS = [
   "CE", "LE", "XLE", "SE", "XSE", "Limited", "Platinum", // Toyota
@@ -47,6 +51,12 @@ const PROVINCES = [
   "AB", "BC", "MB", "NB", "NL", "NS", "NT", "NU", "ON", "PE", "QC", "SK", "YT"
 ];
 
+const FEATURES_LIST = [
+    "Navigation", "Sunroof/Moonroof", "Leather Seats", "Heated Seats", "Backup Camera", 
+    "Bluetooth", "Apple CarPlay", "Android Auto", "Blind Spot Monitor", "Adaptive Cruise Control",
+    "Lane Departure Warning", "Third Row Seating", "Tow Package", "Remote Start"
+];
+
 export default function AppraisalPage() {
   const { dealerships } = useInventory();
   const { toast } = useToast();
@@ -58,11 +68,23 @@ export default function AppraisalPage() {
     kilometers: "",
     trim: "",
     transmission: "automatic", // Default or decoded
+    fuelType: "gasoline",
+    drivetrain: "fwd",
+    bodyType: "sedan",
+    features: [] as string[],
     postalCode: "",
     province: "",
     radius: "50"
   });
+  
+  const [filterOptions, setFilterOptions] = useState({
+      matchTransmission: false,
+      matchDrivetrain: false,
+      matchFuelType: false
+  });
+
   const [showComparables, setShowComparables] = useState(true);
+  const [showAdvanced, setShowAdvanced] = useState(false);
   const [appraisal, setAppraisal] = useState<{
     retailLow: number;
     retailHigh: number;
@@ -111,6 +133,35 @@ export default function AppraisalPage() {
                 }
             }
 
+            // Decode Fuel Type
+             if (vehicle.FuelTypePrimary) {
+                const fuel = vehicle.FuelTypePrimary.toLowerCase();
+                if (fuel.includes("gas")) decoded.fuelType = "gasoline";
+                else if (fuel.includes("diesel")) decoded.fuelType = "diesel";
+                else if (fuel.includes("electric")) decoded.fuelType = "electric";
+                else if (fuel.includes("hybrid")) decoded.fuelType = "hybrid";
+            }
+
+            // Decode Drivetrain
+            if (vehicle.DriveType) {
+                const drive = vehicle.DriveType.toLowerCase();
+                if (drive.includes("awd") || drive.includes("all")) decoded.drivetrain = "awd";
+                else if (drive.includes("4wd") || drive.includes("4-wheel")) decoded.drivetrain = "4wd";
+                else if (drive.includes("rwd") || drive.includes("rear")) decoded.drivetrain = "rwd";
+                else if (drive.includes("fwd") || drive.includes("front")) decoded.drivetrain = "fwd";
+            }
+
+            // Decode Body Type
+             if (vehicle.BodyClass) {
+                const body = vehicle.BodyClass.toLowerCase();
+                if (body.includes("sedan")) decoded.bodyType = "sedan";
+                else if (body.includes("suv") || body.includes("sport utility")) decoded.bodyType = "suv";
+                else if (body.includes("truck") || body.includes("pickup")) decoded.bodyType = "truck";
+                else if (body.includes("van") || body.includes("minivan")) decoded.bodyType = "van";
+                else if (body.includes("coupe")) decoded.bodyType = "coupe";
+                else if (body.includes("hatch")) decoded.bodyType = "hatchback";
+            }
+
             // Check if we got valid data
             if (!decoded.make && !decoded.model) {
                  throw new Error("Could not decode vehicle details");
@@ -140,6 +191,15 @@ export default function AppraisalPage() {
     }
   };
 
+  const toggleFeature = (feature: string) => {
+    setFormData(prev => {
+        const features = prev.features.includes(feature)
+            ? prev.features.filter(f => f !== feature)
+            : [...prev.features, feature];
+        return { ...prev, features };
+    });
+  };
+
   const handleAppraise = () => {
     if (!formData.make || !formData.model) return;
 
@@ -160,12 +220,20 @@ export default function AppraisalPage() {
         }
     }
 
+    // Apply optional strict filters
+    if (filterOptions.matchTransmission) {
+        similar = similar.filter(car => car.transmission?.toLowerCase() === formData.transmission);
+    }
+    if (filterOptions.matchFuelType) {
+        similar = similar.filter(car => car.fuelType?.toLowerCase() === formData.fuelType);
+    }
+    // Note: Drivetrain isn't always in mock data, so we skip strict filter for now to avoid empty results in demo
+
     let basePrice = 25000;
     let estimatedRetail = 0;
 
     if (similar.length === 0) {
         // Fallback mock logic if no inventory matches
-        // This ensures the tool feels functional even with empty inventory
         
         // Adjust base price based on trim (mock)
         if (formData.trim.toLowerCase().includes('limited') || formData.trim.toLowerCase().includes('touring') || formData.trim.toLowerCase().includes('premium')) {
@@ -177,14 +245,17 @@ export default function AppraisalPage() {
         const yearFactor = formData.year ? (parseInt(formData.year) - 2010) * 1000 : 5000;
         const kmFactor = formData.kilometers ? Math.max(0, (150000 - parseInt(formData.kilometers)) * 0.05) : 2000;
         
-        // Mock regional adjustment based on postal code/province
+        // Mock regional adjustment
         const regionFactor = formData.postalCode ? (formData.postalCode.length * 100) : 0;
         const provinceFactor = formData.province === 'ON' || formData.province === 'BC' ? 1000 : 0;
         
-        // Small adjustment for transmission (manuals often worth less on mass market cars, more on sports cars - keep simple for now)
+        // Adjustments for new fields
         const transmissionFactor = formData.transmission === 'manual' ? -500 : 0;
+        const drivetrainFactor = (formData.drivetrain === 'awd' || formData.drivetrain === '4wd') ? 2000 : 0;
+        const fuelFactor = (formData.fuelType === 'hybrid' || formData.fuelType === 'electric') ? 3000 : 0;
+        const featureFactor = formData.features.length * 200; // $200 per feature
 
-        estimatedRetail = basePrice + yearFactor + kmFactor + regionFactor + provinceFactor + transmissionFactor;
+        estimatedRetail = basePrice + yearFactor + kmFactor + regionFactor + provinceFactor + transmissionFactor + drivetrainFactor + fuelFactor + featureFactor;
     } else {
         // Calculate based on real data
         const prices = similar.map(c => parseFloat(c.price));
@@ -200,10 +271,15 @@ export default function AppraisalPage() {
         }
         
         // Apply mock regional/radius adjustment
-        // In a real app, this would query market data within the radius
-        if (formData.radius === "100") adjustedPrice *= 0.98; // Wider market, slightly lower average
+        if (formData.radius === "100") adjustedPrice *= 0.98;
         if (formData.radius === "250") adjustedPrice *= 0.96;
         if (formData.radius === "500") adjustedPrice *= 0.95;
+
+        // Adjust for features/specs on top of average if we didn't filter strictly
+        if (!filterOptions.matchDrivetrain && (formData.drivetrain === 'awd' || formData.drivetrain === '4wd')) adjustedPrice += 1500;
+        if (!filterOptions.matchFuelType && (formData.fuelType === 'hybrid' || formData.fuelType === 'electric')) adjustedPrice += 2000;
+        
+        adjustedPrice += formData.features.length * 150;
 
         estimatedRetail = adjustedPrice;
     }
@@ -303,24 +379,6 @@ export default function AppraisalPage() {
                     </div>
 
                     <div className="space-y-2">
-                        <Label>Transmission</Label>
-                        <RadioGroup 
-                            value={formData.transmission} 
-                            onValueChange={(val) => setFormData({...formData, transmission: val})}
-                            className="flex gap-4"
-                        >
-                            <div className="flex items-center space-x-2">
-                                <RadioGroupItem value="automatic" id="trans-auto" />
-                                <Label htmlFor="trans-auto" className="cursor-pointer font-normal">Automatic</Label>
-                            </div>
-                            <div className="flex items-center space-x-2">
-                                <RadioGroupItem value="manual" id="trans-manual" />
-                                <Label htmlFor="trans-manual" className="cursor-pointer font-normal">Manual</Label>
-                            </div>
-                        </RadioGroup>
-                    </div>
-
-                    <div className="space-y-2">
                         <Label>Kilometers</Label>
                         <Input 
                             placeholder="0" 
@@ -329,6 +387,106 @@ export default function AppraisalPage() {
                             onChange={e => setFormData({...formData, kilometers: e.target.value})} 
                         />
                     </div>
+
+                    <Collapsible open={showAdvanced} onOpenChange={setShowAdvanced} className="space-y-4">
+                        <CollapsibleTrigger asChild>
+                            <Button variant="outline" className="w-full flex items-center justify-between">
+                                Advanced Specs & Features
+                                <CheckSquare className="w-4 h-4 ml-2" />
+                            </Button>
+                        </CollapsibleTrigger>
+                        <CollapsibleContent className="space-y-4 pt-2">
+                             <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <Label>Body Type</Label>
+                                    <Select value={formData.bodyType} onValueChange={(val) => setFormData({...formData, bodyType: val})}>
+                                        <SelectTrigger><SelectValue /></SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="sedan">Sedan</SelectItem>
+                                            <SelectItem value="suv">SUV</SelectItem>
+                                            <SelectItem value="truck">Truck</SelectItem>
+                                            <SelectItem value="coupe">Coupe</SelectItem>
+                                            <SelectItem value="hatchback">Hatchback</SelectItem>
+                                            <SelectItem value="van">Van</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                                <div className="space-y-2">
+                                    <Label>Drivetrain</Label>
+                                    <Select value={formData.drivetrain} onValueChange={(val) => setFormData({...formData, drivetrain: val})}>
+                                        <SelectTrigger><SelectValue /></SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="fwd">FWD</SelectItem>
+                                            <SelectItem value="rwd">RWD</SelectItem>
+                                            <SelectItem value="awd">AWD</SelectItem>
+                                            <SelectItem value="4wd">4WD</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <Label>Transmission</Label>
+                                    <Select value={formData.transmission} onValueChange={(val) => setFormData({...formData, transmission: val})}>
+                                        <SelectTrigger><SelectValue /></SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="automatic">Automatic</SelectItem>
+                                            <SelectItem value="manual">Manual</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                                <div className="space-y-2">
+                                    <Label>Fuel Type</Label>
+                                    <Select value={formData.fuelType} onValueChange={(val) => setFormData({...formData, fuelType: val})}>
+                                        <SelectTrigger><SelectValue /></SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="gasoline">Gasoline</SelectItem>
+                                            <SelectItem value="diesel">Diesel</SelectItem>
+                                            <SelectItem value="hybrid">Hybrid</SelectItem>
+                                            <SelectItem value="electric">Electric</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                            </div>
+
+                            <div className="space-y-2">
+                                <Label>Key Features</Label>
+                                <div className="grid grid-cols-2 gap-2">
+                                    {FEATURES_LIST.map(feature => (
+                                        <div key={feature} className="flex items-center space-x-2">
+                                            <Checkbox 
+                                                id={feature} 
+                                                checked={formData.features.includes(feature)}
+                                                onCheckedChange={() => toggleFeature(feature)}
+                                            />
+                                            <label htmlFor={feature} className="text-xs font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer">
+                                                {feature}
+                                            </label>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <Separator />
+                            
+                            <div className="space-y-2">
+                                <Label className="flex items-center gap-2"><Filter className="w-3 h-3" /> Strict Matching</Label>
+                                <p className="text-xs text-gray-500 mb-2">Only show comparables that match these specs:</p>
+                                <div className="flex flex-col gap-2">
+                                    <div className="flex items-center space-x-2">
+                                        <Checkbox id="match-trans" checked={filterOptions.matchTransmission} onCheckedChange={(c) => setFilterOptions({...filterOptions, matchTransmission: !!c})} />
+                                        <label htmlFor="match-trans" className="text-xs">Match Transmission</label>
+                                    </div>
+                                    <div className="flex items-center space-x-2">
+                                        <Checkbox id="match-fuel" checked={filterOptions.matchFuelType} onCheckedChange={(c) => setFilterOptions({...filterOptions, matchFuelType: !!c})} />
+                                        <label htmlFor="match-fuel" className="text-xs">Match Fuel Type</label>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </CollapsibleContent>
+                    </Collapsible>
 
                     <Separator className="my-2" />
                     
@@ -451,6 +609,12 @@ export default function AppraisalPage() {
                                                         <span>•</span>
                                                         <span>{car.trim}</span>
                                                     </div>
+                                                    {(car.transmission || car.fuelType) && (
+                                                        <div className="text-xs text-gray-400 flex gap-2 mt-1">
+                                                            {car.transmission && <span className="capitalize">{car.transmission}</span>}
+                                                            {car.fuelType && <span>• {car.fuelType}</span>}
+                                                        </div>
+                                                    )}
                                                 </div>
                                                 <div className="flex items-center gap-4">
                                                     <div className="text-right">
