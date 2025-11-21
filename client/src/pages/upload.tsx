@@ -55,8 +55,8 @@ export default function UploadPage() {
   const [activeTab, setActiveTab] = useState("manual");
 
   // Manual Entry State
-  const [newCar, setNewCar] = useState<Partial<Car> & { engineCylinders?: string, engineDisplacement?: string, drivetrain?: string }>({
-    vin: "", make: "", model: "", trim: "", year: "", color: "",
+  const [newCar, setNewCar] = useState<Partial<Car> & { engineCylinders?: string, engineDisplacement?: string, drivetrain?: string, stockNumber?: string, condition?: string }>({
+    vin: "", stockNumber: "", condition: "used", make: "", model: "", trim: "", year: "", color: "",
     price: "", kilometers: "", transmission: "", fuelType: "", bodyType: "",
     listingLink: "", carfaxLink: "", notes: "", dealershipId: "", status: 'available',
     engineCylinders: "", engineDisplacement: "", drivetrain: "fwd", carfaxStatus: "unavailable"
@@ -276,6 +276,8 @@ export default function UploadPage() {
     const carData = {
         dealershipId: newCar.dealershipId!,
         vin: newCar.vin || "",
+        stockNumber: newCar.stockNumber || "",
+        condition: newCar.condition || "used",
         make: newCar.make || "",
         model: newCar.model || "",
         trim: newCar.trim || "",
@@ -300,7 +302,7 @@ export default function UploadPage() {
     createCarMutation.mutate(carData, {
         onSuccess: () => {
             setNewCar({
-                vin: "", make: "", model: "", trim: "", year: "", color: "",
+                vin: "", stockNumber: "", condition: "used", make: "", model: "", trim: "", year: "", color: "",
                 price: "", kilometers: "", transmission: "", fuelType: "", bodyType: "",
                 listingLink: "", carfaxLink: "", notes: "", dealershipId: newCar.dealershipId, status: 'available',
                 engineCylinders: "", engineDisplacement: "", drivetrain: "fwd", carfaxStatus: "unavailable"
@@ -420,7 +422,7 @@ export default function UploadPage() {
                     <SelectTrigger className="bg-white border-blue-200 h-11">
                         <SelectValue placeholder="Choose a dealership" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="max-h-[300px]">
                         {dealerships.map(d => (
                             <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>
                         ))}
@@ -442,6 +444,28 @@ export default function UploadPage() {
                             {isDecoding ? <Loader2 className="w-4 h-4 animate-spin" /> : <QrCode className="w-4 h-4" />}
                         </Button>
                     </div>
+                </div>
+
+                <div className="space-y-2">
+                    <Label>Stock Number</Label>
+                    <Input 
+                        placeholder="Stock #" 
+                        value={newCar.stockNumber} 
+                        onChange={(e) => setNewCar({...newCar, stockNumber: e.target.value})}
+                    />
+                </div>
+
+                <div className="space-y-2">
+                    <Label>Condition</Label>
+                    <Select value={newCar.condition} onValueChange={(val) => setNewCar({...newCar, condition: val})}>
+                        <SelectTrigger>
+                            <SelectValue placeholder="Select Condition" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="new">New</SelectItem>
+                            <SelectItem value="used">Used</SelectItem>
+                        </SelectContent>
+                    </Select>
                 </div>
                 
                 <div className="space-y-2">
