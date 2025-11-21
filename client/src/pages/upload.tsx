@@ -69,6 +69,7 @@ export default function UploadPage() {
   const [isLoadingTrims, setIsLoadingTrims] = useState(false);
   const [duplicateCar, setDuplicateCar] = useState<(Car & { dealershipName?: string }) | null>(null);
   const [showDuplicateAlert, setShowDuplicateAlert] = useState(false);
+  const [dealershipSearch, setDealershipSearch] = useState("");
 
   // Bulk CSV State
   const [csvData, setCsvData] = useState("");
@@ -423,9 +424,22 @@ export default function UploadPage() {
                         <SelectValue placeholder="Choose a dealership" />
                     </SelectTrigger>
                     <SelectContent className="max-h-[300px]">
-                        {dealerships.map(d => (
-                            <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>
-                        ))}
+                        <div className="p-2 sticky top-0 bg-white border-b">
+                            <Input 
+                                placeholder="Search dealerships..." 
+                                value={dealershipSearch}
+                                onChange={(e) => setDealershipSearch(e.target.value)}
+                                className="h-8"
+                            />
+                        </div>
+                        {dealerships
+                            .filter(d => d.name.toLowerCase().includes(dealershipSearch.toLowerCase()))
+                            .map(d => (
+                                <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>
+                            ))}
+                        {dealerships.filter(d => d.name.toLowerCase().includes(dealershipSearch.toLowerCase())).length === 0 && (
+                            <div className="p-4 text-center text-sm text-gray-500">No dealerships found</div>
+                        )}
                     </SelectContent>
                 </Select>
               </div>
