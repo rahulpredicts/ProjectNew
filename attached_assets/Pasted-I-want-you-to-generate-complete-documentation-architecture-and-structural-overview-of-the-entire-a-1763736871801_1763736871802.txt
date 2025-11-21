@@ -1,0 +1,168 @@
+I want you to generate complete documentation, architecture, and structural overview of the entire application you built for me in this Replit project.
+I am migrating this entire project to Google AI Studio, integrated with Firebase Authentication, Firebase Firestore database, and Make.com for automation workflows.
+
+I need a full, extremely detailed technical report of everything that exists in this Replit project, including:
+
+✅ 1. FULL PROJECT STRUCTURE
+
+Complete folder tree (all directories & subdirectories)
+
+Every file name & file location
+
+What each folder is responsible for
+
+Which files work together
+
+✅ 2. FILE-BY-FILE EXPLANATION
+
+For every file, provide:
+
+Purpose of the file
+
+Full explanation of every function, class, or major block of code
+
+Inputs & outputs
+
+How it connects with other files
+
+Which external API keys it uses
+
+Any environment variables & how they are used
+
+Any dependencies required
+
+✅ 3. AUTHENTICATION & USER FLOW
+
+If authentication exists, explain:
+
+How login works
+
+How registration works
+
+How sessions/tokens are handled
+
+How roles or permissions work
+
+Any integration with Firebase/Auth
+
+✅ 4. DATABASE OVERVIEW
+
+Provide a complete breakdown of:
+
+Which database is used
+
+All tables / collections
+
+All fields in each collection
+
+All indexes
+
+All relationships
+
+Example documents
+
+How read/write operations are performed
+
+Where database queries appear in the code
+
+✅ 5. AI / LLM WORKFLOW
+
+Provide detailed explanations of:
+
+Where the LLM is called
+
+Which prompts are used
+
+How prompts are constructed
+
+All system prompts
+
+All user prompts
+
+All agent logic
+
+How responses are handled
+
+Any advanced logic (memory, tools, routing, etc.)
+
+✅ 6. API INTEGRATIONS
+
+Provide documentation for every integration:
+
+External APIs
+
+Webhooks
+
+Any automation flows
+
+Any third-party keys
+
+Where & how these are used
+
+✅ 7. FRONTEND OVERVIEW
+
+If the project has a frontend, explain:
+
+UI structure
+
+All components
+
+How they connect with backend
+
+How data is displayed
+
+All user flows
+
+✅ 8. BACKEND OVERVIEW
+
+Explain:
+
+Routing structure
+
+Controllers
+
+Services
+
+Utilities
+
+Middlewares
+
+File storage
+
+Error handling
+
+✅ 9. DEPENDENCIES
+
+Provide:
+
+A full list of dependencies
+
+Why each dependency is used
+
+Version requirements
+
+Any migration notes for Google AI Studio + Firebase
+
+✅ 10. REDEPLOYMENT GUIDE
+
+Finally, provide:
+
+Step-by-step instructions to rebuild this exact same project in Google AI Studio + Firebase
+
+Which components will move where
+
+What needs to change or be refactored
+
+Which parts Google AI Studio will handle
+
+Which parts Firebase will handle
+
+Any limitations
+
+Suggested improvements
+
+IMPORTANT:
+Write all explanations in clear, professional English, highly detailed, including diagrams or examples if needed.
+Do NOT skip anything.
+Do NOT summarize.
+I need 100% complete documentation exactly as a senior engineer would produce.

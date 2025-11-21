@@ -511,7 +511,7 @@ export default function Inventory() {
         car.bodyType?.toLowerCase().includes(term) ||
         car.fuelType?.toLowerCase().includes(term) ||
         car.drivetrain?.toLowerCase().includes(term) ||
-        car.engineCylinders?.toLowerCase().includes(term) ||
+        car.engineCylinders?.toString().includes(term) ||
         car.features?.some(f => f.toLowerCase().includes(term)) ||
         car.notes?.toLowerCase().includes(term)
       );
