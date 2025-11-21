@@ -70,6 +70,9 @@ export default function UploadPage() {
   const [duplicateCar, setDuplicateCar] = useState<(Car & { dealershipName?: string }) | null>(null);
   const [showDuplicateAlert, setShowDuplicateAlert] = useState(false);
   const [dealershipSearch, setDealershipSearch] = useState("");
+  const [searchVin, setSearchVin] = useState("");
+  const [searchStock, setSearchStock] = useState("");
+  const [isSearching, setIsSearching] = useState(false);
 
   // Bulk CSV State
   const [csvData, setCsvData] = useState("");
@@ -254,6 +257,90 @@ export default function UploadPage() {
       return null;
   };
 
+  const handleSearchVehicle = async () => {
+    // Normalize and trim inputs
+    const normalizedVin = searchVin.trim().toUpperCase();
+    const normalizedStock = searchStock.trim();
+    
+    if (!normalizedVin && !normalizedStock) {
+      toast({ title: "No Search Criteria", description: "Please enter a VIN or Stock Number to search", variant: "destructive" });
+      return;
+    }
+
+    setIsSearching(true);
+    
+    try {
+      let foundCar: Car | null = null;
+      
+      // Try to find by VIN first using backend endpoint
+      if (normalizedVin) {
+        const response = await fetch(`/api/cars/vin/${normalizedVin}`);
+        if (response.ok) {
+          foundCar = await response.json();
+        }
+      }
+      
+      // If not found by VIN, try Stock Number using backend endpoint
+      if (!foundCar && normalizedStock) {
+        const response = await fetch(`/api/cars/stock/${normalizedStock}`);
+        if (response.ok) {
+          foundCar = await response.json();
+        }
+      }
+      
+      if (foundCar) {
+        // Auto-fill the form with found car data, explicitly resetting all fields
+        setNewCar({
+          vin: foundCar.vin || "",
+          stockNumber: foundCar.stockNumber || "",
+          condition: foundCar.condition || "used",
+          make: foundCar.make || "",
+          model: foundCar.model || "",
+          trim: foundCar.trim || "",
+          year: foundCar.year || "",
+          color: foundCar.color || "",
+          price: foundCar.price || "",
+          kilometers: foundCar.kilometers || "",
+          transmission: foundCar.transmission || "",
+          fuelType: foundCar.fuelType || "",
+          bodyType: foundCar.bodyType || "",
+          listingLink: foundCar.listingLink || "",
+          carfaxLink: foundCar.carfaxLink || "",
+          carfaxStatus: foundCar.carfaxStatus || "unavailable",
+          notes: foundCar.notes || "",
+          dealershipId: foundCar.dealershipId || "",
+          status: foundCar.status || "available",
+          engineCylinders: foundCar.engineCylinders || "",
+          engineDisplacement: foundCar.engineDisplacement || "",
+          drivetrain: foundCar.drivetrain || "fwd",
+        });
+        
+        // Reset features to match found car exactly
+        setFeatures(foundCar.features || []);
+        
+        toast({ 
+          title: "Vehicle Found", 
+          description: `Form filled with: ${foundCar.year} ${foundCar.make} ${foundCar.model}` 
+        });
+      } else {
+        toast({ 
+          title: "Not Found", 
+          description: "No vehicle found with that VIN or Stock Number", 
+          variant: "destructive" 
+        });
+      }
+    } catch (error) {
+      console.error("Search Error:", error);
+      toast({ 
+        title: "Search Failed", 
+        description: "Could not search for vehicle. Please try again.", 
+        variant: "destructive" 
+      });
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
   const checkDuplicateStockNumber = (stockNumber: string): Car | null => {
       if (!stockNumber || stockNumber.trim().length === 0) return null;
       
@@ -436,6 +523,42 @@ export default function UploadPage() {
               <CardDescription>Enter all vehicle information manually.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
+              <div className="bg-gray-50 p-4 rounded-xl border border-gray-200">
+                <Label className="text-gray-900 mb-3 block font-semibold">Search Existing Vehicle</Label>
+                <p className="text-sm text-gray-600 mb-4">Search by VIN or Stock Number to auto-fill the form</p>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  <div className="space-y-1">
+                    <Label className="text-sm text-gray-700">Search by VIN</Label>
+                    <Input 
+                      placeholder="Enter VIN" 
+                      value={searchVin} 
+                      onChange={(e) => setSearchVin(e.target.value.toUpperCase())}
+                      data-testid="input-search-vin"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-sm text-gray-700">Search by Stock Number</Label>
+                    <Input 
+                      placeholder="Enter Stock #" 
+                      value={searchStock} 
+                      onChange={(e) => setSearchStock(e.target.value)}
+                      data-testid="input-search-stock"
+                    />
+                  </div>
+                  <div className="flex items-end">
+                    <Button 
+                      onClick={handleSearchVehicle} 
+                      disabled={isSearching || (!searchVin && !searchStock)}
+                      className="w-full"
+                      data-testid="button-search-vehicle"
+                    >
+                      {isSearching ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+                      Search
+                    </Button>
+                  </div>
+                </div>
+              </div>
+
               <div className="bg-blue-50 p-4 rounded-xl border border-blue-100">
                 <Label className="text-blue-900 mb-2 block">Select Dealership *</Label>
                 <Select 

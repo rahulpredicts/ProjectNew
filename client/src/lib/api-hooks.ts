@@ -62,6 +62,12 @@ async function fetchCarByVin(vin: string): Promise<Car | null> {
   return response.json();
 }
 
+async function fetchCarByStockNumber(stockNumber: string): Promise<Car | null> {
+  const response = await fetch(`/api/cars/stock/${stockNumber}`);
+  if (!response.ok) throw new Error('Failed to fetch car');
+  return response.json();
+}
+
 async function createDealership(dealership: Omit<Dealership, 'id' | 'createdAt'>): Promise<Dealership> {
   const response = await fetch('/api/dealerships', {
     method: 'POST',

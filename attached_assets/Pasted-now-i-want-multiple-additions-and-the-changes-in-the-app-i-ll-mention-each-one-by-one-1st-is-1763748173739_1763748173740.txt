@@ -1,0 +1,1003 @@
+now i want multiple additions and the changes in the app, i'll mention each one by one: 
+
+
+1st is:AT THE TOP OF THE FORM , CREATE TWO INPUT FIELDS :-SEARCH BY VIN AND STOCKJ BY STOCK , AND A SEARCH BUTTON SUCH THAT IF THE CAR WITH THAT VIN OR STOCK NUMBER ALREADY EXISTS IN THE DATABSE , THEM THE FORM BELOW SHOULD BE AUTPOMATICVALLY  FILLED.
+
+
+
+2nd is, in the add vehicle panel, add an button to clear out all the filled and unfilled input fields in the whole panel, it should clear out all the filled information in the add vehicle form
+
+
+3rd is, in the add vehicle, don't let anyone save or add the vehicle, unitl they've filled all the cloumns except for the vin or stock number, one column from the VIN & Stock number must be filled, both are not  an compulsion, all other fields are must to fill, engine & features (advanced) is optional, its not mandatory either to fill this one, arfax url is also not mandatory, only after this, one should be able to add the car and save it
+
+
+4th is in the inventory, 
+in the edit vehicle options, provide all the columns filled during the add vehicle form to edit, and should be editable too
+
+
+
+
+
+5th is:
+
+ADD ONE INPUT FILED BEFORE ADD DELAERSHIP DROPDWON  WITH DROPDWON SUBLISTS:-
+
+[Acura, Audi, BMW, Buick, Cadillac, Chevrolet, Chrysler, Dodge, Ford, GMC, Honda, Hyundai, Infiniti, Jaguar, Jeep, Kia, Land Rover, Lexus, Lincoln, Maserati, Mazda, Mercedes-Benz, Mini, Mitsubishi, Nissan, Porsche, Ram, Subaru, Toyota, Volkswagen, Volvo]
+
+and I want the dropdown after the makes dropdown as well, 
+lemme tell you how,
+when someone clicks on an particular make, for example acura, then I want an another dropdown to show up, that'll show all the dealerships of the acura
+I am providing you the list of dealership for each make
+
+below are the lists per make:-
+
+Acura:-[Gabriel acura,
+Acura montreal centre,
+Acura laval,
+Casino Gatineau Acura,
+Acura brossard,
+Acura plus,
+Elegance acura,
+Acura metropolitain,
+Alma acura,
+Precision Acura,
+Theetge acura]
+
+audi:-[Audi west island,
+Audi Anjou,
+Park avenue audi,
+Audi st-bruno,
+Audi ste-foy,
+Audi Lauzon,
+Audi Blainville,
+Sherbrooke audi,
+
+
+Audi Saint  Laurent,
+Audi Levis]
+
+
+BMW:-[BMW laval,
+Park avenue bmw,
+Trois rivieres bmw,
+BMW Montreal Centre,
+BMW West Island,
+BMW ville de Quebec,
+BMW Sainte-Julie,
+Hamel BMW,
+BMW ste-agathe,
+Suprem Automobile,
+
+
+BMW levis,
+BMW Grenier,
+BMW Brossard]
+
+
+CADILLAC:-[Cadillac of Laval,
+Arnold chevrolet buick gmc cadillac inc,
+Cadillac West Island,
+Surgenor Gatineau Chevrolet Cadillac Ltd,
+Thibault Chevrolet Cadillac Pontiac Buick GMC Ltd,
+4 Saisons Chevrolet Cadillac Buick GMC Ltd,
+A. Chalut Auto Ltée,
+B. Dupont Auto Inc.,
+Brossard Cadillac,
+Deschamps Cadillac,
+Duchesne Autos ltee,
+Gareau auto,
+Le Relais Chevrolet Ltee,
+Luciani Cadillac,
+Montplaisir Cadillac,
+Paul Albert Chevrolet Cadillac Buick GMC Ltd,
+Plaza Chevrolet,
+Racine Chevrolet Buick GMC,
+St-Georges Chevrolet Buick Cadillac GMC In,
+Trois-Rivieres Chevrolet Buick GMC Cadillac,
+Vision Chevrlolet Cadillac Buick GMC]
+
+
+BUICK:-[Gravel Chevrolet Buick Cadillac GMC Ltée
+Hamel chevrolet buick gmc
+Christin automobile inc
+Chevrolet Buick GMC
+Lussier chevrolet buick gmc ltee
+Grenier Chevrolet Buick GMC
+St-Jerome Chevrolet
+Garage montplaisir
+Action chevrolet
+Albi chevrolet buick gmc corvette laval
+Arnold chevrolet buick gmc cadillac inc
+Brossard Chevrolet Buick GMC Inc.
+Desjardins Chevrolet Buick GMC Inc
+Dilawri Chevrolet Buick GMC
+Dion chevrolet buick gmc inc
+ Sept-Îles Chevrolet Buick GMC
+Thibault Chevrolet Cadillac Pontiac Buick GMC Ltd
+440 Chevrolet Buick GMC
+A. Chalut Auto Ltée
+A. P. Chevrolet Buick GMC Inc
+Auto Mont Chevrolet Buick GMC Ltd
+Automobiles Carmer (1990) inc.
+Automobiles Paille Inc.
+B. Dupont Auto Inc.
+Bisson chevrolet buick gmc inc
+Boisvert chevrolet buick gmc
+Boulevard Chevrolet Cadillac Buick GMC Inc
+Cartier chevrolet buick gmc
+Chaleur automobiles ltee
+Chevrolet buick gmc west island
+Chibougamau Automobile Inc.
+Deschamps Chevrolet Buick GMC Ltd
+Drouin et Freres
+Dubois et Freres GM
+Duchesne Autos ltee
+F R Dallaire Inc
+Garage Tardif D'Amos
+Gareau Auto
+Germain chevrolet buick gmc
+H. Auger Automobiles Inc.
+Hamilton Chevrolet Pontiac Buick GMC Ltd.
+La Seigneurie Chevrolet Buick GMC
+Lachapelle Buick GMC
+Le Relais Chevrolet Ltee
+Les Automobiles M Rocheleau Inc
+Les sommets chevrolet buick gmc ltee
+Lessard buick chevrolet gmc
+Marlin Chevrolet Inc.
+Marquis Automobiles Inc.
+Méthot Chevrolet Buick GMC
+Nicol Auto inc.
+Paul Albert Chevrolet Cadillac Buick GMC Ltd
+Paul Dumas Chevrolet Buick GMC
+Plaza Chevrolet
+Racine Chevrolet Buick GMC
+Roberval Chevrolet Buick GMC
+Royal chevrolet
+Simpson Automobiles inc.
+St-Georges Chevrolet Buick Cadillac GMC Inc
+Ste-Marie Automobiles Ltd
+Temis Chevrolet Buick GMC Ltd
+ Trois-Rivieres Chevrolet Buick GMC Cadillac
+Vision Chevrlolet Cadillac Buick GMC]
+
+
+CHRYSLER:-[Desmeules Chrysler Dodge Jeep
+Excellence chrysler saint-eustache
+Duclos Longueuil Chrysler Dodge Jeep Ram Inc.
+Des Sources Dodge Chrysler Ltd
+Rive-Sud Chrysler Dodge inc.
+St-jérôme chrysler jeep dodge ram fiat
+Champlain dodge
+Blainville chrysler jeep dodge inc
+Excellence Chrysler Vaudreuil
+Landry Automobiles Ltee
+Grenier Chrysler Dodge Jeep
+Joliette dodge chrysler ltee
+Longue Pointe Chrysler Dodge Jeep Ram
+Kollbec Gatineau Jeep RAM Dodge Chrysler Fiat
+Lestage chrysler
+Girard Automobile Inc.
+Capital Chrysler Quebec
+Chaput Automobile Inc.
+Chicoutimi Chrysler Dodge Jeep Inc.
+Clermont Dodge Chrysler Inc.
+Daniel Pare Dodge Chrysler Inc.
+Elite Chrysler Jeep Inc.
+Gendron Chrysler Dodge Jeep
+JD Chrysler FIAT (Le Groupe JD)
+ Laval Chrysler
+Magog concept chrysler inc
+Trois Diamants Auto (1987) Ltee
+A. Automobiles Gosselin
+Armand Automobiles
+Automobiles Guy Beaudoin Inc.
+Bernier and Crepeau Ltd
+Bessette Automobiles Inc
+Boulay dodge chrysler inc
+C. J. Kyle Ltee
+Didier Dodge Chrysler Inc.
+E P Poirier Ltd
+G. Dumais Automobiles ltee
+Garage P. Vezina Matane
+Kamouraska chrysler
+Kennebec Dodge Chrysler Inc.
+L'Etoile Dodge Chrysler Inc.
+La Perade Chrysler
+Lapointe Auto Inc
+Maison de l'Auto Dolbeau-Mistassini
+Maison de l'auto roberval
+Maison de l'auto St-Felicien
+Michaud Automobiles
+Mont-Joli Chrysler Jeep Dodge
+ N.V. Cloutier inc.
+Poirier Chrysler Jeep Dodge
+St-Basile Dodge Chrysler
+St-Hyacinthe Chrysler Jeep Dodge Inc.
+Vision Chrysler Jeep Inc
+Weedon Automobiles (1977) Inc.]
+
+CHEVROLET:-
+[Gravel Chevrolet Buick Cadillac GMC Ltée
+Hamel chevrolet buick gmc
+Christin Automobile Inc
+Denis Breton Chevrolet Buick GMC
+Lussier chevrolet buick gmc ltee
+Grenier Chevrolet Buick GMC
+Garage montplaisir
+Action chevrolet
+Albi chevrolet buick gmc corvette laval
+Arnold chevrolet buick gmc cadillac inc
+Desjardins Chevrolet Buick GMC Inc
+Dilawri Chevrolet Buick GMC
+Surgenor Gatineau Chevrolet Cadillac Ltd
+Dion chevrolet buick gmc inc
+Sept-îles chevrolet buick gmc
+Thibault Chevrolet Cadillac Pontiac Buick GMC Ltd
+440 Chevrolet Buick GMC
+A. Chalut Auto Ltée
+A. P. Chevrolet Buick GMC Inc
+Auto Mont Chevrolet Buick GMC Ltd
+Automobiles Carmer (1990) inc.
+Automobiles Paille Inc.
+B. Dupont Auto Inc.
+Bisson chevrolet buick gmc inc
+Boisvert chevrolet buick gmc
+Boulevard Chevrolet Cadillac Buick GMC Inc
+Cartier chevrolet buick gmc
+Chaleur automobiles ltee
+chevrolet buick gmc west island
+Chibougamau Automobile Inc.
+Deschamps Chevrolet Buick GMC Ltd
+Drouin et Freres
+Dubois et Freres GM
+Duchesne Autos ltee
+F R Dallaire Inc
+Garage Tardif D'Amos
+Gareau auto
+Germain chevrolet buick gmc
+H. Auger Automobiles Inc.
+La Seigneurie Chevrolet Buick GMC
+Le Relais Chevrolet Ltee
+Les Automobiles M Rocheleau Inc
+Les sommets chevrolet buick gmc ltee
+ Lessard Buick Chevrolet GMC
+Marlin Chevrolet Inc.
+Marquis Automobiles Inc.
+Méthot Chevrolet Buick GMC
+Nicol Auto inc.
+Paul Albert Chevrolet Cadillac Buick GMC Ltd
+Paul Dumas Chevrolet Buick GMC
+ Racine Chevrolet Buick GMC
+Roberval Chevrolet Buick GMC
+Royal chevrolet
+Simpson Automobiles inc.
+St-Georges Chevrolet Buick Cadillac GMC Inc
+Ste-Marie Automobiles Ltd
+Temis Chevrolet Buick GMC Ltd
+Thibault chevrolet cadillac buick gmc
+Trois-Rivieres Chevrolet Buick GMC Cadillac
+Vision Chevrlolet Cadillac Buick GMC]
+
+FORD:-[Dupont and Dupont Ford Lincoln
+440 ford lincoln laval
+Boisvert ford
+Carle ford
+Blainville ford
+Montmorency ford lincoln
+Desjardins ford
+Auto Paquin ltee
+Automobiles val estrie
+Brunelle Ford Ventes Ltee
+Chartrand ford
+Dupont Ford
+Les Galeries Ford inc.
+Olivier ford
+Performance Ford
+Trois-Rivieres Ford Lincoln
+Albi Joliette Ford Lincoln Inc
+Alma ford
+Automobile JP Yergeau
+Automobiles Dalton
+Automobiles Mauger Ford
+Automobiles perron
+Automobiles rejean laporte et fils ltee
+Banlieue ford
+Baril Ford Lincoln
+Beauce auto 2000
+Cliche auto ford
+Deragon ford
+Desmeules Automotive
+Desrosier ford lachute
+Fecteau ford
+Ferro Automobiles
+Ford appalaches
+Fortier ford
+Gentilly Automobiles Ltd
+Hardy Ringuette Automobiles
+Impact ford
+Jean dumas ford
+La perade ford
+Le circuit ford lincoln
+Machabe Automobiles
+Magog Ford Inc.
+Maski Ford Division of Trois-Rivieres Ford Lincoln
+Maurais automobiles
+Morand ford lincoln
+Ostiguy ford lincoln
+Paquin ford
+lombardihonda
+Soma Auto inc.
+St-onge ford
+Terrebonne ford inc
+Venne Ford
+Ventes Ford Elite
+Viau Ford (1990) Inc.
+villeneuve ford
+West Island Ford Lincoln
+Hondade boucherville
+Groupe-bessette
+Cliche auto ford
+Léveillé Ford
+Desrosier Mount-Tremblant
+Ford Granby
+Gendron Ford
+Gerard hubert automobile
+Solution Ford
+Promenades Ford
+Ford Ile Perrot
+Shawville Ford Inc.
+Credit100Limits
+Pretsarabais
+Autodesjardins]
+
+
+JEEP:-[
+Hamel Chevrolet Buick GMC
+Christin Chevrolet Buick GMC
+Denis Breton Chevrolet Buick GMC
+Lussier Chevrolet Buick GMC Corvette Ltd.
+Grenier Chevrolet Buick GMC
+CHEVROLET at ST-JEROME
+Garage Montplaisir
+Action Chevrolet Buick GMC
+Arnold Chevrolet Buick GMC Cadillac Inc
+Desjardins Chevrolet Buick GMC Inc
+Dilawri Chevrolet, Buick and GMC
+Dion Chevrolet Buick GMC Inc
+Fournier Chevrolet Buick GMC Cadillac
+Sept-Îles Chevrolet Buick GMC
+Thibault Chevrolet Cadillac Pontiac Buick GMC Ltd
+440 Chevrolet Buick GMC
+A. Chalut Auto Ltée
+A. P. Chevrolet Buick GMC Inc
+Auto Mont Chevrolet Buick GMC Ltd
+Automobiles Carmer (1990) inc.
+Automobiles Paille Inc.
+B. Dupont Auto Inc.
+Bisson Chevrolet Buick GMC Inc
+Boisvert Chevrolet Buick GMC
+Boulevard Chevrolet Cadillac Buick GMC Inc
+Carrefour Chevrolet Buick GMC
+Cartier Chevrolet Buick GMC
+Chaleur Automobiles ltee
+Chevrolet Buick GMC West Island
+Chibougamau Automobile Inc.
+Deschamps Chevrolet Buick Cadillac GMC
+Drouin et Freres
+Dubois et Freres GM
+Duchesne Autos ltee
+Dufour Pontiac Chevrolet Buick GMC Inc
+F R Dallaire Inc
+Garage McConnery Inc.
+Garage Tardif D'Amos
+Gareau Auto
+Germain Chevrolet Buick GMC
+Guy Thibault Chevrolet Buick GMC Cadillac Ltee
+H. Auger Automobiles Inc.
+Repentigny Chevrolet, Buick & GMC
+Lachapelle Buick GMC
+Le Relais Chevrolet Ltee
+Les Automobiles M Rocheleau Inc
+Les Sommets Chevrolet Buick GMC Ltee
+Lessard Buick Chevrolet GMC
+Marlin Chevrolet Inc.
+Marquis Automobiles Inc.
+Méthot Chevrolet Buick GMC
+Nicol Auto inc.
+Paul Albert Chevrolet Buick GMC
+Paul Dumas Chevrolet Buick GMC
+Racine Chevrolet Buick GMC
+Roberval Chevrolet Buick GMC
+Simpson Automobiles inc.
+ St-Georges Chevrolet Buick Cadillac GMC Inc
+Ste-Marie Automobiles Ltd
+Temis Chevrolet Buick GMC Ltd
+Trois-Rivieres Chevrolet Buick GMC Cadillac
+Vision Chevrlolet Cadillac Buick GMC]
+
+
+
+HONDA:-[Spinelli Honda
+Honda Gabriel
+Honda Ste-Rose
+Hamel Honda
+Lombardi Honda
+Gatineau Honda
+Honda Centreville
+Excel Honda
+Honda 
+Honda Des Sources
+Park Avenue Honda
+Honda De Saint-Jean
+Lallier Honda De Hull
+Honda De Laval
+Nord Sud Honda
+Donnacona Honda
+Honda De Terrebonne
+Lallier Automobile Montreal
+Lallier Ste-Foy
+Avantage Honda
+Honda De Boucherville
+Honda New Richmond
+St-Constant Honda
+Trois-Rivieres Honda
+Alma Honda
+Automobiles Bgp Honda
+Chagnon Honda
+Chambly Honda
+Deragon Honda
+Gaspe Honda
+Honda Casavant
+Honda Charlesbourg
+Honda De Blainville
+Honda De Ste-Agathe
+Honda De Val D'Or
+Honda Degiro Inc
+Honda Des Bois-Francs
+Honda Drummondville
+Honda Lachute
+Honda Mont-Laurier
+L'Ami Rouyn-Noranda
+Lallier Repentigny
+Lamontagne Auto Ltee
+Leo Automobile Ltee
+Levy Honda
+Longueuil Honda
+Matane Honda
+Riviere-Du-Loup Honda
+Sept-Iles Honda
+Sherbrooke Honda
+Thetford Honda
+Villeneuve Honda Joliette
+Civic Honda DDO
+Auto Frank et Michel (Boisbriand)
+valleyfield honda
+Auto Manic Honda
+Cap-aux-Meules Honda Inc]
+
+HYUNDIA:-[Hyundai prestige
+Albi hyundai laval
+Hyundai blainville
+Chomedey hyundai
+Hyundai gabriel ouest
+Hyundai repentigny
+Hyundai west island
+Albi hyundai mascouche
+Riendeau hyundai
+Beauport hyundai
+Hyundai longueuil
+Hyundai Trois-Rivieres
+Coiteux hyundai
+Hull hyundai
+Brossard hyundai
+Hyundai drummondville
+Hyundai vaudreuil
+Hyundai st-constant
+Hyundai st-jerome
+Lessard hyundai
+Hyundai victoriaville
+Hyundai de lanaudiere
+Rimouski hyundai
+Hyundai sherbrooke
+Hamel hyundai
+Hyundai ste-agathe
+Hyundai cowansville
+Ste-foy hyundai
+Hyundai granby
+Hyundai gatineau
+Hyundai valleyfield
+magog hyundai
+Hyundai Sorel-Tracy
+Albi hyundai chateauguay
+Automobiles hyundai matane
+Montmagny hyundai
+Hyundai du royaume
+Hyundai shawinigan
+St-laurent hyundai
+hyundai amos
+Leviko hyundai
+Hyundai casavant
+Ruby Auto inc.
+Hyundai beauce
+Hyundai st-raymond
+Jean Dumas Hyundai
+Ile des Soeurs Hyundai
+Hyundai Riviere-Du-Loup
+Dynastie automobile
+Performe hyundai
+Gaspesie Auto Inc
+Poirier hyundai
+St-jean hyundai
+hyundai longueuil
+comme1neuf
+jmautoplus
+touteslesmarques]
+
+
+
+INFINITI:-[Infiniti laval
+Spinelli infiniti
+INFINITI of Sherbrooke
+ bghgbujqjqw
+Park Avenue INFINITI Brossard
+INFINITI de Boucherville]
+
+JAGUAR:-[Decarie motors
+Jaguar land rover laval
+John Scotti Jaguar Land Rover]
+
+LINCOLN:-[Dupont and Dupont Ford Lincoln
+440 Ford Lincoln Laval
+Montmorency Ford Lincoln
+ Automobiles Val Estrie
+Lincoln Gabriel St-Jacques
+Trois-Rivieres Ford Lincoln
+Albi Joliette Ford Lincoln Inc
+Automobiles Rejean Laporte Et Fils ltee
+Baril Ford Lincoln
+Hardy Ringuette Automobiles
+Maski Ford Division of Trois-Rivieres Ford Lincoln
+Morand Ford Lincoln
+Ostiguy Ford Lincoln
+West Island Ford Lincoln
+]
+
+
+KIA:-[Kia Gabriel
+Spinelli Kia
+Lallier Kia de Laval
+Kia Mario Blain Sainte-Julie
+Kia de LaSalle
+Kia Mario Blain
+Boisvert Kia
+Kia Joliette
+Kia Saint-Constant
+ALBI Kia Mascouche
+Complexe Kia Montreal
+ Kia Beauport
+ Kia Matane
+Kia Victoriaville
+Mega Kia Brossard
+Ville-Marie Kia
+Action Kia
+ALBI Kia St-Eustache
+Automobiles du Boulevard Kia
+Barnabe Kia
+Chambly Kia
+Dube Kia
+Formule Kia
+ Kia Cap-Sante
+Kia Charlevoix
+Kia de Drummondville
+Kia de Granby
+Kia de Magog
+Kia des Laurentides
+Kia Dealership in Hawkesbury
+Kia Harold Auto
+Kia Levis
+Kia Mario Blain Sorel-Tracy
+Kia New Richmond
+Kia Quebec
+Kia Repentigny
+Kia Ste-Foy
+Kia Trois-Rivieres
+Kia Valleyfield Regatta
+Longueuil Kia
+Maison Kia Dolbeau-Mistassini
+Mega Kia Sherbrooke
+Montreal-Nord Kia
+Promenade Kia
+Sept-Iles Kia
+St-Onge Kia
+Poirier Kia
+Kia ST - Hyacinthe
+Boulevard kia
+kia megantic]
+
+
+
+LAND ROVER:-[Decarie Motors
+Land Rover Laval
+John Scotti Jaguar Land Rover]
+
+
+LEXUS:-[Lexus Gabriel
+Spinelli Lexus Pointe-Claire
+Spinelli Lexus Lachine
+Lexus Prestige
+Park Avenue Lexus Sainte-Julie
+Boulevard Lexus
+Lexus Laval
+Lexus quebec
+Lexus gabriel Brossard]
+
+
+MITSUBISHI:-[
+Rallye Mitsubishi
+Granby Mitsubishi
+St-Eustache Mitsubishi
+Beauce Mitsubishi
+Boisvert Mitsubishi
+Boucherville Mitsubishi
+Brossard Mitsubishi
+Cote-Nord Mitsubishi
+Coupal and Brassard Mitsubishi
+John Scotti Mitsubishi
+Kamouraska Mitsubishi
+La Maison Mitsubishi Roberval
+Laval Mitsubishi
+Mitsubishi Saguenay
+Paquet Mitsubishi
+Quebec Mitsubishi
+Repentigny Mitsubishi
+Sherbrooke Mitsubishi
+Sherbrooke MitsubishiSt-Hyacinthe Mitsubishi
+Ste-Foy Mitsubishi
+Trois-Rivieres Mitsubishi
+Valleyfield Mitsubishi
+Action Mitsubishi
+Montréal Mitsubishi
+St-Hyacinthe Mitsubishi]
+
+
+
+NISSAN:-[Spinelli Nissan
+Nissan Gabriel Jean-Talon
+Groupe Rive-Sud de Brossard
+Nissan Gabriel
+Nissan Gabriel St-Léonard
+Nissan de Boucherville
+Nissan Magog
+Coupal and Brassard Chambly Nissan
+Alma Nissan
+Belvedere Nissan inc.
+Capital City Nissan
+Cowansville Nissan
+St-Georges Nissan
+ALBI Nissan Île-Perrot
+ALBI Nissan Joliette
+ALBI Nissan Mascouche
+ALBI Nissan Mont-Tremblant
+ALBI Nissan Repentigny
+ALBI Nissan Vaudreuil
+Baie-Comeau Nissan
+Beauport Nissan
+Belvedere Nissan inc.
+Energie Nissan Shawinigan
+Gatineau Nissan
+Germain Nissan
+HGregoire Nissan Blainville
+HGregoire Nissan Chomedey
+HGregoire Nissan Saint-Eustache
+L'Ami Junior Nissan Charlevoix
+L'Ami Junior Nissan Chicoutimi
+Matane Nissan
+Nissan de Granby
+Nissan Drummondville
+Paquet Nissan
+Poirier Nissan
+Rimouski Nissan inc.
+Nissan de Granby
+Nissan Drummondville
+Nissan de Granby
+Nissan Drummondville
+St-Félicien Nissan inc.
+Ste-Foy Nissan - Quebec
+Trois-Rivieres Nissan Inc.
+Val-D'Or Nissan Inc
+Valleyfield Nissan
+Victoriaville Nissan
+Hull Nissan
+Dormani Nissan
+Nissan de Saint-Hyacinthe]
+
+
+RAM:-[
+Desmeules Chrysler Dodge Jeep
+Excellence Chrysler St-Eustache
+Duclos Longueuil Chrysler Dodge Jeep Ram Inc
+Des Sources Dodge Chrysler Ltd
+St-Jérôme Chrysler Jeep Dodge RAM Fiat
+Champlain Dodge
+Excellence Chrysler Vaudreuil
+Landry Automobiles Ltee
+Grenier Chrysler Dodge Jeep
+Boulevard Dodge Chrysler Jeep - Montreal
+Joliette Dodge Chrysler Ltee
+Longue Pointe Chrysler Dodge Jeep Ram
+Kollbec Gatineau Jeep RAM Dodge Chrysler Fiat
+Lestage Chrysler
+Girard Automobile Inc.
+ALBI Chrysler Dodge Jeep RAM Fiat Pointe-aux-Trembles
+Capital Chrysler Quebec
+Chaput Automobile Inc.
+Chicoutimi Chrysler Dodge Jeep Inc.
+Clermont Dodge Chrysler Inc.
+Daniel Pare Dodge Chrysler Inc.
+Gendron Chrysler Dodge Jeep
+JD Chrysler FIAT (Le Groupe JD)
+Laval Chrysler
+Rondeau Chrysler Jeep Dodge Inc
+Trois Diamants Auto (1987) Ltee
+A. Automobiles Gosselin
+Armand Automobiles
+Au Royaume Chrysler Dodge Jeep Inc
+Automobiles Bernier and Crepeau Ltd
+Automobiles Guy Beaudoin Inc.
+Bessette Automobiles Inc
+Boulay Dodge Chrysler Inc
+C. J. Kyle Ltee
+Clement Chrysler Dodge Ltd
+Deux Rives Chrysler Dodge Jeep
+Didier Dodge Chrysler Inc.
+Dupont Automobile Ltee
+E P Poirier Ltd
+G. Dumais Automobiles ltee
+Garage F Cossette
+Garage P. Vezina Matane
+Garage Poirier and Fils Ltee
+Garage Windsor
+Kamouraska Chrysler
+Kennebec Dodge Chrysler Inc.
+L'Etoile Dodge Chrysler Inc.
+La Perade Chrysler
+Lapointe Auto Inc
+Les Automobiles Simard Inc.
+Levis Chrysler
+Maison de l'Auto Dolbeau-Mistassini
+Maison de l'Auto Roberval
+Maison de l'auto St-Felicien
+Michaud Automobiles
+Mont-Joli Chrysler Jeep Dodge
+N.V. Cloutier inc.
+Performance Laurentides Inc
+Poirier Chrysler Jeep Dodge
+St-Basile Dodge Chrysler
+St-Hyacinthe Chrysler Jeep Dodge Inc.
+St-Raymond Chrysler Jeep Dodge Ram
+Weedon Automobiles (1977) Inc.]
+
+
+MAZDA:-[Spinelli Mazda
+Mazda President
+Mazda de laval
+Mazda gabriel st-laurent
+Elite Mazda
+Mazda 2-20
+Brossard Mazda
+Argus Mazda
+Metro Mazda
+Mazda pointe-aux-trembles
+Mazda Des Sources
+Barnabe Mazda
+ALBI Mazda Laval
+ALBI Mazda Mascouche
+Chambly mazda
+Donnacona Mazda
+Mazda Chateauguay
+Mazda Joliette
+Mazda Saint-Jérôme
+Planete Mazda
+Amos Mazda
+Baie-Comeau Mazda
+Beauport Mazda
+Blais Mazda
+Charlevoix Mazda
+Cowansville Mazda
+Formule Mazda
+La Maison Mazda
+Laurier Mazda
+Levis Mazda
+Longueuil Mazda
+Mazda Chatel
+Mazda de Magog
+Mazda de Sherbrooke
+Mazda Drummond
+Mazda Gaspe
+Mazda L'Ami Junior 2.0
+Mazda Trois-Rivieres
+Mazda Val David véhicules d'occasion
+Megantic Mazda
+Montmagny Mazda
+Paquin Mazda
+Performe Mazda
+Prestige Mazda
+Sept-Iles Mazda
+Sittelle Mazda
+Val-d'Or Mazda Inc.
+Valleyfield Mazda
+Villeneuve Mazda
+Mazda repentigny
+Mazda De Boucherville
+Dube mazda]
+
+
+MERCEDES-BENZ:-[Silver Star
+Mercedes-Benz West Island
+Mercedes-Benz Laval
+Mercedes-Benz Montréal-Est
+Franke Mercedes-Benz
+Mercedes-Benz Blainville
+Chatel Automobiles Ltee
+Duval Mercedes-Benz
+Mercedes-Benz Gatineau
+Mercedes-Benz Rive-Sud
+Mercedes-Benz Saguenay
+Mercedes-Benz Sherbrooke
+Mercedes-Benz Trois-Rivieres]
+
+
+PORSCHE:-[Porsche Centre Québec
+Porsche Prestige
+Porsche Rive-Sud | St-Hubert
+]
+
+
+
+TOYOTA:-[Spinelli Toyota Pointe Claire
+Spinelli Toyota Lachine
+Alix Toyota
+Chomedey Toyota Laval
+Woodland Toyota
+ Toyota Gabriel Centre-Ville
+Toyota Gabriel St-Laurent
+Ile-Perrot Toyota
+Park Avenue Toyota
+Carrefour 40-640 Toyota
+Chasse Toyota
+St-Leonard Toyota
+St-Jerome Toyota
+Toyota Montreal-Nord
+Toyota Charlesbourg
+Ste-Therese Toyota
+Chateauguay Toyota
+Duval Toyota
+Longueuil Toyota
+Mauricie Toyota Inc.
+Toyota Gatineau
+Acces Toyota inc.
+Angers Toyota
+Candiac Toyota inc.
+StHubert Toyota
+Cowansville Toyota
+Du Beau Toyota
+Houle Toyota
+Matane Toyota
+Sherbrooke Toyota
+St-Raymond Toyota
+ Ste-Foy Toyota
+Toyota Drummondville
+Toyota Victoriaville
+Vimont Toyota Laval
+Alma Toyota
+Amos Toyota
+Boulevard Toyota
+Dery Toyota
+Granby Toyota
+Gareau Toyota
+Gaspe Toyota
+Joliette Toyota
+Lachute Toyota Ltee
+Lagrange Toyota
+Leveille Toyota
+Lévis Toyota
+Manic Toyota
+ Montmagny Toyota
+ Rimouski Toyota
+ Riviere-du-Loup Toyota
+toyota-town
+Rocoto Toyota
+Sept-Iles Toyota inc.
+St-Eustache Toyota
+St-Félicien Toyota
+St-Georges Toyota inc.
+Toyota Baie-des-Chaleurs
+Charlevoix Toyota
+Toyota Magog
+ Toyota Mont-Laurier
+Toyota Richmond Inc
+Toyota Ste-Agathe
+Trois-Rivieres Toyota
+Valleyfield Toyota
+ Villa Toyota
+Pierre Lefebvre Toyota
+autoplus
+jd occassion]
+
+
+
+SUBARU:-[Subaru-Montreal
+Subaru Brossard
+Subaru Outaouais
+Subaru Des Sources
+Subaru Rive Nord
+Subaru de Laval
+Subaru Ste-Julie
+John Scotti Subaru
+Lachute Subaru
+ Levis Subaru
+
+Desjardins Subaru
+Formule Subaru
+Groupe Grand-Portage
+Option Subaru
+Subaru New Richmond
+Subaru St-Hyacinthe
+Subaru Ste-Agathe Enr
+Subaru Trois-Rivieres
+Subaru Victoriaville
+Suzuki Subaru Repentigny
+Vachon Subaru
+Grand-Portage Auto]
+
+VOLKSWAGEN:-[Alma Volkswagen
+Arbour automobiles ltee
+Carrefour 40-640 Toyota
+Carrefour 40-640 volkswagen
+Centre-Ville Volkswagen
+Complexe volkswagen 440
+Drummondville volkswagen
+Granby volkswagen
+Grand portage volkswagen
+Grenier volkswagen
+Groupe Lauzon
+Haut-richelieu volkswagen
+Joliette volkswagen
+Langlois volkswagen
+Laval volkswagen ltee
+Les Automobiles Popular Inc
+Mauricie Volkswagen Inc
+Paquin volkswagen
+Park avenue volkswagen
+Rimar volkswagen
+Rinfret volkswagen
+Saguenay volkswagen
+Spinelli volkswagen lachine
+St-Bruno Volkswagen
+Vallee Automobile Inc
+Vaudreuil volkswagen
+Volkswagen de l'estrie
+Volkswagen de l'outaouais
+Volkswagen des sources
+Volkswagen Gabriel
+Volkswagen Lauzon Blainville
+Volkswagen new richmond
+Volkswagen rimouski
+Volkswagen sorel-tracy
+Volkswagen Ste-Hyacinthe
+Volkswagen st-jerome
+Volkswagen Victoriaville inc.]
+
+VOLVO:-[Volvo de brossard
+Volvo laval
+Volvo Pointe-Claire
+Uptown Volvo Cars Decarie
+ALBI Volvo Sainte-Agathe-des-Monts
+Volvo sherbrooke
+Volvo de québec
+Villeneuve Volvo
+Volvo Cars Saint Léonard
+Volvo St. Hyacinthe]
+
+
