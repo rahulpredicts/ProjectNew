@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import {
   Search,
   Plus,
@@ -149,6 +149,54 @@ export default function Inventory() {
 
   const [sortBy, setSortBy] = useState("addedDate");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
+  
+  // Generate dynamic filter options from inventory
+  const availableModels = useMemo(() => {
+    const models = new Set<string>();
+    allCars.forEach(car => {
+      if (car.model && (!filterMake || car.make === filterMake)) {
+        models.add(car.model);
+      }
+    });
+    return Array.from(models).sort();
+  }, [allCars, filterMake]);
+
+  const availableYears = useMemo(() => {
+    const years = new Set<string>();
+    allCars.forEach(car => {
+      if (car.year) {
+        years.add(car.year.toString());
+      }
+    });
+    return Array.from(years).sort((a, b) => parseInt(b) - parseInt(a)); // Descending
+  }, [allCars]);
+
+  const availableFilterTrims = useMemo(() => {
+    if (!filterMake) return [];
+    return getTrimsForMake(filterMake);
+  }, [filterMake]);
+
+  // Reset dependent filters when upstream filter changes
+  useEffect(() => {
+    if (filterMake) {
+      // Reset model and trim when make changes
+      const validModel = availableModels.includes(filterModel);
+      if (!validModel && filterModel) {
+        setFilterModel("");
+      }
+    } else {
+      // Clear model and trim when no make selected
+      if (filterModel) setFilterModel("");
+      if (filterTrim) setFilterTrim("");
+    }
+  }, [filterMake, availableModels]);
+
+  useEffect(() => {
+    // Reset trim if it's not in available trims
+    if (filterTrim && !availableFilterTrims.includes(filterTrim)) {
+      setFilterTrim("");
+    }
+  }, [availableFilterTrims]);
   
   // VIN Decoder state for edit dialog
   const [isDecodingEditCar, setIsDecodingEditCar] = useState(false);
@@ -655,18 +703,42 @@ export default function Inventory() {
                 <Card className="border-0 shadow-sm bg-white/80 backdrop-blur-sm">
                     <CardContent className="p-6">
                         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
-                            {/* Standard Text Filters */}
+                            {/* Standard Dropdown Filters */}
                             <div className="space-y-2">
                                 <Label className="text-xs text-gray-500">Make</Label>
-                                <Input placeholder="Any Make" value={filterMake} onChange={(e) => setFilterMake(e.target.value)} className="h-9" />
+                                <Select value={filterMake || "all"} onValueChange={(val) => setFilterMake(val === "all" ? "" : val)}>
+                                    <SelectTrigger className="h-9"><SelectValue placeholder="Any Make" /></SelectTrigger>
+                                    <SelectContent className="max-h-[300px]">
+                                        <SelectItem value="all">All Makes</SelectItem>
+                                        {CAR_MAKES.map(make => (
+                                            <SelectItem key={make} value={make}>{make}</SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
                             </div>
                             <div className="space-y-2">
                                 <Label className="text-xs text-gray-500">Model</Label>
-                                <Input placeholder="Any Model" value={filterModel} onChange={(e) => setFilterModel(e.target.value)} className="h-9" />
+                                <Select value={filterModel || "all"} onValueChange={(val) => setFilterModel(val === "all" ? "" : val)}>
+                                    <SelectTrigger className="h-9"><SelectValue placeholder="Any Model" /></SelectTrigger>
+                                    <SelectContent className="max-h-[300px]">
+                                        <SelectItem value="all">All Models</SelectItem>
+                                        {availableModels.map(model => (
+                                            <SelectItem key={model} value={model}>{model}</SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
                             </div>
                             <div className="space-y-2">
                                 <Label className="text-xs text-gray-500">Year</Label>
-                                <Input placeholder="Any Year" value={filterYear} onChange={(e) => setFilterYear(e.target.value)} className="h-9" />
+                                <Select value={filterYear || "all"} onValueChange={(val) => setFilterYear(val === "all" ? "" : val)}>
+                                    <SelectTrigger className="h-9"><SelectValue placeholder="Any Year" /></SelectTrigger>
+                                    <SelectContent className="max-h-[300px]">
+                                        <SelectItem value="all">All Years</SelectItem>
+                                        {availableYears.map(year => (
+                                            <SelectItem key={year} value={year}>{year}</SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
                             </div>
                             <div className="space-y-2">
                                 <Label className="text-xs text-gray-500">VIN Contains</Label>
@@ -678,7 +750,15 @@ export default function Inventory() {
                             </div>
                             <div className="space-y-2">
                                 <Label className="text-xs text-gray-500">Trim</Label>
-                                <Input placeholder="Any Trim" value={filterTrim} onChange={(e) => setFilterTrim(e.target.value)} className="h-9" />
+                                <Select value={filterTrim || "all"} onValueChange={(val) => setFilterTrim(val === "all" ? "" : val)} disabled={!filterMake}>
+                                    <SelectTrigger className="h-9"><SelectValue placeholder={filterMake ? "Any Trim" : "Select Make First"} /></SelectTrigger>
+                                    <SelectContent className="max-h-[300px]">
+                                        <SelectItem value="all">All Trims</SelectItem>
+                                        {availableFilterTrims.map(trim => (
+                                            <SelectItem key={trim} value={trim}>{trim}</SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
                             </div>
                             <div className="space-y-2">
                                 <Label className="text-xs text-gray-500">Province</Label>
