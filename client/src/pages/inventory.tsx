@@ -139,12 +139,12 @@ export default function Inventory() {
   const [filterKmsRange, setFilterKmsRange] = useState<[number, number]>([0, 300000]);
   const [filterProvince, setFilterProvince] = useState("");
   
-  // New Filters
-  const [filterTransmission, setFilterTransmission] = useState("");
-  const [filterDrivetrain, setFilterDrivetrain] = useState("");
-  const [filterFuelType, setFilterFuelType] = useState("");
-  const [filterBodyType, setFilterBodyType] = useState("");
-  const [filterEngineCylinders, setFilterEngineCylinders] = useState("");
+  // New Filters (multi-select)
+  const [filterTransmission, setFilterTransmission] = useState<string[]>([]);
+  const [filterDrivetrain, setFilterDrivetrain] = useState<string[]>([]);
+  const [filterFuelType, setFilterFuelType] = useState<string[]>([]);
+  const [filterBodyType, setFilterBodyType] = useState<string[]>([]);
+  const [filterEngineCylinders, setFilterEngineCylinders] = useState<string[]>([]);
 
   const [sortBy, setSortBy] = useState("addedDate");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
@@ -538,12 +538,12 @@ export default function Inventory() {
     // @ts-ignore
     if (filterProvince) cars = cars.filter(c => c.dealershipProvince?.toLowerCase().includes(filterProvince.toLowerCase()));
 
-    // New Filters
-    if (filterTransmission && filterTransmission !== 'all') cars = cars.filter(c => c.transmission?.toLowerCase() === filterTransmission.toLowerCase());
-    if (filterDrivetrain && filterDrivetrain !== 'all') cars = cars.filter(c => c.drivetrain?.toLowerCase() === filterDrivetrain.toLowerCase());
-    if (filterFuelType && filterFuelType !== 'all') cars = cars.filter(c => c.fuelType?.toLowerCase() === filterFuelType.toLowerCase());
-    if (filterBodyType && filterBodyType !== 'all') cars = cars.filter(c => c.bodyType?.toLowerCase() === filterBodyType.toLowerCase());
-    if (filterEngineCylinders && filterEngineCylinders !== 'all') cars = cars.filter(c => c.engineCylinders === filterEngineCylinders);
+    // New Filters (multi-select)
+    if (filterTransmission.length > 0) cars = cars.filter(c => filterTransmission.includes(c.transmission?.toLowerCase() || ""));
+    if (filterDrivetrain.length > 0) cars = cars.filter(c => filterDrivetrain.includes(c.drivetrain?.toLowerCase() || ""));
+    if (filterFuelType.length > 0) cars = cars.filter(c => filterFuelType.includes(c.fuelType?.toLowerCase() || ""));
+    if (filterBodyType.length > 0) cars = cars.filter(c => filterBodyType.includes(c.bodyType?.toLowerCase() || ""));
+    if (filterEngineCylinders.length > 0) cars = cars.filter(c => filterEngineCylinders.includes(c.engineCylinders?.toString() || ""));
 
 
     cars.sort((a, b) => {
@@ -582,11 +582,11 @@ export default function Inventory() {
     setFilterPriceRange([0, 200000]);
     setFilterKmsRange([0, 300000]);
     setFilterProvince("");
-    setFilterTransmission("");
-    setFilterDrivetrain("");
-    setFilterFuelType("");
-    setFilterBodyType("");
-    setFilterEngineCylinders("");
+    setFilterTransmission([]);
+    setFilterDrivetrain([]);
+    setFilterFuelType([]);
+    setFilterBodyType([]);
+    setFilterEngineCylinders([]);
   };
 
   const totalInventory = allCars.length;
@@ -822,76 +822,107 @@ export default function Inventory() {
                             </div>
                         </div>
 
-                        {/* Dropdown Filters */}
+                        {/* Multi-Select Dropdown Filters */}
                         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-6 pt-4 border-t border-gray-100">
                             <div className="space-y-2">
-                                <Label className="text-xs text-gray-500">Transmission</Label>
-                                <Select value={filterTransmission} onValueChange={setFilterTransmission}>
-                                    <SelectTrigger className="h-9"><SelectValue placeholder="All" /></SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="all">All Transmissions</SelectItem>
-                                        <SelectItem value="automatic">Automatic</SelectItem>
-                                        <SelectItem value="manual">Manual</SelectItem>
-                                    </SelectContent>
-                                </Select>
+                                <Label className="text-xs text-gray-500">Transmission ({filterTransmission.length})</Label>
+                                <div className="border rounded-md p-2 bg-white max-h-[150px] overflow-y-auto space-y-1">
+                                    {["automatic", "manual"].map(val => (
+                                        <label key={val} className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-1 rounded">
+                                            <Checkbox 
+                                                checked={filterTransmission.includes(val)}
+                                                onCheckedChange={(checked) => {
+                                                    if (checked) {
+                                                        setFilterTransmission([...filterTransmission, val]);
+                                                    } else {
+                                                        setFilterTransmission(filterTransmission.filter(v => v !== val));
+                                                    }
+                                                }}
+                                            />
+                                            <span className="text-sm capitalize">{val}</span>
+                                        </label>
+                                    ))}
+                                </div>
                             </div>
                             <div className="space-y-2">
-                                <Label className="text-xs text-gray-500">Drivetrain</Label>
-                                <Select value={filterDrivetrain} onValueChange={setFilterDrivetrain}>
-                                    <SelectTrigger className="h-9"><SelectValue placeholder="All" /></SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="all">All Drivetrains</SelectItem>
-                                        <SelectItem value="fwd">FWD</SelectItem>
-                                        <SelectItem value="rwd">RWD</SelectItem>
-                                        <SelectItem value="awd">AWD</SelectItem>
-                                        <SelectItem value="4wd">4WD</SelectItem>
-                                        <SelectItem value="4x4">4x4</SelectItem>
-                                    </SelectContent>
-                                </Select>
+                                <Label className="text-xs text-gray-500">Drivetrain ({filterDrivetrain.length})</Label>
+                                <div className="border rounded-md p-2 bg-white max-h-[150px] overflow-y-auto space-y-1">
+                                    {["fwd", "rwd", "awd", "4wd", "4x4"].map(val => (
+                                        <label key={val} className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-1 rounded">
+                                            <Checkbox 
+                                                checked={filterDrivetrain.includes(val)}
+                                                onCheckedChange={(checked) => {
+                                                    if (checked) {
+                                                        setFilterDrivetrain([...filterDrivetrain, val]);
+                                                    } else {
+                                                        setFilterDrivetrain(filterDrivetrain.filter(v => v !== val));
+                                                    }
+                                                }}
+                                            />
+                                            <span className="text-sm uppercase">{val}</span>
+                                        </label>
+                                    ))}
+                                </div>
                             </div>
                             <div className="space-y-2">
-                                <Label className="text-xs text-gray-500">Fuel Type</Label>
-                                <Select value={filterFuelType} onValueChange={setFilterFuelType}>
-                                    <SelectTrigger className="h-9"><SelectValue placeholder="All" /></SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="all">All Fuel Types</SelectItem>
-                                        <SelectItem value="gasoline">Gasoline</SelectItem>
-                                        <SelectItem value="diesel">Diesel</SelectItem>
-                                        <SelectItem value="hybrid">Hybrid</SelectItem>
-                                        <SelectItem value="electric">Electric</SelectItem>
-                                    </SelectContent>
-                                </Select>
+                                <Label className="text-xs text-gray-500">Fuel Type ({filterFuelType.length})</Label>
+                                <div className="border rounded-md p-2 bg-white max-h-[150px] overflow-y-auto space-y-1">
+                                    {["gasoline", "diesel", "hybrid", "electric"].map(val => (
+                                        <label key={val} className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-1 rounded">
+                                            <Checkbox 
+                                                checked={filterFuelType.includes(val)}
+                                                onCheckedChange={(checked) => {
+                                                    if (checked) {
+                                                        setFilterFuelType([...filterFuelType, val]);
+                                                    } else {
+                                                        setFilterFuelType(filterFuelType.filter(v => v !== val));
+                                                    }
+                                                }}
+                                            />
+                                            <span className="text-sm capitalize">{val}</span>
+                                        </label>
+                                    ))}
+                                </div>
                             </div>
                             <div className="space-y-2">
-                                <Label className="text-xs text-gray-500">Body Type</Label>
-                                <Select value={filterBodyType} onValueChange={setFilterBodyType}>
-                                    <SelectTrigger className="h-9"><SelectValue placeholder="All" /></SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="all">All Body Types</SelectItem>
-                                        <SelectItem value="sedan">Sedan</SelectItem>
-                                        <SelectItem value="suv">SUV</SelectItem>
-                                        <SelectItem value="truck">Truck</SelectItem>
-                                        <SelectItem value="coupe">Coupe</SelectItem>
-                                        <SelectItem value="hatchback">Hatchback</SelectItem>
-                                        <SelectItem value="van">Van</SelectItem>
-                                    </SelectContent>
-                                </Select>
+                                <Label className="text-xs text-gray-500">Body Type ({filterBodyType.length})</Label>
+                                <div className="border rounded-md p-2 bg-white max-h-[150px] overflow-y-auto space-y-1">
+                                    {["sedan", "suv", "truck", "coupe", "hatchback", "van"].map(val => (
+                                        <label key={val} className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-1 rounded">
+                                            <Checkbox 
+                                                checked={filterBodyType.includes(val)}
+                                                onCheckedChange={(checked) => {
+                                                    if (checked) {
+                                                        setFilterBodyType([...filterBodyType, val]);
+                                                    } else {
+                                                        setFilterBodyType(filterBodyType.filter(v => v !== val));
+                                                    }
+                                                }}
+                                            />
+                                            <span className="text-sm capitalize">{val}</span>
+                                        </label>
+                                    ))}
+                                </div>
                             </div>
                             <div className="space-y-2">
-                                <Label className="text-xs text-gray-500">Cylinders</Label>
-                                <Select value={filterEngineCylinders} onValueChange={setFilterEngineCylinders}>
-                                    <SelectTrigger className="h-9"><SelectValue placeholder="All" /></SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="all">All Cylinders</SelectItem>
-                                        <SelectItem value="3">3 Cyl</SelectItem>
-                                        <SelectItem value="4">4 Cyl</SelectItem>
-                                        <SelectItem value="5">5 Cyl</SelectItem>
-                                        <SelectItem value="6">6 Cyl</SelectItem>
-                                        <SelectItem value="8">8 Cyl</SelectItem>
-                                        <SelectItem value="10">10 Cyl</SelectItem>
-                                        <SelectItem value="12">12 Cyl</SelectItem>
-                                    </SelectContent>
-                                </Select>
+                                <Label className="text-xs text-gray-500">Cylinders ({filterEngineCylinders.length})</Label>
+                                <div className="border rounded-md p-2 bg-white max-h-[150px] overflow-y-auto space-y-1">
+                                    {["3", "4", "5", "6", "8", "10", "12"].map(val => (
+                                        <label key={val} className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-1 rounded">
+                                            <Checkbox 
+                                                checked={filterEngineCylinders.includes(val)}
+                                                onCheckedChange={(checked) => {
+                                                    if (checked) {
+                                                        setFilterEngineCylinders([...filterEngineCylinders, val]);
+                                                    } else {
+                                                        setFilterEngineCylinders(filterEngineCylinders.filter(v => v !== val));
+                                                    }
+                                                }}
+                                            />
+                                            <span className="text-sm">{val} Cyl</span>
+                                        </label>
+                                    ))}
+                                </div>
                             </div>
                         </div>
 
