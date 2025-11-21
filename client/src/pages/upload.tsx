@@ -528,20 +528,12 @@ export default function UploadPage() {
                 <div className="space-y-2"><Label>Year</Label><Input placeholder="YYYY" type="number" value={newCar.year} onChange={(e) => setNewCar({...newCar, year: e.target.value})} /></div>
                 
                 <div className="space-y-2">
-                    <Label>
-                        Trim
-                        {isLoadingTrims && <span className="ml-2 text-xs text-gray-400 animate-pulse">Fetching...</span>}
-                    </Label>
-                    <Select value={newCar.trim} onValueChange={(val) => setNewCar({...newCar, trim: val})}>
-                        <SelectTrigger>
-                            <SelectValue placeholder="Select Trim" />
-                        </SelectTrigger>
-                        <SelectContent className="max-h-[300px]">
-                            {availableTrims.map(trim => (
-                                <SelectItem key={trim} value={trim}>{trim}</SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
+                    <Label>Trim</Label>
+                    <Input 
+                        placeholder="e.g. LX, EX, Touring" 
+                        value={newCar.trim} 
+                        onChange={(e) => setNewCar({...newCar, trim: e.target.value})} 
+                    />
                 </div>
                 
                 <div className="space-y-2">
