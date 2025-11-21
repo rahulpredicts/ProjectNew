@@ -30,8 +30,12 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
-const POPULAR_MAKES = [
-  "Acura", "Audi", "BMW", "Buick", "Cadillac", "Chevrolet", "Chrysler", "Dodge", "Fiat", "Ford", "GMC", "Honda", "Hyundai", "Infiniti", "Jaguar", "Jeep", "Kia", "Land Rover", "Lexus", "Lincoln", "Mazda", "Mercedes-Benz", "Mini", "Mitsubishi", "Nissan", "Porsche", "Ram", "Subaru", "Tesla", "Toyota", "Volkswagen", "Volvo"
+const CAR_MAKES = [
+  "Acura", "Alfa Romeo", "Aston Martin", "Audi", "Bentley", "BMW", "Buick", "Cadillac",
+  "Chevrolet", "Chrysler", "Dodge", "Ferrari", "Fiat", "Ford", "Genesis", "GMC",
+  "Honda", "Hyundai", "Infiniti", "Jaguar", "Jeep", "Kia", "Lamborghini", "Land Rover",
+  "Lexus", "Lincoln", "Maserati", "Mazda", "McLaren", "Mercedes-Benz", "MINI", "Mitsubishi",
+  "Nissan", "Porsche", "Ram", "Rolls-Royce", "Subaru", "Tesla", "Toyota", "Volkswagen", "Volvo"
 ];
 
 const COMMON_COLORS = [
@@ -41,9 +45,17 @@ const COMMON_COLORS = [
 ];
 
 const FEATURES_LIST = [
-    "Navigation", "Sunroof/Moonroof", "Leather Seats", "Heated Seats", "Backup Camera", 
-    "Bluetooth", "Apple CarPlay", "Android Auto", "Blind Spot Monitor", "Adaptive Cruise Control",
-    "Lane Departure Warning", "Third Row Seating", "Tow Package", "Remote Start"
+  "Navigation System", "Sunroof/Moonroof", "Panoramic Sunroof", "Leather Seats", "Heated Front Seats", 
+  "Heated Rear Seats", "Ventilated Seats", "Memory Seats", "Power Seats", "Backup Camera", 
+  "360° Camera", "Parking Sensors", "Bluetooth", "Apple CarPlay", "Android Auto", 
+  "Wireless Charging", "Premium Sound System", "Blind Spot Monitor", "Adaptive Cruise Control",
+  "Lane Departure Warning", "Lane Keep Assist", "Collision Warning", "Automatic Emergency Braking",
+  "Third Row Seating", "Tow Package", "Trailer Hitch", "Remote Start", "Keyless Entry", 
+  "Push Button Start", "Power Liftgate", "Hands-Free Liftgate", "Roof Rack", "Running Boards",
+  "LED Headlights", "Fog Lights", "Daytime Running Lights", "HID Headlights", "Automatic Headlights",
+  "Rain Sensing Wipers", "Heated Mirrors", "Power Folding Mirrors", "Heads-Up Display",
+  "Dual Zone Climate", "Tri-Zone Climate", "Rear Climate Control", "Air Suspension",
+  "Sport Package", "Off-Road Package", "Winter Package", "Technology Package"
 ];
 
 export default function UploadPage() {
@@ -128,10 +140,10 @@ export default function UploadPage() {
             throw new Error(result.error);
         }
             
-        // Normalize Make to match POPULAR_MAKES (case-insensitive)
+        // Normalize Make to match CAR_MAKES (case-insensitive)
         let normalizedMake = result.make || "";
         if (normalizedMake) {
-            const matchedMake = POPULAR_MAKES.find(m => m.toLowerCase() === normalizedMake.toLowerCase());
+            const matchedMake = CAR_MAKES.find(m => m.toLowerCase() === normalizedMake.toLowerCase());
             if (matchedMake) {
                 normalizedMake = matchedMake;
             }
@@ -735,10 +747,9 @@ export default function UploadPage() {
                             <SelectValue placeholder="Select Make" />
                         </SelectTrigger>
                         <SelectContent className="max-h-[300px]">
-                            {POPULAR_MAKES.map(make => (
+                            {CAR_MAKES.map(make => (
                                 <SelectItem key={make} value={make}>{make}</SelectItem>
                             ))}
-                            <SelectItem value="Other">Other</SelectItem>
                         </SelectContent>
                     </Select>
                 </div>

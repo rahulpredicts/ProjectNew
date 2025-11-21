@@ -82,10 +82,26 @@ const COMMON_COLORS = [
   "Purple", "Other"
 ];
 
+const CAR_MAKES = [
+  "Acura", "Alfa Romeo", "Aston Martin", "Audi", "Bentley", "BMW", "Buick", "Cadillac",
+  "Chevrolet", "Chrysler", "Dodge", "Ferrari", "Fiat", "Ford", "Genesis", "GMC",
+  "Honda", "Hyundai", "Infiniti", "Jaguar", "Jeep", "Kia", "Lamborghini", "Land Rover",
+  "Lexus", "Lincoln", "Maserati", "Mazda", "McLaren", "Mercedes-Benz", "MINI", "Mitsubishi",
+  "Nissan", "Porsche", "Ram", "Rolls-Royce", "Subaru", "Tesla", "Toyota", "Volkswagen", "Volvo"
+];
+
 const FEATURES_LIST = [
-  "Navigation", "Sunroof/Moonroof", "Leather Seats", "Heated Seats", "Backup Camera", 
-  "Bluetooth", "Apple CarPlay", "Android Auto", "Blind Spot Monitor", "Adaptive Cruise Control",
-  "Lane Departure Warning", "Third Row Seating", "Tow Package", "Remote Start"
+  "Navigation System", "Sunroof/Moonroof", "Panoramic Sunroof", "Leather Seats", "Heated Front Seats", 
+  "Heated Rear Seats", "Ventilated Seats", "Memory Seats", "Power Seats", "Backup Camera", 
+  "360° Camera", "Parking Sensors", "Bluetooth", "Apple CarPlay", "Android Auto", 
+  "Wireless Charging", "Premium Sound System", "Blind Spot Monitor", "Adaptive Cruise Control",
+  "Lane Departure Warning", "Lane Keep Assist", "Collision Warning", "Automatic Emergency Braking",
+  "Third Row Seating", "Tow Package", "Trailer Hitch", "Remote Start", "Keyless Entry", 
+  "Push Button Start", "Power Liftgate", "Hands-Free Liftgate", "Roof Rack", "Running Boards",
+  "LED Headlights", "Fog Lights", "Daytime Running Lights", "HID Headlights", "Automatic Headlights",
+  "Rain Sensing Wipers", "Heated Mirrors", "Power Folding Mirrors", "Heads-Up Display",
+  "Dual Zone Climate", "Tri-Zone Climate", "Rear Climate Control", "Air Suspension",
+  "Sport Package", "Off-Road Package", "Winter Package", "Technology Package"
 ];
 
 export default function Inventory() {
@@ -1073,10 +1089,16 @@ export default function Inventory() {
                 
                 <div className="grid gap-2">
                   <Label>Make</Label>
-                  <Input
-                    value={editingCar.make}
-                    onChange={(e) => setEditingCar({ ...editingCar, make: e.target.value })}
-                  />
+                  <Select value={editingCar.make} onValueChange={(val) => setEditingCar({ ...editingCar, make: val })}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select Make" />
+                    </SelectTrigger>
+                    <SelectContent className="max-h-[300px]">
+                      {CAR_MAKES.map(make => (
+                        <SelectItem key={make} value={make}>{make}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div className="grid gap-2">
                   <Label>Model</Label>
@@ -1094,11 +1116,20 @@ export default function Inventory() {
                 </div>
                 <div className="grid gap-2">
                   <Label>Trim</Label>
-                  <Input
-                    placeholder="e.g. LX, EX, Touring"
-                    value={editingCar.trim}
-                    onChange={(e) => setEditingCar({ ...editingCar, trim: e.target.value })}
-                  />
+                  <Select value={editingCar.trim} onValueChange={(val) => setEditingCar({ ...editingCar, trim: val })}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select Trim" />
+                    </SelectTrigger>
+                    <SelectContent className="max-h-[300px]">
+                      {availableEditTrims.length > 0 ? (
+                        availableEditTrims.map(trim => (
+                          <SelectItem key={trim} value={trim}>{trim}</SelectItem>
+                        ))
+                      ) : (
+                        <SelectItem value="Base">Base</SelectItem>
+                      )}
+                    </SelectContent>
+                  </Select>
                 </div>
                  <div className="grid gap-2">
                   <Label>Price</Label>
