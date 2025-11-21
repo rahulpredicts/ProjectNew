@@ -401,12 +401,66 @@ export default function UploadPage() {
   };
 
   const handleManualSubmit = (ignoreDuplicate = false) => {
+    // Validate dealership
     if (!newCar.dealershipId) {
         toast({ title: "Error", description: "Please select a dealership", variant: "destructive" });
         return;
     }
+    
+    // Validate VIN or Stock Number (at least one required)
+    if (!newCar.vin && !newCar.stockNumber) {
+        toast({ title: "Error", description: "Either VIN or Stock Number is required", variant: "destructive" });
+        return;
+    }
+    
+    // Validate required fields
     if (!newCar.make || !newCar.model) {
         toast({ title: "Error", description: "Make and Model are required", variant: "destructive" });
+        return;
+    }
+    
+    if (!newCar.year) {
+        toast({ title: "Error", description: "Year is required", variant: "destructive" });
+        return;
+    }
+    
+    if (!newCar.trim) {
+        toast({ title: "Error", description: "Trim is required", variant: "destructive" });
+        return;
+    }
+    
+    if (!newCar.color) {
+        toast({ title: "Error", description: "Color is required", variant: "destructive" });
+        return;
+    }
+    
+    if (!newCar.price) {
+        toast({ title: "Error", description: "Price is required", variant: "destructive" });
+        return;
+    }
+    
+    if (!newCar.kilometers) {
+        toast({ title: "Error", description: "Kilometers is required", variant: "destructive" });
+        return;
+    }
+    
+    if (!newCar.transmission) {
+        toast({ title: "Error", description: "Transmission is required", variant: "destructive" });
+        return;
+    }
+    
+    if (!newCar.fuelType) {
+        toast({ title: "Error", description: "Fuel Type is required", variant: "destructive" });
+        return;
+    }
+    
+    if (!newCar.bodyType) {
+        toast({ title: "Error", description: "Body Type is required", variant: "destructive" });
+        return;
+    }
+    
+    if (!newCar.condition) {
+        toast({ title: "Error", description: "Condition is required", variant: "destructive" });
         return;
     }
     
