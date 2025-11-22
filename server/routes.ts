@@ -220,12 +220,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const vinMatch = html.match(/\b([A-HJ-NPR-Z0-9]{17})\b/i);
       if (vinMatch) extracted.vin = vinMatch[0].toUpperCase();
 
-      // Extract Price (dollar amounts)
-      const priceMatch = html.match(/\$[\s]?([\d,]+(?:\.\d{2})?)/);
+      // Extract Price - prioritize selling price, red color indicators, or prominent prices
+      let priceMatch = html.match(/(?:Selling|Sale|Final|Current)?\s*(?:Price|Amount)[\s:]?\$[\s]?([\d,]+(?:\.\d{2})?)/i);
+      if (!priceMatch) priceMatch = html.match(/color\s*[:=]\s*["']?red["']?[^>]*>[^<]*\$[\s]?([\d,]+(?:\.\d{2})?)/i);
+      if (!priceMatch) priceMatch = html.match(/style\s*=\s*["'][^"']*color\s*:\s*red[^"']*["'][^>]*>[^<]*\$[\s]?([\d,]+(?:\.\d{2})?)/i);
+      if (!priceMatch) priceMatch = html.match(/<strong>[^<]*\$[\s]?([\d,]+(?:\.\d{2})?)[^<]*<\/strong>/i);
+      if (!priceMatch) priceMatch = html.match(/\$[\s]?([\d,]{3,}(?:\.\d{2})?)/); // Larger amounts (more likely selling price)
       if (priceMatch) extracted.price = priceMatch[1].replace(/,/g, "");
 
-      // Extract Mileage/Kilometers
-      const kmsMatch = html.match(/(\d+(?:,\d+)?)\s*(?:km|kilometers|miles|mi)\b/i);
+      // Extract Mileage/Kilometers - prioritize odometer and larger numbers
+      let kmsMatch = html.match(/[Oo]dometer[\s:]+([\d,]+)\s*(?:km|kilometers|miles|mi)/i);
+      if (!kmsMatch) kmsMatch = html.match(/[Mm]ileage[\s:]+([\d,]+)\s*(?:km|kilometers|miles|mi)/i);
+      if (!kmsMatch) kmsMatch = html.match(/([\d,]{4,})\s*(?:km|kilometers)\b/i); // Look for larger km values
+      if (!kmsMatch) kmsMatch = html.match(/(\d+(?:,\d+)?)\s*(?:km|kilometers|miles|mi)\b/i);
       if (kmsMatch) extracted.kilometers = kmsMatch[1].replace(/,/g, "");
 
       // Extract Stock Number - try multiple patterns
