@@ -902,6 +902,7 @@ export default function UploadPage() {
                             <SelectItem value="coupe">Coupe</SelectItem>
                             <SelectItem value="hatchback">Hatchback</SelectItem>
                             <SelectItem value="van">Van</SelectItem>
+                            <SelectItem value="convertible">Convertible</SelectItem>
                         </SelectContent>
                     </Select>
                 </div>

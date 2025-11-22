@@ -887,7 +887,7 @@ export default function Inventory() {
                             <div className="space-y-2">
                                 <Label className="text-xs text-gray-500">Body Type ({filterBodyType.length})</Label>
                                 <div className="border rounded-md p-2 bg-white max-h-[150px] overflow-y-auto space-y-1">
-                                    {["sedan", "suv", "truck", "coupe", "hatchback", "van"].map(val => (
+                                    {["sedan", "suv", "truck", "coupe", "hatchback", "van", "convertible"].map(val => (
                                         <label key={val} className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-1 rounded">
                                             <Checkbox 
                                                 checked={filterBodyType.includes(val)}
