@@ -212,12 +212,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const html = await response.text();
       const extracted: any = {};
 
-      // Extract Year - check URL first, then headings, then generic
+      // Extract Year - check URL first, then headings, then generic (get full 4-digit year)
       let yearMatch = url.match(/(19|20)\d{2}/);
       if (!yearMatch) yearMatch = html.match(/<h[1-6][^>]*>\s*(19|20)\d{2}\s+[A-Z]/i); // Year at start of heading
       if (!yearMatch) yearMatch = html.match(/(19|20)\d{2}\s+(?:Acura|Alfa Romeo|Aston Martin|Audi|Bentley|BMW|Buick|Cadillac|Chevrolet|Chrysler|Dodge|Ferrari|Fiat|Ford|Genesis|GMC|Honda|Hyundai|Infiniti|Jaguar|Jeep|Kia|Lamborghini|Land Rover|Lexus|Lincoln|Maserati|Mazda|McLaren|Mercedes-Benz|MINI|Mitsubishi|Nissan|Porsche|Ram|Rolls-Royce|Subaru|Tesla|Toyota|Volkswagen|Volvo)/i);
       if (!yearMatch) yearMatch = html.match(/\b(19|20)\d{2}\b/);
-      if (yearMatch) extracted.year = yearMatch[1] || yearMatch[0];
+      if (yearMatch) extracted.year = yearMatch[0]; // yearMatch[0] is the full 4-digit year
 
       // Extract VIN (17 characters, uppercase letters and numbers)
       const vinMatch = html.match(/\b([A-HJ-NPR-Z0-9]{17})\b/i);
