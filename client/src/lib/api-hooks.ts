@@ -16,7 +16,6 @@ export interface Dealership {
 export interface Car {
   id: string;
   dealershipId: string;
-  dealerName: string;
   vin: string;
   stockNumber?: string;
   condition: string;
