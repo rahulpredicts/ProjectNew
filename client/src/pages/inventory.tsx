@@ -151,13 +151,17 @@ export default function Inventory() {
   
   // Generate dynamic filter options from inventory
   const availableModels = useMemo(() => {
-    const models = new Set<string>();
+    const modelsMap = new Map<string, string>(); // lowercase -> original case
     allCars.forEach(car => {
       if (car.model && (!filterMake || car.make === filterMake)) {
-        models.add(car.model);
+        const lowerCase = car.model.toLowerCase();
+        // Keep the first encountered version (or the longest if multiple cases exist)
+        if (!modelsMap.has(lowerCase) || car.model.length > (modelsMap.get(lowerCase)?.length || 0)) {
+          modelsMap.set(lowerCase, car.model);
+        }
       }
     });
-    return Array.from(models).sort();
+    return Array.from(modelsMap.values()).sort();
   }, [allCars, filterMake]);
 
   const availableYears = useMemo(() => {
