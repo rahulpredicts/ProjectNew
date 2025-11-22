@@ -56,28 +56,33 @@ export const CANADIAN_TRIMS = Array.from(
 ).sort();
 
 export function getTrimsForMake(make: string): string[] {
-    if (!make) return CANADIAN_TRIMS_BY_MAKE["Other"];
+    if (!make) return Array.from(new Set(CANADIAN_TRIMS_BY_MAKE["Other"])).sort();
+
+    let trims: string[] = [];
 
     // 1. Try exact match
     if (CANADIAN_TRIMS_BY_MAKE[make]) {
-        return CANADIAN_TRIMS_BY_MAKE[make];
-    }
-    
-    // 2. Try case-insensitive match
-    const keys = Object.keys(CANADIAN_TRIMS_BY_MAKE);
-    const exactCaseMatch = keys.find(k => k.toLowerCase() === make.toLowerCase());
-    if (exactCaseMatch) {
-        return CANADIAN_TRIMS_BY_MAKE[exactCaseMatch];
+        trims = CANADIAN_TRIMS_BY_MAKE[make];
+    } else {
+        // 2. Try case-insensitive match
+        const keys = Object.keys(CANADIAN_TRIMS_BY_MAKE);
+        const exactCaseMatch = keys.find(k => k.toLowerCase() === make.toLowerCase());
+        if (exactCaseMatch) {
+            trims = CANADIAN_TRIMS_BY_MAKE[exactCaseMatch];
+        } else {
+            // 3. Try partial match (e.g. "Ford Motor Company" -> "Ford")
+            // Check if any key is contained in the make string (case-insensitive)
+            const partialMatch = keys.find(k => make.toLowerCase().includes(k.toLowerCase()));
+            if (partialMatch) {
+                trims = CANADIAN_TRIMS_BY_MAKE[partialMatch];
+            } else {
+                trims = CANADIAN_TRIMS_BY_MAKE["Other"];
+            }
+        }
     }
 
-    // 3. Try partial match (e.g. "Ford Motor Company" -> "Ford")
-    // Check if any key is contained in the make string (case-insensitive)
-    const partialMatch = keys.find(k => make.toLowerCase().includes(k.toLowerCase()));
-    if (partialMatch) {
-        return CANADIAN_TRIMS_BY_MAKE[partialMatch];
-    }
-
-    return CANADIAN_TRIMS_BY_MAKE["Other"];
+    // Remove duplicates and sort
+    return Array.from(new Set(trims)).sort();
 }
 
 export async function fetchCanadianTrims(year: string, make: string, model: string): Promise<string[]> {
