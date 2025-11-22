@@ -212,9 +212,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const html = await response.text();
       const extracted: any = {};
 
-      // Extract Year (4 digits)
-      const yearMatch = html.match(/\b(19|20)\d{2}\b/);
-      if (yearMatch) extracted.year = yearMatch[0];
+      // Extract Year - check URL first, then headings, then generic
+      let yearMatch = url.match(/(19|20)\d{2}/);
+      if (!yearMatch) yearMatch = html.match(/<h[1-6][^>]*>\s*(19|20)\d{2}\s+[A-Z]/i); // Year at start of heading
+      if (!yearMatch) yearMatch = html.match(/(19|20)\d{2}\s+(?:Acura|Alfa Romeo|Aston Martin|Audi|Bentley|BMW|Buick|Cadillac|Chevrolet|Chrysler|Dodge|Ferrari|Fiat|Ford|Genesis|GMC|Honda|Hyundai|Infiniti|Jaguar|Jeep|Kia|Lamborghini|Land Rover|Lexus|Lincoln|Maserati|Mazda|McLaren|Mercedes-Benz|MINI|Mitsubishi|Nissan|Porsche|Ram|Rolls-Royce|Subaru|Tesla|Toyota|Volkswagen|Volvo)/i);
+      if (!yearMatch) yearMatch = html.match(/\b(19|20)\d{2}\b/);
+      if (yearMatch) extracted.year = yearMatch[1] || yearMatch[0];
 
       // Extract VIN (17 characters, uppercase letters and numbers)
       const vinMatch = html.match(/\b([A-HJ-NPR-Z0-9]{17})\b/i);
@@ -236,8 +239,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!kmsMatch) kmsMatch = html.match(/(\d+(?:,\d+)?)\s*(?:km|kilometers|miles|mi)\b/i);
       if (kmsMatch) extracted.kilometers = kmsMatch[1].replace(/,/g, "");
 
-      // Extract Stock Number - try multiple patterns including hash format (#26102B)
-      let stockMatch = html.match(/#\s*([A-Za-z0-9\-_]+)\b/); // Hash prefix pattern like #26102B
+      // Extract Stock Number - try multiple patterns
+      let stockMatch = html.match(/Stock\s*#\s*:\s*([A-Za-z0-9\-_]+)/i); // Stock #: W0095 format
+      if (!stockMatch) stockMatch = html.match(/#\s*([A-Za-z0-9\-_]+)\b/); // Hash prefix pattern like #26102B
       if (!stockMatch) stockMatch = html.match(/Stock\s*(?:Number|#|:)?\s*[:=]?\s*([A-Za-z0-9\-_]+)/i);
       if (!stockMatch) stockMatch = html.match(/SKU\s*[:=]?\s*([A-Za-z0-9\-_]+)/i);
       if (!stockMatch) stockMatch = html.match(/Stock\s*([A-Za-z0-9\-_]+)/i);
