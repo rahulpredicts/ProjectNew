@@ -27,7 +27,7 @@
 - VIN decoding and vehicle data extraction
 - Vehicle appraisal and market value estimation
 - Search and filtering across inventory
-- Data export/import functionality
+- Data export/import funct65416ionality
 - Carfax integration tracking
 - Canadian-specific vehicle trim database
 
