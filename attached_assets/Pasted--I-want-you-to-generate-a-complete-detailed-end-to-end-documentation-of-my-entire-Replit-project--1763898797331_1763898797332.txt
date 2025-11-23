@@ -1,0 +1,173 @@
+"I want you to generate a complete, detailed, end-to-end documentation of my entire Replit project.
+Include every file, every folder, every dependency, every component, every function, every route, and every API integration.
+I want a full breakdown of:
+
+1. Project Structure
+
+Full file tree
+
+Every folder name
+
+Every file name
+
+Purpose of each file
+
+2. Frontend (React / HTML / JS / CSS / etc.)
+
+For EACH frontend file:
+
+Full source code
+
+What each component does
+
+All props, state, hooks, handlers
+
+All API calls & how they connect to the backend
+
+All UI flows
+
+How pages and routes work
+
+Any reusable components
+
+Any libraries used and why
+
+3. Backend (Node / Express / Python / etc.)
+
+For EACH backend file:
+
+Full source code
+
+All endpoints (GET / POST / PUT / DELETE)
+
+What each function does
+
+All middleware
+
+All validation logic
+
+All database logic
+
+Any authentication/authorization logic
+
+All external API integrations
+
+Error handling flows
+
+4. Database
+
+Explain how data is stored
+
+All collections / tables
+
+Data schema for each
+
+Example documents
+
+CRUD operations
+
+How the app currently writes/reads/deletes/updates data
+
+5. Config Files
+
+package.json dependencies
+
+environment variables
+
+.env usage (do NOT hide anything—show variable names and explain purpose)
+
+Build scripts
+
+Firebase/Google configurations if any
+
+Any initial setup requirements
+
+6. Complete Technical Documentation
+
+System architecture diagram (text-based)
+
+Data flow diagram
+
+User flow diagram
+
+Explanation of how frontend connects to backend
+
+Explanation of how backend connects to DB
+
+Authentication flow
+
+Dealer registration flow
+
+Dealer login flow
+
+Admin panel flow
+
+Appraisal flow
+
+Vehicle upload flow
+
+Any other flows the app supports
+
+7. Instructions for Rebuilding
+
+I want instructions for:
+
+How to rebuild this exact same app from scratch
+
+Step-by-step setup
+
+All install commands
+
+How to run frontend
+
+How to run backend
+
+How to configure environment variables
+
+How to connect database
+
+How to deploy
+
+8. Migration Help
+
+I want guidance on:
+
+How to port this entire project to Google AI Studio + Firebase
+
+Which parts must be changed
+
+Which parts stay same
+
+How to rewrite backend functions into Firebase Cloud Functions
+
+How to rewrite the UI into Google AI Studio Pages
+
+How to integrate Firestore
+
+How to integrate Firebase Auth
+
+How to store vehicles, dealers, appraisals
+
+How to handle routes
+
+IMPORTANT:
+
+Do not skip or summarize anything.
+Give me complete code for every file exactly as it currently exists.
+Give me full technical documentation that explains the entire app end-to-end."
+
+✅ This prompt will give you:
+✔ Full source code dump
+✔ Full project tree
+✔ Full backend & frontend explanation
+✔ Data schemas
+✔ All API call logic
+✔ All React component logic
+✔ All Express or Firebase logic
+✔ Dealer registration flow
+✔ Admin approval flow
+✔ Authentication flow
+✔ Vehicle upload flow
+✔ Appraisal module flow
+✔ Step-by-step rebuild instructions
+✔ Migration plan for Google AI Studio
