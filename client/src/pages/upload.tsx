@@ -93,6 +93,12 @@ export default function UploadPage() {
   const [urlInput, setUrlInput] = useState("");
   const [isScrapingUrl, setIsScrapingUrl] = useState(false);
 
+  // Bulk URLs State
+  const [bulkUrls, setBulkUrls] = useState("");
+  const [isBulkExtracting, setIsBulkExtracting] = useState(false);
+  const [bulkResults, setBulkResults] = useState<Array<{url: string, status: 'pending' | 'loading' | 'success' | 'error', data?: Partial<Car>, error?: string}>>([]);
+  const [selectedDealershipBulk, setSelectedDealershipBulk] = useState("");
+
   // AI Scan State
   const [scannedFile, setScannedFile] = useState<File | null>(null);
   const [scanResult, setScanResult] = useState<Partial<Car> | null>(null);
@@ -171,6 +177,117 @@ export default function UploadPage() {
     } finally {
       setIsScrapingUrl(false);
     }
+  };
+
+  const handleBulkUrlsExtract = async () => {
+    if (!bulkUrls.trim()) {
+      toast({ title: "URLs Required", description: "Please paste one or more listing URLs", variant: "destructive" });
+      return;
+    }
+
+    if (!selectedDealershipBulk) {
+      toast({ title: "Dealership Required", description: "Please select a dealership", variant: "destructive" });
+      return;
+    }
+
+    const urls = bulkUrls.split('\n').map(url => url.trim()).filter(url => url && url.startsWith('http'));
+    
+    if (urls.length === 0) {
+      toast({ title: "No Valid URLs", description: "Please paste valid URLs starting with http/https", variant: "destructive" });
+      return;
+    }
+
+    setIsBulkExtracting(true);
+    const results: typeof bulkResults = urls.map(url => ({ url, status: 'pending' as const }));
+    setBulkResults(results);
+
+    try {
+      for (let i = 0; i < urls.length; i++) {
+        const url = urls[i];
+        results[i].status = 'loading';
+        setBulkResults([...results]);
+
+        try {
+          const res = await fetch("/api/scrape-listing", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ url })
+          });
+
+          if (res.ok) {
+            const extracted = await res.json();
+            results[i].status = 'success';
+            results[i].data = {
+              ...extracted,
+              dealershipId: selectedDealershipBulk,
+              listingLink: url,
+              status: 'available' as const,
+              condition: 'used'
+            };
+          } else {
+            results[i].status = 'error';
+            results[i].error = 'Failed to extract data';
+          }
+        } catch (error) {
+          results[i].status = 'error';
+          results[i].error = 'Network error';
+        }
+
+        setBulkResults([...results]);
+      }
+
+      const successCount = results.filter(r => r.status === 'success').length;
+      toast({ title: "Extraction Complete", description: `Successfully extracted ${successCount}/${urls.length} vehicles`, variant: "default" });
+    } finally {
+      setIsBulkExtracting(false);
+    }
+  };
+
+  const handleBulkSaveAll = async () => {
+    const successResults = bulkResults.filter(r => r.status === 'success' && r.data);
+    let savedCount = 0;
+
+    for (const result of successResults) {
+      if (!result.data) continue;
+
+      const carData = {
+        dealershipId: result.data.dealershipId || selectedDealershipBulk,
+        vin: result.data.vin || "",
+        stockNumber: result.data.stockNumber || "",
+        condition: result.data.condition || "used",
+        make: result.data.make || "",
+        model: result.data.model || "",
+        trim: result.data.trim || "",
+        year: result.data.year || "",
+        color: result.data.color || "",
+        price: result.data.price || "",
+        kilometers: result.data.kilometers || "",
+        transmission: result.data.transmission || "",
+        fuelType: result.data.fuelType || "",
+        bodyType: result.data.bodyType || "",
+        drivetrain: result.data.drivetrain,
+        engineCylinders: result.data.engineCylinders,
+        engineDisplacement: result.data.engineDisplacement,
+        features: [],
+        listingLink: result.data.listingLink || "",
+        carfaxLink: result.data.carfaxLink || "",
+        carfaxStatus: result.data.carfaxStatus || "unavailable",
+        notes: `Imported from: ${result.url}`,
+        status: 'available' as const
+      };
+
+      try {
+        await createCarMutation.mutateAsync(carData);
+        savedCount++;
+      } catch (error) {
+        console.error("Error saving car:", error);
+      }
+    }
+
+    toast({ title: "Saved Successfully", description: `Added ${savedCount} vehicles to inventory`, variant: "default" });
+    setBulkUrls("");
+    setBulkResults([]);
+    setSelectedDealershipBulk("");
   };
 
   const handleDecodeVin = async () => {
@@ -670,11 +787,12 @@ export default function UploadPage() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-8">
-        <TabsList className="grid grid-cols-4 w-full max-w-2xl bg-gray-100 p-1 rounded-xl h-auto">
-          <TabsTrigger value="manual" className="py-3 rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm">Manual Entry</TabsTrigger>
-          <TabsTrigger value="csv" className="py-3 rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm">Bulk CSV</TabsTrigger>
-          <TabsTrigger value="url" className="py-3 rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm">URL Import</TabsTrigger>
-          <TabsTrigger value="scan" className="py-3 rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm">AI Scan (PDF)</TabsTrigger>
+        <TabsList className="grid grid-cols-5 w-full max-w-4xl bg-gray-100 p-1 rounded-xl h-auto">
+          <TabsTrigger value="manual" className="py-2 text-sm rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm">Manual Entry</TabsTrigger>
+          <TabsTrigger value="csv" className="py-2 text-sm rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm">Bulk CSV</TabsTrigger>
+          <TabsTrigger value="url" className="py-2 text-sm rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm">URL Import</TabsTrigger>
+          <TabsTrigger value="bulk" className="py-2 text-sm rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm">Bulk URLs</TabsTrigger>
+          <TabsTrigger value="scan" className="py-2 text-sm rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm">AI Scan (PDF)</TabsTrigger>
         </TabsList>
 
         {/* Manual Entry Tab */}
@@ -1085,6 +1203,143 @@ export default function UploadPage() {
                 </div>
             </CardContent>
            </Card>
+        </TabsContent>
+
+        {/* Bulk URLs Tab */}
+        <TabsContent value="bulk" className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-300">
+            <Card className="border-0 shadow-sm ring-1 ring-gray-200">
+                <CardHeader>
+                    <CardTitle>Bulk URL Extract</CardTitle>
+                    <CardDescription>Paste multiple vehicle listing URLs (one per line) to extract and save all at once.</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                    {bulkResults.length === 0 && (
+                        <>
+                            <div className="bg-purple-50 p-4 rounded-xl border border-purple-100">
+                                <Label className="text-purple-900 mb-2 block font-semibold">Select Dealership *</Label>
+                                <Select value={selectedDealershipBulk} onValueChange={setSelectedDealershipBulk}>
+                                    <SelectTrigger className="bg-white border-purple-200 h-11">
+                                        <SelectValue placeholder="Choose a dealership" />
+                                    </SelectTrigger>
+                                    <SelectContent className="max-h-[300px]">
+                                        {dealerships.map(d => (
+                                            <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+
+                            <div className="space-y-2">
+                                <Label className="font-semibold">Listing URLs</Label>
+                                <p className="text-sm text-gray-600 mb-2">One URL per line (AutoTrader, Kijiji, Dealer websites, etc.)</p>
+                                <Textarea 
+                                    placeholder={"https://www.autotrader.ca/a/toyota/camry/2020\nhttps://www.kijiji.ca/v/...\nhttps://dealer.com/listing/..."} 
+                                    className="font-mono min-h-[250px] text-sm"
+                                    value={bulkUrls}
+                                    onChange={(e) => setBulkUrls(e.target.value)}
+                                    disabled={isBulkExtracting}
+                                />
+                            </div>
+
+                            <div className="flex gap-3 justify-end">
+                                <Button 
+                                    variant="outline" 
+                                    onClick={() => setBulkUrls("")}
+                                    disabled={isBulkExtracting || !bulkUrls.trim()}
+                                >
+                                    Clear
+                                </Button>
+                                <Button 
+                                    onClick={handleBulkUrlsExtract} 
+                                    disabled={isBulkExtracting || !bulkUrls.trim() || !selectedDealershipBulk}
+                                    size="lg"
+                                >
+                                    {isBulkExtracting ? (
+                                        <>
+                                            <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                                            Extracting...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <LinkIcon className="w-4 h-4 mr-2" />
+                                            Extract All
+                                        </>
+                                    )}
+                                </Button>
+                            </div>
+                        </>
+                    )}
+
+                    {bulkResults.length > 0 && (
+                        <div className="space-y-4">
+                            <div className="flex items-center justify-between mb-4">
+                                <h3 className="font-semibold text-lg">Extraction Results</h3>
+                                <span className="text-sm text-gray-600">
+                                    {bulkResults.filter(r => r.status === 'success').length}/{bulkResults.length} successful
+                                </span>
+                            </div>
+
+                            <div className="space-y-3 max-h-[400px] overflow-y-auto">
+                                {bulkResults.map((result, idx) => (
+                                    <div key={idx} className={`p-4 rounded-lg border flex items-start gap-4 ${
+                                        result.status === 'success' ? 'bg-green-50 border-green-200' :
+                                        result.status === 'error' ? 'bg-red-50 border-red-200' :
+                                        result.status === 'loading' ? 'bg-blue-50 border-blue-200' :
+                                        'bg-gray-50 border-gray-200'
+                                    }`}>
+                                        <div className="flex-shrink-0 mt-1">
+                                            {result.status === 'success' && <CheckCircle2 className="w-5 h-5 text-green-600" />}
+                                            {result.status === 'error' && <AlertCircle className="w-5 h-5 text-red-600" />}
+                                            {result.status === 'loading' && <Loader2 className="w-5 h-5 text-blue-600 animate-spin" />}
+                                            {result.status === 'pending' && <div className="w-5 h-5 rounded-full border-2 border-gray-300" />}
+                                        </div>
+                                        <div className="flex-grow min-w-0">
+                                            <p className="text-sm font-medium truncate">{result.url}</p>
+                                            {result.status === 'success' && result.data && (
+                                                <p className="text-sm text-gray-600 mt-1">
+                                                    {result.data.year} {result.data.make} {result.data.model} {result.data.trim ? `- ${result.data.trim}` : ''}
+                                                </p>
+                                            )}
+                                            {result.status === 'error' && (
+                                                <p className="text-sm text-red-600 mt-1">{result.error}</p>
+                                            )}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+
+                            <div className="bg-blue-50 border border-blue-100 rounded-lg p-4 flex items-start gap-3">
+                                <CheckCircle2 className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+                                <div className="text-sm text-blue-700">
+                                    <p className="font-semibold mb-1">Ready to save</p>
+                                    <p>{bulkResults.filter(r => r.status === 'success').length} vehicles extracted and ready to be added to your inventory.</p>
+                                </div>
+                            </div>
+
+                            <div className="flex gap-3 justify-end">
+                                <Button 
+                                    variant="outline" 
+                                    onClick={() => {
+                                        setBulkResults([]);
+                                        setBulkUrls("");
+                                        setSelectedDealershipBulk("");
+                                    }}
+                                >
+                                    Start Over
+                                </Button>
+                                <Button 
+                                    onClick={handleBulkSaveAll}
+                                    disabled={!bulkResults.some(r => r.status === 'success')}
+                                    size="lg"
+                                >
+                                    <Plus className="w-4 h-4 mr-2" />
+                                    Save All to Inventory
+                                </Button>
+                            </div>
+                        </div>
+                    )}
+                </CardContent>
+            </Card>
         </TabsContent>
 
         {/* URL Import Tab */}
