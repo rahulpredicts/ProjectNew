@@ -1,5 +1,5 @@
 import { Link, useLocation } from "wouter";
-import { LayoutDashboard, PlusCircle, Car, Menu, Calculator } from "lucide-react";
+import { LayoutDashboard, PlusCircle, Car, Menu, Calculator, FlaskConical } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export function Layout({ children }: { children: React.ReactNode }) {
@@ -9,6 +9,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
     { href: "/", label: "Inventory", icon: LayoutDashboard },
     { href: "/upload", label: "Add Vehicles", icon: PlusCircle },
     { href: "/appraisal", label: "Appraisal Tool", icon: Calculator },
+    { href: "/test-api", label: "API Test Lab", icon: FlaskConical },
   ];
 
   return (
