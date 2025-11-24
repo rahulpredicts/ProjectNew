@@ -110,6 +110,14 @@ export default function UploadPage() {
   const [scannedFile, setScannedFile] = useState<File | null>(null);
   const [scanResult, setScanResult] = useState<Partial<Car> | null>(null);
 
+  // AI Parser State (Claude)
+  const [textFiles, setTextFiles] = useState<File[]>([]);
+  const [isParsingWithClaude, setIsParsingWithClaude] = useState(false);
+  const [parsedCsvData, setParsedCsvData] = useState<Array<Record<string, string>>>([]);
+  const [parsedCsvRaw, setParsedCsvRaw] = useState("");
+  const [selectedDealershipParser, setSelectedDealershipParser] = useState("");
+  const [isSavingParsed, setIsSavingParsed] = useState(false);
+
   // Effect to update trims based on Make immediately (local fallback)
   useEffect(() => {
     if (newCar.make && newCar.make !== "Other") {
@@ -995,6 +1003,174 @@ export default function UploadPage() {
     toast({ title: "Data Transferred", description: "Review details and save" });
   };
 
+  const handleTextFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (files && files.length > 0) {
+      setTextFiles(Array.from(files));
+      toast({ title: "Files Loaded", description: `${files.length} text file(s) uploaded`, variant: "default" });
+    }
+  };
+
+  const handleParseWithClaude = async () => {
+    if (textFiles.length === 0) {
+      toast({ title: "No Files", description: "Please upload text files first", variant: "destructive" });
+      return;
+    }
+
+    if (!selectedDealershipParser) {
+      toast({ title: "Dealership Required", description: "Please select a dealership", variant: "destructive" });
+      return;
+    }
+
+    setIsParsingWithClaude(true);
+
+    try {
+      // Read all text files
+      const fileContents = await Promise.all(
+        textFiles.map(file => file.text())
+      );
+
+      const combinedText = fileContents.join("\n\n===FILE_SEPARATOR===\n\n");
+
+      // Send to backend for Claude processing
+      const response = await fetch('/api/parse-with-claude', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ textContent: combinedText })
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to parse with Claude');
+      }
+
+      const result = await response.json();
+      
+      if (result.csv) {
+        setParsedCsvRaw(result.csv);
+        const rows = parseCsvData(result.csv);
+        setParsedCsvData(rows);
+        toast({ 
+          title: "✓ Parsing Complete!", 
+          description: `Claude extracted ${rows.length} vehicles from your text files`, 
+          variant: "default" 
+        });
+      } else {
+        throw new Error('No CSV data returned');
+      }
+    } catch (error) {
+      console.error("Error parsing with Claude:", error);
+      toast({ 
+        title: "Parsing Error", 
+        description: error instanceof Error ? error.message : "Failed to parse text files", 
+        variant: "destructive" 
+      });
+    } finally {
+      setIsParsingWithClaude(false);
+    }
+  };
+
+  const downloadParsedCsv = () => {
+    if (!parsedCsvRaw) {
+      toast({ title: "No Data", description: "No CSV data to download", variant: "destructive" });
+      return;
+    }
+
+    const dealershipName = dealerships.find(d => d.id === selectedDealershipParser)?.name || "dealership";
+    const date = new Date().toISOString().split('T')[0];
+    const filename = `${dealershipName.replace(/\s+/g, '_')}_parsed_${date}.csv`;
+
+    const blob = new Blob([parsedCsvRaw], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', filename);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    toast({ title: "✓ Downloaded", description: `CSV file: ${filename}`, variant: "default" });
+  };
+
+  const handleImportParsedCsv = async () => {
+    if (parsedCsvData.length === 0) {
+      toast({ title: "No Data", description: "No data to import", variant: "destructive" });
+      return;
+    }
+
+    if (!selectedDealershipParser) {
+      toast({ title: "Dealership Required", description: "Please select a dealership", variant: "destructive" });
+      return;
+    }
+
+    setIsSavingParsed(true);
+
+    try {
+      const carsToImport = parsedCsvData.map(row => ({
+        vin: (row.vin || "").trim(),
+        stockNumber: (row.stock_number || row.stock || row.stocknumber || "").trim(),
+        condition: (row.condition || "used").trim(),
+        make: (row.make || "Unknown").trim(),
+        model: (row.model || "Unknown").trim(),
+        trim: (row.trim || "").trim(),
+        year: (row.year || "").trim(),
+        color: (row.color || "").trim(),
+        price: (row.price || "0").toString().trim(),
+        kilometers: (row.kilometers || row.km || row.kilometer || "0").toString().trim(),
+        transmission: (row.transmission || "").trim(),
+        fuelType: (row.fuel_type || row.fueltype || "").trim(),
+        bodyType: (row.body_type || row.bodytype || "").trim(),
+        drivetrain: (row.drivetrain || "fwd").trim(),
+        engineCylinders: (row.engine_cy || row.cylinders || "").trim(),
+        engineDisplacement: (row.engine_di || row.displacement || "").trim(),
+        features: [],
+        listingLink: (row.listing_link || row.url || "").trim(),
+        carfaxLink: (row.carfax_link || "").trim(),
+        notes: (row.notes || "Imported via Claude AI Parser").trim(),
+      }));
+
+      const response = await fetch('/api/cars/bulk-import', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          dealershipId: selectedDealershipParser,
+          cars: carsToImport
+        })
+      });
+
+      const result = await response.json();
+      
+      if (response.ok) {
+        toast({ 
+          title: `✓ Import Complete!`, 
+          description: `Successfully added ${result.successCount}/${result.totalProcessed} vehicles to database`, 
+          variant: result.failureCount === 0 ? "default" : "destructive" 
+        });
+
+        setTextFiles([]);
+        setParsedCsvData([]);
+        setParsedCsvRaw("");
+        setSelectedDealershipParser("");
+      } else {
+        toast({ 
+          title: "Import Failed", 
+          description: result.error || "Failed to import vehicles", 
+          variant: "destructive" 
+        });
+      }
+    } catch (error) {
+      console.error("Error importing:", error);
+      toast({ 
+        title: "Import Error", 
+        description: error instanceof Error ? error.message : "Failed to import vehicles", 
+        variant: "destructive" 
+        });
+    } finally {
+      setIsSavingParsed(false);
+    }
+  };
+
   return (
     <div className="p-6 md:p-10 max-w-5xl mx-auto space-y-8">
       <div className="flex flex-col gap-2">
@@ -1003,11 +1179,12 @@ export default function UploadPage() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-8">
-        <TabsList className="grid grid-cols-5 w-full max-w-4xl bg-gray-100 p-1 rounded-xl h-auto">
+        <TabsList className="grid grid-cols-6 w-full max-w-5xl bg-gray-100 p-1 rounded-xl h-auto">
           <TabsTrigger value="manual" className="py-2 text-sm rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm">Manual Entry</TabsTrigger>
           <TabsTrigger value="csv" className="py-2 text-sm rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm">Bulk CSV</TabsTrigger>
           <TabsTrigger value="url" className="py-2 text-sm rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm">URL Import</TabsTrigger>
           <TabsTrigger value="bulk" className="py-2 text-sm rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm">Bulk URLs</TabsTrigger>
+          <TabsTrigger value="parser" className="py-2 text-sm rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm">AI Parser</TabsTrigger>
           <TabsTrigger value="scan" className="py-2 text-sm rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm">AI Scan (PDF)</TabsTrigger>
         </TabsList>
 

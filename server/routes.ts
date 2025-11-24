@@ -2,6 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { insertDealershipSchema, updateDealershipSchema, insertCarSchema, updateCarSchema } from "@shared/schema";
+import Anthropic from "@anthropic-ai/sdk";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Dealership routes
