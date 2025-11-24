@@ -88,6 +88,10 @@ export default function UploadPage() {
 
   // Bulk CSV State
   const [csvData, setCsvData] = useState("");
+  const [csvRows, setCsvRows] = useState<Array<Record<string, string>>>([]);
+  const [selectedDealershipCsv, setSelectedDealershipCsv] = useState("");
+  const [isSavingCsv, setIsSavingCsv] = useState(false);
+  const csvFileInputRef = useRef<HTMLInputElement>(null);
   
   // URL Import State
   const [urlInput, setUrlInput] = useState("");
@@ -241,6 +245,117 @@ export default function UploadPage() {
     } finally {
       setIsBulkExtracting(false);
     }
+  };
+
+  const parseCsvData = (csv: string): Array<Record<string, string>> => {
+    const lines = csv.trim().split('\n');
+    if (lines.length === 0) return [];
+
+    // Get headers from first line
+    const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
+    
+    // Parse data rows
+    const rows: Array<Record<string, string>> = [];
+    for (let i = 1; i < lines.length; i++) {
+      const values = lines[i].split(',').map(v => v.trim());
+      const row: Record<string, string> = {};
+      
+      headers.forEach((header, idx) => {
+        row[header] = values[idx] || '';
+      });
+      
+      if (Object.values(row).some(v => v)) { // Only add if row has data
+        rows.push(row);
+      }
+    }
+    
+    return rows;
+  };
+
+  const handleCsvFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const csv = event.target?.result as string;
+      setCsvData(csv);
+      const rows = parseCsvData(csv);
+      setCsvRows(rows);
+      
+      if (rows.length > 0) {
+        toast({ title: "CSV Loaded", description: `Found ${rows.length} vehicles in the file`, variant: "default" });
+      }
+    };
+    reader.readAsText(file);
+  };
+
+  const handleCsvDataChange = (data: string) => {
+    setCsvData(data);
+    const rows = parseCsvData(data);
+    setCsvRows(rows);
+  };
+
+  const handleSaveCsvToDatabase = async () => {
+    if (csvRows.length === 0) {
+      toast({ title: "No Data", description: "Please upload or paste CSV data first", variant: "destructive" });
+      return;
+    }
+
+    if (!selectedDealershipCsv) {
+      toast({ title: "Dealership Required", description: "Please select a dealership", variant: "destructive" });
+      return;
+    }
+
+    setIsSavingCsv(true);
+    let savedCount = 0;
+    let errorCount = 0;
+
+    for (const row of csvRows) {
+      try {
+        const carData = {
+          dealershipId: selectedDealershipCsv,
+          vin: row.vin || row['17-digit vin'] || "",
+          stockNumber: row['stock number'] || row.stock || row['stock #'] || "",
+          condition: row.condition || "used",
+          make: row.make || "",
+          model: row.model || "",
+          trim: row.trim || row.edition || "",
+          year: row.year || "",
+          color: row.color || row.exterior || "",
+          price: row.price || row['selling price'] || "",
+          kilometers: row.kilometers || row.mileage || row.km || "",
+          transmission: row.transmission || "",
+          fuelType: row['fuel type'] || row.fuel || "",
+          bodyType: row['body type'] || row.body || "",
+          features: [],
+          listingLink: row['listing url'] || row.url || "",
+          carfaxLink: row['carfax link'] || "",
+          carfaxStatus: "unavailable" as const,
+          notes: row.notes || "",
+          status: 'available' as const
+        };
+
+        await createCarMutation.mutateAsync(carData);
+        savedCount++;
+      } catch (error) {
+        console.error("Error saving car:", error);
+        errorCount++;
+      }
+    }
+
+    toast({ 
+      title: "Upload Complete", 
+      description: `Added ${savedCount} vehicles (${errorCount} failed)`, 
+      variant: errorCount === 0 ? "default" : "destructive" 
+    });
+    
+    setCsvData("");
+    setCsvRows([]);
+    setSelectedDealershipCsv("");
+    if (csvFileInputRef.current) csvFileInputRef.current.value = "";
+    
+    setIsSavingCsv(false);
   };
 
   const handleBulkSaveAll = async () => {
@@ -1160,13 +1275,13 @@ export default function UploadPage() {
         <TabsContent value="csv" className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-300">
            <Card className="border-0 shadow-sm ring-1 ring-gray-200">
             <CardHeader>
-                <CardTitle>Bulk Upload</CardTitle>
-                <CardDescription>Paste your CSV data below or upload a file. Format: VIN, Make, Model, Year, Price</CardDescription>
+                <CardTitle>Bulk CSV Upload</CardTitle>
+                <CardDescription>Upload a CSV file or paste CSV data. Supports: VIN, Make, Model, Year, Price, Stock Number, Color, Fuel Type, Transmission, etc.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
                 <div className="bg-blue-50 p-4 rounded-xl border border-blue-100">
-                    <Label className="text-blue-900 mb-2 block">Target Dealership *</Label>
-                    <Select>
+                    <Label className="text-blue-900 mb-2 block font-semibold">Target Dealership *</Label>
+                    <Select value={selectedDealershipCsv} onValueChange={setSelectedDealershipCsv}>
                         <SelectTrigger className="bg-white border-blue-200 h-11">
                             <SelectValue placeholder="Choose a dealership" />
                         </SelectTrigger>
@@ -1178,29 +1293,130 @@ export default function UploadPage() {
                     </Select>
                 </div>
 
-                <div className="grid gap-2">
-                    <Label>CSV Data</Label>
-                    <Textarea 
-                        placeholder="VIN,Make,Model,Year,Price&#10;12345,Toyota,Camry,2023,30000&#10;67890,Honda,Civic,2022,25000" 
-                        className="font-mono min-h-[200px] text-sm"
-                        value={csvData}
-                        onChange={(e) => setCsvData(e.target.value)}
-                    />
-                </div>
-                
-                <div className="flex items-center gap-4 py-4 border-t border-dashed">
-                    <Button variant="outline" className="w-full h-32 border-2 border-dashed flex flex-col gap-2 hover:bg-gray-50">
-                        <FileText className="w-8 h-8 text-gray-400" />
-                        <span className="text-gray-600 font-medium">Or drop CSV file here</span>
-                    </Button>
+                {/* File Input Section */}
+                <div className="space-y-3">
+                    <Label className="font-semibold">Upload CSV File or Paste Data Below</Label>
+                    <div className="flex items-center justify-center w-full">
+                        <label htmlFor="csv-file-input" className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-2xl cursor-pointer bg-gray-50 hover:bg-gray-100 transition-colors">
+                            <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                                <FileText className="w-8 h-8 text-gray-400 mb-2" />
+                                <p className="mb-1 text-sm text-gray-500"><span className="font-semibold">Click to upload CSV</span> or drag and drop</p>
+                                <p className="text-xs text-gray-500">CSV files only (.csv)</p>
+                            </div>
+                            <Input 
+                                id="csv-file-input"
+                                type="file" 
+                                accept=".csv"
+                                className="hidden" 
+                                onChange={handleCsvFileUpload}
+                                ref={csvFileInputRef}
+                                data-testid="input-csv-file"
+                            />
+                        </label>
+                    </div>
                 </div>
 
-                <div className="flex justify-end">
-                    <Button onClick={handleCsvUpload} disabled={loading} size="lg">
-                        {loading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <UploadIcon className="w-4 h-4 mr-2" />}
-                        Process Data
-                    </Button>
+                {/* CSV Textarea */}
+                <div className="grid gap-2">
+                    <Label className="font-semibold">Or Paste CSV Data</Label>
+                    <Textarea 
+                        placeholder="VIN,Make,Model,Year,Price,Stock Number&#10;1HGBH41JXMN109186,Toyota,Camry,2023,30000,12345&#10;2T1BURHE0JC106186,Honda,Civic,2022,25000,67890" 
+                        className="font-mono min-h-[200px] text-sm"
+                        value={csvData}
+                        onChange={(e) => handleCsvDataChange(e.target.value)}
+                        data-testid="textarea-csv-data"
+                    />
                 </div>
+
+                {/* CSV Data Preview Table */}
+                {csvRows.length > 0 && (
+                    <div className="space-y-4">
+                        <div className="flex items-center justify-between">
+                            <h3 className="font-semibold text-lg">Preview: {csvRows.length} Vehicles Found</h3>
+                            <Button 
+                                variant="ghost" 
+                                size="sm"
+                                onClick={() => {
+                                    setCsvData("");
+                                    setCsvRows([]);
+                                    if (csvFileInputRef.current) csvFileInputRef.current.value = "";
+                                }}
+                                className="text-red-600 hover:text-red-700"
+                            >
+                                Clear
+                            </Button>
+                        </div>
+                        
+                        <div className="border rounded-lg overflow-x-auto">
+                            <table className="w-full text-sm">
+                                <thead className="bg-gray-100 border-b">
+                                    <tr>
+                                        <th className="px-4 py-3 text-left font-semibold text-gray-700">#</th>
+                                        <th className="px-4 py-3 text-left font-semibold text-gray-700">Make</th>
+                                        <th className="px-4 py-3 text-left font-semibold text-gray-700">Model</th>
+                                        <th className="px-4 py-3 text-left font-semibold text-gray-700">Year</th>
+                                        <th className="px-4 py-3 text-left font-semibold text-gray-700">VIN</th>
+                                        <th className="px-4 py-3 text-left font-semibold text-gray-700">Price</th>
+                                        <th className="px-4 py-3 text-left font-semibold text-gray-700">Stock #</th>
+                                        <th className="px-4 py-3 text-left font-semibold text-gray-700">Color</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y">
+                                    {csvRows.map((row, idx) => (
+                                        <tr key={idx} className="hover:bg-gray-50">
+                                            <td className="px-4 py-3 text-gray-600">{idx + 1}</td>
+                                            <td className="px-4 py-3 font-medium">{row.make || '-'}</td>
+                                            <td className="px-4 py-3">{row.model || '-'}</td>
+                                            <td className="px-4 py-3">{row.year || '-'}</td>
+                                            <td className="px-4 py-3 font-mono text-xs">{row.vin ? row.vin.substring(0, 8) + '...' : '-'}</td>
+                                            <td className="px-4 py-3 font-medium text-green-600">${row.price || '0'}</td>
+                                            <td className="px-4 py-3">{row['stock number'] || row.stock || row['stock #'] || '-'}</td>
+                                            <td className="px-4 py-3">{row.color || row.exterior || '-'}</td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div className="flex gap-3 justify-end pt-4 border-t">
+                            <Button 
+                                variant="outline" 
+                                onClick={() => {
+                                    setCsvData("");
+                                    setCsvRows([]);
+                                    if (csvFileInputRef.current) csvFileInputRef.current.value = "";
+                                }}
+                                size="lg"
+                            >
+                                Cancel
+                            </Button>
+                            <Button 
+                                onClick={handleSaveCsvToDatabase} 
+                                disabled={isSavingCsv || csvRows.length === 0 || !selectedDealershipCsv}
+                                size="lg"
+                                data-testid="button-save-csv"
+                            >
+                                {isSavingCsv ? (
+                                    <>
+                                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                        Saving {csvRows.length} vehicles...
+                                    </>
+                                ) : (
+                                    <>
+                                        <UploadIcon className="w-4 h-4 mr-2" />
+                                        Upload {csvRows.length} Vehicles to Database
+                                    </>
+                                )}
+                            </Button>
+                        </div>
+                    </div>
+                )}
+
+                {csvData === "" && csvRows.length === 0 && (
+                    <div className="text-center py-12 text-gray-500">
+                        <p>Upload a CSV file or paste data to get started</p>
+                    </div>
+                )}
             </CardContent>
            </Card>
         </TabsContent>
