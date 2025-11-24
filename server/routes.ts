@@ -194,8 +194,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
           const validated = insertCarSchema.parse(carData);
           
-          // Check for duplicates
-          if (validated.vin) {
+          // Check for duplicates only if VIN is provided and non-empty
+          if (validated.vin && validated.vin.trim() !== "") {
             const existingCar = await storage.getCarByVin(validated.vin);
             if (existingCar) {
               results.push({
@@ -207,7 +207,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
             }
           }
 
-          if (validated.stockNumber) {
+          // Check for duplicates only if stock number is provided and non-empty
+          if (validated.stockNumber && validated.stockNumber.trim() !== "") {
             const existingCar = await storage.getCarByStockNumber(validated.stockNumber);
             if (existingCar) {
               results.push({
