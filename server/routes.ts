@@ -345,6 +345,94 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Test endpoint - directly test ScrapingDog API
+  app.post("/api/test-scrapingdog-direct", async (req, res) => {
+    try {
+      const { url } = req.body;
+      if (!url) {
+        return res.status(400).json({ error: "URL is required" });
+      }
+
+      const apiKey = process.env.SCRAPINGDOG_API_KEY;
+      if (!apiKey) {
+        return res.status(500).json({ error: "ScrapingDog API key not configured" });
+      }
+
+      console.log("Testing ScrapingDog API with dynamic=false");
+      const scrapingDogUrl = `https://api.scrapingdog.com/scrape?api_key=${apiKey}&url=${encodeURIComponent(url)}&dynamic=false`;
+      
+      const response = await fetch(scrapingDogUrl, {
+        method: "GET",
+        headers: {
+          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+        }
+      });
+
+      const html = await response.text();
+      const status = response.status;
+      const ok = response.ok;
+
+      // Return raw HTML and metadata for inspection
+      const preview = html.substring(0, 2000);
+      const htmlLength = html.length;
+      
+      // Try to extract cars anyway
+      const cars: any[] = [];
+      
+      // Extract VINs
+      const vinRegex = /\b([A-HJ-NPR-Z0-9]{17})\b/gi;
+      const vins = new Set<string>();
+      let vinMatch;
+      while ((vinMatch = vinRegex.exec(html)) !== null) {
+        vins.add(vinMatch[1].toUpperCase());
+      }
+
+      // Extract all make/model combinations
+      const makeModelRegex = /(Acura|Alfa Romeo|Aston Martin|Audi|Bentley|BMW|Buick|Cadillac|Chevrolet|Chrysler|Dodge|Ferrari|Fiat|Ford|Genesis|GMC|Honda|Hyundai|Infiniti|Jaguar|Jeep|Kia|Lamborghini|Land Rover|Lexus|Lincoln|Maserati|Mazda|McLaren|Mercedes-Benz|MINI|Mitsubishi|Nissan|Porsche|Ram|Rolls-Royce|Subaru|Tesla|Toyota|Volkswagen|Volvo)\s+([A-Za-z0-9\s\-]+)/gi;
+      const makeModels = new Set<string>();
+      let makeModelMatch;
+      while ((makeModelMatch = makeModelRegex.exec(html)) !== null) {
+        const make = makeModelMatch[1];
+        const model = makeModelMatch[2]?.trim();
+        makeModels.add(`${make} ${model}`);
+      }
+
+      // Extract prices
+      const priceRegex = /\$[\s]?([\d,]+(?:\.\d{2})?)/g;
+      const prices = new Set<string>();
+      let priceMatch;
+      while ((priceMatch = priceRegex.exec(html)) !== null) {
+        prices.add(priceMatch[1]);
+      }
+
+      // Extract years
+      const yearRegex = /(19|20)\d{2}/g;
+      const years = new Set<string>();
+      let yearMatch;
+      while ((yearMatch = yearRegex.exec(html)) !== null) {
+        years.add(yearMatch[0]);
+      }
+
+      res.json({
+        status: "success",
+        apiStatus: status,
+        apiOk: ok,
+        htmlLength,
+        preview,
+        analysis: {
+          vinsFound: Array.from(vins),
+          makeModelsFound: Array.from(makeModels),
+          pricesFound: Array.from(prices).slice(0, 20),
+          yearsFound: Array.from(years)
+        },
+        rawHtml: html
+      });
+    } catch (error) {
+      console.error("Error testing ScrapingDog:", error);
+      res.status(500).json({ error: "Failed to test ScrapingDog", details: error instanceof Error ? error.message : "Unknown error" });
+    }
+  });
+
   // Bulk inventory extraction - extracts all cars from a listing page with multiple strategies
   app.post("/api/scrape-inventory-bulk", async (req, res) => {
     try {

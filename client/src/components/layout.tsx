@@ -12,6 +12,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
     { href: "/bulk-scraper", label: "Bulk Inventory", icon: Zap },
     { href: "/test-api", label: "API Test Lab", icon: FlaskConical },
     { href: "/test-scrapingdog", label: "ScrapingDog Test", icon: FlaskConical },
+    { href: "/debug-scrapingdog", label: "Debug ScrapingDog", icon: FlaskConical },
   ];
 
   return (
