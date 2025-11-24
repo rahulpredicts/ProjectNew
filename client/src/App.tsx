@@ -8,10 +8,6 @@ import NotFound from "@/pages/not-found";
 import Inventory from "@/pages/inventory";
 import UploadPage from "@/pages/upload";
 import AppraisalPage from "@/pages/appraisal";
-import BrowserActTest from "@/pages/browseract-test";
-import ScrapingDogTest from "@/pages/scrapingdog-test";
-import BulkScraper from "@/pages/bulk-scraper";
-import ScrapingDogDebug from "@/pages/scrapingdog-debug";
 
 function Router() {
   return (
@@ -20,10 +16,6 @@ function Router() {
         <Route path="/" component={Inventory} />
         <Route path="/upload" component={UploadPage} />
         <Route path="/appraisal" component={AppraisalPage} />
-        <Route path="/test-api" component={BrowserActTest} />
-        <Route path="/test-scrapingdog" component={ScrapingDogTest} />
-        <Route path="/bulk-scraper" component={BulkScraper} />
-        <Route path="/debug-scrapingdog" component={ScrapingDogDebug} />
         <Route component={NotFound} />
       </Switch>
     </Layout>
