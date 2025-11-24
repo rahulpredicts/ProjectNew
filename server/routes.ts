@@ -345,10 +345,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Bulk inventory extraction - extracts all cars from a listing page
+  // Bulk inventory extraction - extracts all cars from a listing page with multiple strategies
   app.post("/api/scrape-inventory-bulk", async (req, res) => {
     try {
-      const { url } = req.body;
+      const { url, useRendering } = req.body;
       if (!url) {
         return res.status(400).json({ error: "URL is required" });
       }
@@ -358,30 +358,77 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(500).json({ error: "ScrapingDog API key not configured" });
       }
 
-      // Call ScrapingDog API with JavaScript rendering enabled
-      const scrapingDogUrl = `https://api.scrapingdog.com/scrape?api_key=${apiKey}&url=${encodeURIComponent(url)}&render=true`;
-      
-      const response = await fetch(scrapingDogUrl, {
-        method: "GET",
-        headers: {
-          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
-        }
-      });
+      let html = "";
+      let renderMethod = "unknown";
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error("ScrapingDog error:", errorText);
-        return res.status(400).json({ error: "Failed to scrape inventory listing" });
+      // Try multiple approaches to get the HTML content
+      try {
+        // First attempt: Try with rendering if explicitly requested or try both
+        if (useRendering !== false) {
+          console.log("Attempting ScrapingDog with render=true");
+          const scrapingDogUrl = `https://api.scrapingdog.com/scrape?api_key=${apiKey}&url=${encodeURIComponent(url)}&render=true`;
+          const response = await fetch(scrapingDogUrl, {
+            method: "GET",
+            headers: {
+              "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+            }
+          });
+          
+          if (response.ok) {
+            html = await response.text();
+            renderMethod = "dynamic (render=true)";
+            console.log("Successfully fetched with render=true");
+          } else {
+            console.log("render=true failed, trying alternative methods");
+            throw new Error("render=true failed");
+          }
+        }
+      } catch (err) {
+        console.log("Attempting ScrapingDog with dynamic=false");
+        try {
+          // Second attempt: Try without rendering (static content)
+          const scrapingDogUrl = `https://api.scrapingdog.com/scrape?api_key=${apiKey}&url=${encodeURIComponent(url)}&dynamic=false`;
+          const response = await fetch(scrapingDogUrl, {
+            method: "GET",
+            headers: {
+              "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+            }
+          });
+          
+          if (response.ok) {
+            html = await response.text();
+            renderMethod = "static (dynamic=false)";
+            console.log("Successfully fetched with dynamic=false");
+          } else {
+            console.log("dynamic=false failed");
+            throw new Error("dynamic=false failed");
+          }
+        } catch (err2) {
+          console.log("All ScrapingDog methods failed, attempting direct fetch");
+          // Third attempt: Direct fetch as fallback
+          const response = await fetch(url, {
+            headers: {
+              "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+            }
+          });
+          
+          if (response.ok) {
+            html = await response.text();
+            renderMethod = "direct fetch";
+            console.log("Successfully fetched with direct fetch");
+          } else {
+            throw new Error("All fetch methods failed");
+          }
+        }
       }
 
-      const html = await response.text();
+      if (!html) {
+        return res.status(400).json({ error: "Failed to fetch page content with any method" });
+      }
+
       const cars: any[] = [];
 
-      // Split HTML into potential car listing sections
-      // Look for common patterns like divs with car data, table rows, or list items
-      const carSections = html.match(/<(?:div|tr|li|article)[^>]*(?:class|id)="[^"]*(?:car|vehicle|listing|item)[^"]*"[^>]*>[\s\S]*?<\/(?:div|tr|li|article)>/gi) || [];
-
-      // If no structured sections, try to extract all VINs and associated data
+      // Extract all VINs first (17-character alphanumeric)
       const vinRegex = /\b([A-HJ-NPR-Z0-9]{17})\b/gi;
       let vinMatches;
       const vins = new Set<string>();
@@ -390,75 +437,153 @@ export async function registerRoutes(app: Express): Promise<Server> {
         vins.add(vinMatches[1].toUpperCase());
       }
 
-      // Extract data for each VIN found
-      for (const vin of Array.from(vins).slice(0, 50)) { // Limit to 50 cars
-        const car: any = { vin };
-
-        // Extract context around VIN to get related data
-        const vinIndex = html.indexOf(vin);
-        const context = html.substring(Math.max(0, vinIndex - 500), Math.min(html.length, vinIndex + 1000));
-
-        // Extract year
-        const yearMatch = context.match(/(19|20)\d{2}/);
-        if (yearMatch) car.year = yearMatch[0];
-
-        // Extract make/model
-        const makeModelMatch = context.match(/(Acura|Alfa Romeo|Aston Martin|Audi|Bentley|BMW|Buick|Cadillac|Chevrolet|Chrysler|Dodge|Ferrari|Fiat|Ford|Genesis|GMC|Honda|Hyundai|Infiniti|Jaguar|Jeep|Kia|Lamborghini|Land Rover|Lexus|Lincoln|Maserati|Mazda|McLaren|Mercedes-Benz|MINI|Mitsubishi|Nissan|Porsche|Ram|Rolls-Royce|Subaru|Tesla|Toyota|Volkswagen|Volvo)\s+([A-Za-z0-9\s\-]+)/i);
-        if (makeModelMatch) {
-          car.make = makeModelMatch[1];
-          car.model = makeModelMatch[2]?.trim();
+      // If no VINs found, try to extract by other patterns (common for dealerships)
+      if (vins.size === 0) {
+        console.log("No VINs found, attempting to extract by vehicle info patterns");
+        
+        // Look for make/model patterns and extract associated data
+        const makeModelPattern = /(Acura|Alfa Romeo|Aston Martin|Audi|Bentley|BMW|Buick|Cadillac|Chevrolet|Chrysler|Dodge|Ferrari|Fiat|Ford|Genesis|GMC|Honda|Hyundai|Infiniti|Jaguar|Jeep|Kia|Lamborghini|Land Rover|Lexus|Lincoln|Maserati|Mazda|McLaren|Mercedes-Benz|MINI|Mitsubishi|Nissan|Porsche|Ram|Rolls-Royce|Subaru|Tesla|Toyota|Volkswagen|Volvo)\s+([A-Za-z0-9\s\-]+)/gi;
+        
+        let makeModelMatch;
+        const processedCars = new Map();
+        
+        while ((makeModelMatch = makeModelPattern.exec(html)) !== null) {
+          const make = makeModelMatch[1];
+          const model = makeModelMatch[2]?.trim();
+          const key = `${make}-${model}`;
+          
+          if (!processedCars.has(key)) {
+            processedCars.set(key, { make, model });
+          }
         }
+        
+        // Convert map to array
+        const carDataArray = Array.from(processedCars.values());
+        for (const carData of carDataArray) {
+          const make = carData.make;
+          const model = carData.model;
+          
+          // Find context around this make/model
+          const pattern = new RegExp(make + '\\s+' + model.split(' ')[0], 'i');
+          const index = html.search(pattern);
+          
+          if (index !== -1) {
+            const context = html.substring(Math.max(0, index - 400), Math.min(html.length, index + 1200));
+            
+            const car: any = { make, model };
+            
+            // Extract year
+            const yearMatch = context.match(/(19|20)\d{2}/);
+            if (yearMatch) car.year = yearMatch[0];
+            
+            // Extract trim
+            const trimMatch = context.match(/(?:Trim|Edition|Package|Model)[\s:]*["']?([A-Za-z0-9\s]+)["']?/i);
+            if (trimMatch) car.trim = trimMatch[1].trim();
+            
+            // Extract color
+            const colorMatch = context.match(/(Black|White|Silver|Gray|Red|Blue|Brown|Green|Beige|Gold|Orange|Yellow|Purple|Charcoal|Burgundy|Maroon|Navy|Teal|Cyan|Lime|Pearl)/i);
+            if (colorMatch) car.color = colorMatch[0];
+            
+            // Extract price
+            const priceMatch = context.match(/\$[\s]?([\d,]+(?:\.\d{2})?)/);
+            if (priceMatch) car.price = priceMatch[1].replace(/,/g, "");
+            
+            // Extract kilometers
+            const kmsMatch = context.match(/([\d,]+)\s*(?:km|kilometers|miles)/i);
+            if (kmsMatch) car.kilometers = kmsMatch[1].replace(/,/g, "");
+            
+            // Extract stock number
+            const stockMatch = context.match(/Stock[\s:#]*([\w\-]+)/i);
+            if (stockMatch) car.stockNumber = stockMatch[1].trim();
+            
+            // Extract fuel type
+            const fuelMatch = context.match(/(Gasoline|Diesel|Electric|Hybrid|Plug-in Hybrid)/i);
+            if (fuelMatch) car.fuelType = fuelMatch[0];
+            
+            // Extract transmission
+            const transMatch = context.match(/(Automatic|Manual|CVT|Dual-Clutch)/i);
+            if (transMatch) car.transmission = transMatch[0];
+            
+            // Extract body type
+            const bodyMatch = context.match(/(Sedan|SUV|Truck|Coupe|Hatchback|Van|Wagon|Convertible)/i);
+            if (bodyMatch) car.bodyType = bodyMatch[0];
+            
+            cars.push(car);
+          }
+        }
+      } else {
+        // Extract data for each VIN found
+        for (const vin of Array.from(vins).slice(0, 50)) {
+          const car: any = { vin };
 
-        // Extract trim (often in quotes or parentheses)
-        const trimMatch = context.match(/(?:Trim|Edition|Package)[\s:]*["']?([A-Za-z0-9\s]+)["']?/i);
-        if (trimMatch) car.trim = trimMatch[1].trim();
+          // Extract context around VIN to get related data
+          const vinIndex = html.indexOf(vin);
+          const context = html.substring(Math.max(0, vinIndex - 500), Math.min(html.length, vinIndex + 1000));
 
-        // Extract color
-        const colorMatch = context.match(/(Black|White|Silver|Gray|Red|Blue|Brown|Green|Beige|Gold|Orange|Yellow|Purple|Charcoal|Burgundy|Maroon|Navy|Teal|Cyan|Lime|Pearl)/i);
-        if (colorMatch) car.color = colorMatch[0];
+          // Extract year
+          const yearMatch = context.match(/(19|20)\d{2}/);
+          if (yearMatch) car.year = yearMatch[0];
 
-        // Extract price
-        const priceMatch = context.match(/\$[\s]?([\d,]+(?:\.\d{2})?)/);
-        if (priceMatch) car.price = priceMatch[1].replace(/,/g, "");
+          // Extract make/model
+          const makeModelMatch = context.match(/(Acura|Alfa Romeo|Aston Martin|Audi|Bentley|BMW|Buick|Cadillac|Chevrolet|Chrysler|Dodge|Ferrari|Fiat|Ford|Genesis|GMC|Honda|Hyundai|Infiniti|Jaguar|Jeep|Kia|Lamborghini|Land Rover|Lexus|Lincoln|Maserati|Mazda|McLaren|Mercedes-Benz|MINI|Mitsubishi|Nissan|Porsche|Ram|Rolls-Royce|Subaru|Tesla|Toyota|Volkswagen|Volvo)\s+([A-Za-z0-9\s\-]+)/i);
+          if (makeModelMatch) {
+            car.make = makeModelMatch[1];
+            car.model = makeModelMatch[2]?.trim();
+          }
 
-        // Extract kilometers
-        const kmsMatch = context.match(/([\d,]+)\s*(?:km|kilometers)/i);
-        if (kmsMatch) car.kilometers = kmsMatch[1].replace(/,/g, "");
+          // Extract trim
+          const trimMatch = context.match(/(?:Trim|Edition|Package)[\s:]*["']?([A-Za-z0-9\s]+)["']?/i);
+          if (trimMatch) car.trim = trimMatch[1].trim();
 
-        // Extract stock number (fallback if VIN not available)
-        const stockMatch = context.match(/Stock[\s:#]*([\w\-]+)/i);
-        if (stockMatch) car.stockNumber = stockMatch[1].trim();
+          // Extract color
+          const colorMatch = context.match(/(Black|White|Silver|Gray|Red|Blue|Brown|Green|Beige|Gold|Orange|Yellow|Purple|Charcoal|Burgundy|Maroon|Navy|Teal|Cyan|Lime|Pearl)/i);
+          if (colorMatch) car.color = colorMatch[0];
 
-        // Extract fuel type
-        const fuelMatch = context.match(/(Gasoline|Diesel|Electric|Hybrid|Plug-in Hybrid)/i);
-        if (fuelMatch) car.fuelType = fuelMatch[0];
+          // Extract price
+          const priceMatch = context.match(/\$[\s]?([\d,]+(?:\.\d{2})?)/);
+          if (priceMatch) car.price = priceMatch[1].replace(/,/g, "");
 
-        // Extract transmission
-        const transMatch = context.match(/(Automatic|Manual|CVT|Dual-Clutch)/i);
-        if (transMatch) car.transmission = transMatch[0];
+          // Extract kilometers
+          const kmsMatch = context.match(/([\d,]+)\s*(?:km|kilometers)/i);
+          if (kmsMatch) car.kilometers = kmsMatch[1].replace(/,/g, "");
 
-        // Look for carfax link
-        const carfaxMatch = html.match(/https:\/\/(?:www\.)?carfax[^\s<>"]+/i);
-        if (carfaxMatch) car.carfaxLink = carfaxMatch[0];
+          // Extract stock number
+          const stockMatch = context.match(/Stock[\s:#]*([\w\-]+)/i);
+          if (stockMatch) car.stockNumber = stockMatch[1].trim();
 
-        // Extract body type
-        const bodyMatch = context.match(/(Sedan|SUV|Truck|Coupe|Hatchback|Van|Wagon|Convertible)/i);
-        if (bodyMatch) car.bodyType = bodyMatch[0];
+          // Extract fuel type
+          const fuelMatch = context.match(/(Gasoline|Diesel|Electric|Hybrid|Plug-in Hybrid)/i);
+          if (fuelMatch) car.fuelType = fuelMatch[0];
 
-        // Only add cars that have at least VIN or make/model
-        if (car.vin || (car.make && car.model)) {
-          cars.push(car);
+          // Extract transmission
+          const transMatch = context.match(/(Automatic|Manual|CVT|Dual-Clutch)/i);
+          if (transMatch) car.transmission = transMatch[0];
+
+          // Look for carfax link
+          const carfaxMatch = html.match(/https:\/\/(?:www\.)?carfax[^\s<>"]+/i);
+          if (carfaxMatch) car.carfaxLink = carfaxMatch[0];
+
+          // Extract body type
+          const bodyMatch = context.match(/(Sedan|SUV|Truck|Coupe|Hatchback|Van|Wagon|Convertible)/i);
+          if (bodyMatch) car.bodyType = bodyMatch[0];
+
+          // Only add cars that have at least VIN or make/model
+          if (car.vin || (car.make && car.model)) {
+            cars.push(car);
+          }
         }
       }
 
       res.json({ 
         cars,
         totalFound: cars.length,
-        vinsExtracted: Array.from(vins).length 
+        vinsExtracted: Array.from(vins).length,
+        renderMethod,
+        status: "success"
       });
     } catch (error) {
       console.error("Error with bulk scraping:", error);
-      res.status(500).json({ error: "Failed to scrape inventory from listing page" });
+      res.status(500).json({ error: "Failed to scrape inventory from listing page", details: error instanceof Error ? error.message : "Unknown error" });
     }
   });
 
