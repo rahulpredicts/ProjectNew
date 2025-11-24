@@ -10,6 +10,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
     { href: "/upload", label: "Add Vehicles", icon: PlusCircle },
     { href: "/appraisal", label: "Appraisal Tool", icon: Calculator },
     { href: "/test-api", label: "API Test Lab", icon: FlaskConical },
+    { href: "/test-scrapingdog", label: "ScrapingDog Test", icon: FlaskConical },
   ];
 
   return (

@@ -266,6 +266,85 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ScrapingDog API endpoint - uses JavaScript rendering for better extraction
+  app.post("/api/scrape-listing-scrapingdog", async (req, res) => {
+    try {
+      const { url } = req.body;
+      if (!url) {
+        return res.status(400).json({ error: "URL is required" });
+      }
+
+      const apiKey = process.env.SCRAPINGDOG_API_KEY;
+      if (!apiKey) {
+        return res.status(500).json({ error: "ScrapingDog API key not configured" });
+      }
+
+      // Call ScrapingDog API with JavaScript rendering enabled
+      const scrapingDogUrl = `https://api.scrapingdog.com/scrape?api_key=${apiKey}&url=${encodeURIComponent(url)}&render=true`;
+      
+      const response = await fetch(scrapingDogUrl, {
+        method: "GET",
+        headers: {
+          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+        }
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error("ScrapingDog error:", errorText);
+        return res.status(400).json({ error: "Failed to scrape with ScrapingDog" });
+      }
+
+      const html = await response.text();
+      const extracted: any = {};
+
+      // Extract Year
+      let yearMatch = url.match(/(19|20)\d{2}/);
+      if (!yearMatch) yearMatch = html.match(/<h[1-6][^>]*>\s*(19|20)\d{2}\s+[A-Z]/i);
+      if (!yearMatch) yearMatch = html.match(/(19|20)\d{2}\s+(?:Acura|Alfa Romeo|Aston Martin|Audi|Bentley|BMW|Buick|Cadillac|Chevrolet|Chrysler|Dodge|Ferrari|Fiat|Ford|Genesis|GMC|Honda|Hyundai|Infiniti|Jaguar|Jeep|Kia|Lamborghini|Land Rover|Lexus|Lincoln|Maserati|Mazda|McLaren|Mercedes-Benz|MINI|Mitsubishi|Nissan|Porsche|Ram|Rolls-Royce|Subaru|Tesla|Toyota|Volkswagen|Volvo)/i);
+      if (!yearMatch) yearMatch = html.match(/\b(19|20)\d{2}\b/);
+      if (yearMatch) extracted.year = yearMatch[0];
+
+      // Extract VIN
+      const vinMatch = html.match(/\b([A-HJ-NPR-Z0-9]{17})\b/i);
+      if (vinMatch) extracted.vin = vinMatch[0].toUpperCase();
+
+      // Extract Price
+      let priceMatch = html.match(/[Ss]elling\s*[Pp]rice[\s:]?\$[\s]?([\d,]+(?:\.\d{2})?)/);
+      if (!priceMatch) priceMatch = html.match(/(?:Selling|Sale|Final|Current)?\s*(?:Price|Amount)[\s:]?\$[\s]?([\d,]+(?:\.\d{2})?)/i);
+      if (!priceMatch) priceMatch = html.match(/\$[\s]?([\d,]{3,}(?:\.\d{2})?)/);
+      if (priceMatch) extracted.price = priceMatch[1].replace(/,/g, "");
+
+      // Extract Kilometers
+      let kmsMatch = html.match(/[Oo]dometer[\s:]+([\d,]+)\s*(?:km|kilometers|miles|mi)/i);
+      if (!kmsMatch) kmsMatch = html.match(/[Mm]ileage[\s:]+([\d,]+)\s*(?:km|kilometers|miles|mi)/i);
+      if (!kmsMatch) kmsMatch = html.match(/([\d,]{4,})\s*(?:km|kilometers)\b/i);
+      if (kmsMatch) extracted.kilometers = kmsMatch[1].replace(/,/g, "");
+
+      // Extract Stock Number
+      let stockMatch = html.match(/Stock\s*#\s*:\s*([A-Za-z0-9\-_]+)/i);
+      if (!stockMatch) stockMatch = html.match(/Stock\s*(?:Number|#|:)?\s*[:=]?\s*([A-Za-z0-9\-_]+)/i);
+      if (!stockMatch) stockMatch = html.match(/SKU\s*[:=]?\s*([A-Za-z0-9\-_]+)/i);
+      if (stockMatch) extracted.stockNumber = stockMatch[1].trim();
+
+      // Extract Color
+      const colorMatch = html.match(/(Black|White|Silver|Gray|Red|Blue|Brown|Green|Beige|Gold|Orange|Yellow|Purple|Charcoal|Burgundy|Maroon|Navy|Teal|Cyan|Lime|Pearl)/i);
+      if (colorMatch) extracted.color = colorMatch[0];
+
+      // Extract Make/Model
+      const makeModelMatch = html.match(/(Acura|Alfa Romeo|Aston Martin|Audi|Bentley|BMW|Buick|Cadillac|Chevrolet|Chrysler|Dodge|Ferrari|Fiat|Ford|Genesis|GMC|Honda|Hyundai|Infiniti|Jaguar|Jeep|Kia|Lamborghini|Land Rover|Lexus|Lincoln|Maserati|Mazda|McLaren|Mercedes-Benz|MINI|Mitsubishi|Nissan|Porsche|Ram|Rolls-Royce|Subaru|Tesla|Toyota|Volkswagen|Volvo)\s+([A-Za-z0-9\s\-]+)(?:\s|,|<)/i);
+      if (makeModelMatch) {
+        extracted.make = makeModelMatch[1];
+        extracted.model = makeModelMatch[2]?.trim();
+      }
+
+      res.json({ extracted, rawHtml: html.substring(0, 5000) }); // Include snippet of raw HTML
+    } catch (error) {
+      console.error("Error with ScrapingDog:", error);
+      res.status(500).json({ error: "Failed to scrape with ScrapingDog service" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

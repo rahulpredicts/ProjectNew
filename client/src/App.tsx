@@ -9,6 +9,7 @@ import Inventory from "@/pages/inventory";
 import UploadPage from "@/pages/upload";
 import AppraisalPage from "@/pages/appraisal";
 import BrowserActTest from "@/pages/browseract-test";
+import ScrapingDogTest from "@/pages/scrapingdog-test";
 
 function Router() {
   return (
@@ -18,6 +19,7 @@ function Router() {
         <Route path="/upload" component={UploadPage} />
         <Route path="/appraisal" component={AppraisalPage} />
         <Route path="/test-api" component={BrowserActTest} />
+        <Route path="/test-scrapingdog" component={ScrapingDogTest} />
         <Route component={NotFound} />
       </Switch>
     </Layout>
