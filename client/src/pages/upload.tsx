@@ -1958,6 +1958,193 @@ export default function UploadPage() {
             </Card>
         </TabsContent>
 
+        {/* AI Parser Tab */}
+        <TabsContent value="parser" className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-300">
+            <Card className="border-0 shadow-sm ring-1 ring-gray-200">
+                <CardHeader>
+                    <CardTitle>AI Text Parser</CardTitle>
+                    <CardDescription>Upload text files containing vehicle listings. Claude AI will extract and structure the data into CSV format.</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                    
+                    {textFiles.length === 0 && parsedCsvData.length === 0 && (
+                        <div className="space-y-4">
+                            <div className="space-y-2">
+                                <Label>Select Dealership *</Label>
+                                <Select value={selectedDealershipParser} onValueChange={setSelectedDealershipParser}>
+                                    <SelectTrigger data-testid="select-dealership-parser">
+                                        <SelectValue placeholder="Choose a dealership" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {dealerships.map(d => (
+                                            <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+
+                            <div className="flex items-center justify-center w-full">
+                                <Label htmlFor="text-file-upload" className="flex flex-col items-center justify-center w-full h-64 border-2 border-gray-300 border-dashed rounded-2xl cursor-pointer bg-gray-50 hover:bg-gray-100 transition-colors">
+                                    <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                                        <div className="w-16 h-16 bg-purple-100 text-purple-600 rounded-full flex items-center justify-center mb-4">
+                                            <FileText className="w-8 h-8" />
+                                        </div>
+                                        <p className="mb-2 text-sm text-gray-500"><span className="font-semibold">Click to upload</span> or drag and drop</p>
+                                        <p className="text-xs text-gray-500">TXT, CSV, or any text file with vehicle listings</p>
+                                    </div>
+                                    <Input 
+                                        id="text-file-upload" 
+                                        type="file" 
+                                        className="hidden" 
+                                        accept=".txt,.csv,.text"
+                                        multiple
+                                        onChange={handleTextFileUpload}
+                                        data-testid="input-text-file"
+                                    />
+                                </Label>
+                            </div>
+                        </div>
+                    )}
+
+                    {textFiles.length > 0 && parsedCsvData.length === 0 && (
+                        <div className="space-y-4">
+                            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                                <div className="flex items-start gap-3">
+                                    <FileText className="w-5 h-5 text-blue-600 mt-0.5" />
+                                    <div className="flex-1">
+                                        <p className="font-medium text-blue-900">Files Selected</p>
+                                        <ul className="mt-2 space-y-1">
+                                            {textFiles.map((file, idx) => (
+                                                <li key={idx} className="text-sm text-blue-700">
+                                                    {file.name} ({(file.size / 1024).toFixed(1)} KB)
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="flex gap-3 justify-end">
+                                <Button 
+                                    variant="outline" 
+                                    onClick={() => setTextFiles([])}
+                                    data-testid="button-cancel-parse"
+                                >
+                                    Cancel
+                                </Button>
+                                <Button 
+                                    onClick={handleParseWithClaude}
+                                    disabled={isParsingWithClaude || !selectedDealershipParser}
+                                    size="lg"
+                                    data-testid="button-parse-claude"
+                                >
+                                    {isParsingWithClaude ? (
+                                        <>
+                                            <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                                            Parsing with Claude AI...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <FileText className="w-4 h-4 mr-2" />
+                                            Parse with AI
+                                        </>
+                                    )}
+                                </Button>
+                            </div>
+                        </div>
+                    )}
+
+                    {parsedCsvData.length > 0 && (
+                        <div className="space-y-6">
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <h3 className="font-semibold text-lg">Parsed Results</h3>
+                                    <p className="text-sm text-gray-600 mt-1">
+                                        {parsedCsvData.length} vehicles extracted by Claude AI
+                                    </p>
+                                </div>
+                                <div className="text-right">
+                                    <div className="text-2xl font-bold text-purple-600">{parsedCsvData.length}</div>
+                                    <div className="text-xs text-gray-500">Vehicles Found</div>
+                                </div>
+                            </div>
+
+                            <div className="border rounded-lg overflow-hidden bg-white">
+                                <div className="overflow-x-auto">
+                                    <table className="w-full text-sm">
+                                        <thead className="bg-gray-50 border-b">
+                                            <tr>
+                                                <th className="px-4 py-3 text-left font-semibold text-gray-700">Year</th>
+                                                <th className="px-4 py-3 text-left font-semibold text-gray-700">Make</th>
+                                                <th className="px-4 py-3 text-left font-semibold text-gray-700">Model</th>
+                                                <th className="px-4 py-3 text-left font-semibold text-gray-700">Trim</th>
+                                                <th className="px-4 py-3 text-left font-semibold text-gray-700">Price</th>
+                                                <th className="px-4 py-3 text-left font-semibold text-gray-700">Kilometers</th>
+                                                <th className="px-4 py-3 text-left font-semibold text-gray-700">VIN</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y">
+                                            {parsedCsvData.map((row, idx) => (
+                                                <tr key={idx} className="hover:bg-gray-50" data-testid={`row-parsed-${idx}`}>
+                                                    <td className="px-4 py-3 text-gray-900">{row.year || "—"}</td>
+                                                    <td className="px-4 py-3 text-gray-900">{row.make || "—"}</td>
+                                                    <td className="px-4 py-3 text-gray-900">{row.model || "—"}</td>
+                                                    <td className="px-4 py-3 text-gray-900 text-xs">{row.trim || "—"}</td>
+                                                    <td className="px-4 py-3 text-gray-900 font-medium">${Number(row.price || 0).toLocaleString()}</td>
+                                                    <td className="px-4 py-3 text-gray-600">{Number(row.kilometers || row.km || 0).toLocaleString()} km</td>
+                                                    <td className="px-4 py-3 font-mono text-xs text-gray-600">{row.vin ? row.vin.substring(0, 8) + "..." : "—"}</td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+                            <div className="flex gap-3 justify-end flex-wrap">
+                                <Button 
+                                    variant="outline" 
+                                    onClick={() => {
+                                        setParsedCsvData([]);
+                                        setParsedCsvRaw("");
+                                        setTextFiles([]);
+                                    }}
+                                    data-testid="button-start-over-parser"
+                                >
+                                    Start Over
+                                </Button>
+                                <Button 
+                                    variant="outline"
+                                    onClick={downloadParsedCsv}
+                                    data-testid="button-download-csv-parser"
+                                >
+                                    <FileText className="w-4 h-4 mr-2" />
+                                    Download CSV
+                                </Button>
+                                <Button 
+                                    onClick={handleImportParsedCsv}
+                                    disabled={isSavingParsed || !selectedDealershipParser}
+                                    size="lg"
+                                    data-testid="button-import-database-parser"
+                                >
+                                    {isSavingParsed ? (
+                                        <>
+                                            <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                                            Importing...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <UploadIcon className="w-4 h-4 mr-2" />
+                                            Import {parsedCsvData.length} to Database
+                                        </>
+                                    )}
+                                </Button>
+                            </div>
+                        </div>
+                    )}
+                </CardContent>
+            </Card>
+        </TabsContent>
+
         {/* AI Scan Tab */}
         <TabsContent value="scan" className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-300">
             <Card className="border-0 shadow-sm ring-1 ring-gray-200">
