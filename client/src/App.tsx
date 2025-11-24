@@ -14,6 +14,7 @@ function Router() {
     <Layout>
       <Switch>
         <Route path="/" component={Inventory} />
+        <Route path="/inventory" component={Inventory} />
         <Route path="/upload" component={UploadPage} />
         <Route path="/appraisal" component={AppraisalPage} />
         <Route component={NotFound} />

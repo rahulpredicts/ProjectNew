@@ -278,22 +278,18 @@ export default function Inventory() {
         return;
       }
       
-      // Validate required fields (matching add form validation)
+      // Validate required fields
       const requiredFields = [
         { field: editingCar.dealershipId, name: 'Dealership' },
         { field: editingCar.make, name: 'Make' },
         { field: editingCar.model, name: 'Model' },
         { field: editingCar.year, name: 'Year' },
-        { field: editingCar.trim, name: 'Trim' },
         { field: editingCar.price, name: 'Price' },
         { field: editingCar.kilometers, name: 'Kilometers' },
         { field: editingCar.color, name: 'Color' },
-        { field: editingCar.transmission, name: 'Transmission' },
-        { field: editingCar.fuelType, name: 'Fuel Type' },
-        { field: editingCar.bodyType, name: 'Body Type' },
         { field: editingCar.condition, name: 'Condition' }
       ];
-      // Optional fields: listing URL, Carfax link, notes, drivetrain, engine specs, features
+      // Optional fields: trim, transmission, fuel type, body type, listing URL, Carfax link, notes, drivetrain, engine specs, features
       
       const missingFields = requiredFields.filter(({ field }) => !field || field.trim() === '');
       if (missingFields.length > 0) {
@@ -1286,20 +1282,11 @@ export default function Inventory() {
                 </div>
                 <div className="grid gap-2">
                   <Label>Trim</Label>
-                  <Select value={editingCar.trim} onValueChange={(val) => setEditingCar({ ...editingCar, trim: val })}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select Trim" />
-                    </SelectTrigger>
-                    <SelectContent className="max-h-[300px]">
-                      {availableEditTrims.length > 0 ? (
-                        availableEditTrims.map(trim => (
-                          <SelectItem key={trim} value={trim}>{trim}</SelectItem>
-                        ))
-                      ) : (
-                        <SelectItem value="Base">Base</SelectItem>
-                      )}
-                    </SelectContent>
-                  </Select>
+                  <Input
+                    placeholder="Trim Level"
+                    value={editingCar.trim || ""}
+                    onChange={(e) => setEditingCar({ ...editingCar, trim: e.target.value })}
+                  />
                 </div>
                  <div className="grid gap-2">
                   <Label>Price</Label>
@@ -1330,11 +1317,12 @@ export default function Inventory() {
                 </div>
                 <div className="grid gap-2">
                   <Label>Transmission</Label>
-                  <Select value={editingCar.transmission || ""} onValueChange={(val) => setEditingCar({ ...editingCar, transmission: val })}>
+                  <Select value={editingCar.transmission || "not_specified"} onValueChange={(val) => setEditingCar({ ...editingCar, transmission: val === "not_specified" ? "" : val })}>
                     <SelectTrigger>
                       <SelectValue placeholder="Select Transmission" />
                     </SelectTrigger>
                     <SelectContent>
+                      <SelectItem value="not_specified">Not Specified</SelectItem>
                       <SelectItem value="automatic">Automatic</SelectItem>
                       <SelectItem value="manual">Manual</SelectItem>
                       <SelectItem value="cvt">CVT</SelectItem>
@@ -1343,11 +1331,12 @@ export default function Inventory() {
                 </div>
                 <div className="grid gap-2">
                   <Label>Fuel Type</Label>
-                  <Select value={editingCar.fuelType || ""} onValueChange={(val) => setEditingCar({ ...editingCar, fuelType: val })}>
+                  <Select value={editingCar.fuelType || "not_specified"} onValueChange={(val) => setEditingCar({ ...editingCar, fuelType: val === "not_specified" ? "" : val })}>
                     <SelectTrigger>
                       <SelectValue placeholder="Select Fuel Type" />
                     </SelectTrigger>
                     <SelectContent>
+                      <SelectItem value="not_specified">Not Specified</SelectItem>
                       <SelectItem value="gasoline">Gasoline</SelectItem>
                       <SelectItem value="diesel">Diesel</SelectItem>
                       <SelectItem value="electric">Electric</SelectItem>
@@ -1357,11 +1346,12 @@ export default function Inventory() {
                 </div>
                 <div className="grid gap-2">
                   <Label>Body Type</Label>
-                  <Select value={editingCar.bodyType || ""} onValueChange={(val) => setEditingCar({ ...editingCar, bodyType: val })}>
+                  <Select value={editingCar.bodyType || "not_specified"} onValueChange={(val) => setEditingCar({ ...editingCar, bodyType: val === "not_specified" ? "" : val })}>
                     <SelectTrigger>
                       <SelectValue placeholder="Select Body Type" />
                     </SelectTrigger>
                     <SelectContent>
+                      <SelectItem value="not_specified">Not Specified</SelectItem>
                       <SelectItem value="sedan">Sedan</SelectItem>
                       <SelectItem value="suv">SUV</SelectItem>
                       <SelectItem value="truck">Truck</SelectItem>

@@ -29,16 +29,18 @@ export function Layout({ children }: { children: React.ReactNode }) {
           {navItems.map((item) => {
             const isActive = location === item.href;
             return (
-              <Link key={item.href} href={item.href}>
-                <a className={cn(
+              <Link 
+                key={item.href} 
+                href={item.href}
+                className={cn(
                   "flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-medium",
                   isActive 
                     ? "bg-black text-white shadow-lg shadow-black/10" 
                     : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
-                )}>
-                  <item.icon className={cn("w-5 h-5", isActive ? "text-white" : "text-gray-500")} />
-                  {item.label}
-                </a>
+                )}
+              >
+                <item.icon className={cn("w-5 h-5", isActive ? "text-white" : "text-gray-500")} />
+                {item.label}
               </Link>
             );
           })}
