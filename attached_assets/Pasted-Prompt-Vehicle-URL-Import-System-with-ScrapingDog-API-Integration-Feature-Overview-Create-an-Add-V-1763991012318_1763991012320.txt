@@ -1,0 +1,177 @@
+Prompt: Vehicle URL Import System with ScrapingDog API Integration
+Feature Overview
+Create an "Add Vehicles via URL Import" tab/page that allows users to scrape vehicle data from dealership websites using ScrapingDog API, extract vehicle information, generate a CSV file, display it in a table, and import it to the database.
+User Flow & Requirements
+Step 1: URL Input Section
+
+Create an input field where users can paste the dealership inventory URL (e.g., https://www.mazdarepentigny.com/used/search.html)
+Add a "Fetch" button next to the URL input
+Validate the URL format before proceeding
+
+Step 2: API Key Modal/Prompt
+
+When "Fetch" button is clicked, show a modal/popup asking for the ScrapingDog API key
+Input field for API key with a "Save API Key" option (store in localStorage for future use)
+Add a link to get API key: https://www.scrapingdog.com/
+"Continue" button to proceed after API key is entered
+
+Step 3: Scrape & Extract Data
+
+After API key is provided, show an "Extract Vehicle Data" button
+On click, call ScrapingDog API with the provided URL:
+
+javascriptconst response = await fetch(`https://api.scrapingdog.com/scrape?api_key=${apiKey}&url=${encodeURIComponent(url)}&render=true`);
+```
+- Show loading spinner/progress indicator during scraping
+- Display the raw HTML/script code returned in a collapsible code viewer (optional)
+
+#### **Step 4: Parse & Generate CSV**
+- Create a "Generate CSV" button that parses the scraped HTML
+- Extract vehicle data using regex/DOM parsing for these fields:
+
+**CSV Columns (in this exact order):**
+```
+id, dealership, vin, make, model, trim, year, color, price, kilometer, transmission, fuel_type, body_type, drivetrain, engine_cy, engine_di, features, listing_link, carfax_link, car_status, notes, stock_a, stock_num, condition, created_at, status
+```
+
+**Data Extraction Patterns:**
+- `id`: Extract from `data-carid` attribute
+- `dealership`: Extract from `dealerName` in JSON or page meta
+- `vin`: Extract from `data-vin` attribute
+- `make`: Extract from `data-make` attribute
+- `model`: Extract from `data-model` attribute
+- `trim`: Extract from `data-trim` attribute
+- `year`: Extract from `data-year` attribute
+- `color`: Extract from "Ext:" in description
+- `price`: Extract from `class="dollarsigned"` span
+- `kilometer`: Extract from `class="s-km"` span
+- `transmission`: Extract from vehicle specs
+- `fuel_type`: Extract from "Fuel:" field
+- `body_type`: Extract from "Category:" field
+- `drivetrain`: Extract from "Drive train:" field
+- `engine_cy`: Extract from "Cylinders:" field
+- `engine_di`: Extract from "Engine:" field (displacement)
+- `features`: Extract from description text
+- `listing_link`: Construct from vehicle URL pattern
+- `carfax_link`: Extract from Carfax badge href
+- `car_status`: Default to "Available"
+- `notes`: Empty by default
+- `stock_a`: Empty by default
+- `stock_num`: Extract from `data-stock-number`
+- `condition`: Extract from `data-condition` (USED/NEW)
+- `created_at`: Current date (YYYY-MM-DD)
+- `status`: Default to "Active"
+
+#### **Step 5: Display Data Table**
+- Show extracted data in a responsive, sortable table
+- Include columns: Year, Make, Model, Trim, Price, Kilometer, VIN, Stock#, Condition
+- Add search/filter functionality
+- Show total vehicle count
+- Allow row selection for partial import
+
+#### **Step 6: Export & Import Actions**
+Create action buttons:
+
+1. **"Download CSV" Button**
+   - Generate and download the CSV file with all extracted data
+   - Filename format: `{dealership}_vehicles_{date}.csv`
+
+2. **"Import to Database" Button**
+   - Send data to backend API endpoint
+   - Show confirmation modal before import
+   - Display success/error messages
+   - Show import progress for large datasets
+
+### **UI/UX Requirements**
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  Add Vehicles - URL Import                                       │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                  │
+│  Step 1: Enter Dealership URL                                   │
+│  ┌──────────────────────────────────────────────┐ ┌───────────┐ │
+│  │ https://www.example.com/used/inventory       │ │  Fetch    │ │
+│  └──────────────────────────────────────────────┘ └───────────┘ │
+│                                                                  │
+│  Step 2: API Configuration                                      │
+│  ┌──────────────────────────────────────────────┐               │
+│  │ ScrapingDog API Key: ••••••••••••••         │ ✓ Saved      │
+│  └──────────────────────────────────────────────┘               │
+│                                                                  │
+│  Step 3: Extract Data                                           │
+│  ┌─────────────────┐  ┌─────────────────┐                       │
+│  │ Extract Data    │  │ View Raw HTML   │                       │
+│  └─────────────────┘  └─────────────────┘                       │
+│                                                                  │
+│  ┌─────────────────────────────────────────────────────────────┐│
+│  │ Extracted: 36 vehicles from Mazda Repentigny                ││
+│  ├─────────────────────────────────────────────────────────────┤│
+│  │ Year │ Make  │ Model    │ Price   │ KM      │ VIN          ││
+│  │ 2023 │ Mazda │ CX-5     │ $28,500 │ 15,000  │ JM3KF...     ││
+│  │ 2022 │ Mazda │ CX-30    │ $24,000 │ 32,000  │ 3MVD...      ││
+│  │ ...  │ ...   │ ...      │ ...     │ ...     │ ...          ││
+│  └─────────────────────────────────────────────────────────────┘│
+│                                                                  │
+│  ┌─────────────────┐  ┌─────────────────────────┐               │
+│  │ Download CSV    │  │ Import to Database      │               │
+│  └─────────────────┘  └─────────────────────────┘               │
+│                                                                  │
+└─────────────────────────────────────────────────────────────────┘
+Technical Implementation
+Frontend (React/Vue/Angular):
+javascript// State management
+const [url, setUrl] = useState('');
+const [apiKey, setApiKey] = useState(localStorage.getItem('scrapingdog_api_key') || '');
+const [scrapedHtml, setScrapedHtml] = useState('');
+const [vehicles, setVehicles] = useState([]);
+const [loading, setLoading] = useState(false);
+const [step, setStep] = useState(1);
+
+// API call to ScrapingDog
+const fetchWebsite = async () => {
+  const response = await fetch(
+    `https://api.scrapingdog.com/scrape?api_key=${apiKey}&url=${encodeURIComponent(url)}&render=true`
+  );
+  const html = await response.text();
+  setScrapedHtml(html);
+};
+
+// Parse HTML and extract vehicles
+const extractVehicles = () => {
+  // Use regex or DOMParser to extract vehicle data
+  // Map to CSV column structure
+};
+
+// Generate and download CSV
+const downloadCSV = () => {
+  const csv = convertToCSV(vehicles);
+  const blob = new Blob([csv], { type: 'text/csv' });
+  // Trigger download
+};
+
+// Import to database
+const importToDatabase = async () => {
+  await fetch('/api/vehicles/import', {
+    method: 'POST',
+    body: JSON.stringify({ vehicles }),
+    headers: { 'Content-Type': 'application/json' }
+  });
+};
+Backend API Endpoint:
+javascript// POST /api/vehicles/import
+router.post('/import', async (req, res) => {
+  const { vehicles } = req.body;
+  // Validate data
+  // Bulk insert to database
+  // Return success/error response
+});
+Sample CSV Output Format
+csvid,dealership,vin,make,model,trim,year,color,price,kilometer,transmission,fuel_type,body_type,drivetrain,engine_cy,engine_di,features,listing_link,carfax_link,car_status,notes,stock_a,stock_num,condition,created_at,status
+13094887,Mazda Repentigny,3MZBM1U73FM234078,Mazda,Mazda3,4dr Sdn Auto GX,2015,Black,8780,167919,Auto.,Gas,Cars,Front-wheel drive,I4,2.0,,https://www.mazdarepentigny.com/used/2015-Mazda-Mazda3-id13094887.html,https://vhr.carfax.ca/?id=xxx,Available,,,P2124A,USED,2025-11-24,Active
+Error Handling
+
+Invalid URL format → Show validation error
+Invalid/expired API key → Show API error with retry option
+Scraping failed → Show error with option to retry
+No vehicles found → Show "No vehicles detected" message
+Import failed → Show error details and allow retry

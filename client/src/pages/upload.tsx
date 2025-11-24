@@ -102,6 +102,9 @@ export default function UploadPage() {
   const [isBulkExtracting, setIsBulkExtracting] = useState(false);
   const [bulkResults, setBulkResults] = useState<Array<{url: string, status: 'pending' | 'loading' | 'success' | 'error', data?: Partial<Car>, error?: string}>>([]);
   const [selectedDealershipBulk, setSelectedDealershipBulk] = useState("");
+  const [showRawHtml, setShowRawHtml] = useState(false);
+  const [rawHtmlContent, setRawHtmlContent] = useState("");
+  const [isSavingBulk, setIsSavingBulk] = useState(false);
 
   // AI Scan State
   const [scannedFile, setScannedFile] = useState<File | null>(null);
@@ -382,51 +385,125 @@ export default function UploadPage() {
     }
   };
 
-  const handleBulkSaveAll = async () => {
+  const generateCsvFromBulkResults = () => {
     const successResults = bulkResults.filter(r => r.status === 'success' && r.data);
-    let savedCount = 0;
+    if (successResults.length === 0) return "";
 
-    for (const result of successResults) {
-      if (!result.data) continue;
+    const headers = ["year", "make", "model", "trim", "price", "kilometers", "vin", "stock_number", "condition", "url"];
+    const rows = successResults.map(r => [
+      r.data?.year || "",
+      r.data?.make || "",
+      r.data?.model || "",
+      r.data?.trim || "",
+      r.data?.price || "",
+      r.data?.kilometers || "",
+      r.data?.vin || "",
+      r.data?.stockNumber || "",
+      r.data?.condition || "used",
+      r.url
+    ]);
 
-      const carData = {
-        dealershipId: result.data.dealershipId || selectedDealershipBulk,
-        vin: result.data.vin || "",
-        stockNumber: result.data.stockNumber || "",
-        condition: result.data.condition || "used",
-        make: result.data.make || "",
-        model: result.data.model || "",
-        trim: result.data.trim || "",
-        year: result.data.year || "",
-        color: result.data.color || "",
-        price: result.data.price || "",
-        kilometers: result.data.kilometers || "",
-        transmission: result.data.transmission || "",
-        fuelType: result.data.fuelType || "",
-        bodyType: result.data.bodyType || "",
-        drivetrain: result.data.drivetrain,
-        engineCylinders: result.data.engineCylinders,
-        engineDisplacement: result.data.engineDisplacement,
-        features: [],
-        listingLink: result.data.listingLink || "",
-        carfaxLink: result.data.carfaxLink || "",
-        carfaxStatus: result.data.carfaxStatus || "unavailable",
-        notes: `Imported from: ${result.url}`,
-        status: 'available' as const
-      };
+    const csv = [headers.join(","), ...rows.map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(","))].join("\n");
+    return csv;
+  };
 
-      try {
-        await createCarMutation.mutateAsync(carData);
-        savedCount++;
-      } catch (error) {
-        console.error("Error saving car:", error);
-      }
+  const downloadBulkCsv = () => {
+    const csv = generateCsvFromBulkResults();
+    if (!csv) {
+      toast({ title: "No Data", description: "No vehicles to export", variant: "destructive" });
+      return;
     }
 
-    toast({ title: "Saved Successfully", description: `Added ${savedCount} vehicles to inventory`, variant: "default" });
-    setBulkUrls("");
-    setBulkResults([]);
-    setSelectedDealershipBulk("");
+    const dealershipName = dealerships.find(d => d.id === selectedDealershipBulk)?.name || "dealership";
+    const date = new Date().toISOString().split('T')[0];
+    const filename = `${dealershipName.replace(/\s+/g, '_')}_vehicles_${date}.csv`;
+
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', filename);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    toast({ title: "✓ Downloaded", description: `CSV file: ${filename}`, variant: "default" });
+  };
+
+  const handleBulkSaveAll = async () => {
+    const successResults = bulkResults.filter(r => r.status === 'success' && r.data);
+    
+    if (successResults.length === 0) {
+      toast({ title: "No Data", description: "No successful extractions to save", variant: "destructive" });
+      return;
+    }
+
+    setIsSavingBulk(true);
+    
+    try {
+      const carsToImport = successResults.map(result => ({
+        vin: result.data?.vin || "",
+        stockNumber: result.data?.stockNumber || "",
+        condition: result.data?.condition || "used",
+        make: result.data?.make || "Unknown",
+        model: result.data?.model || "Unknown",
+        trim: result.data?.trim || "",
+        year: result.data?.year || "",
+        color: result.data?.color || "",
+        price: result.data?.price || "0",
+        kilometers: result.data?.kilometers || "0",
+        transmission: result.data?.transmission || "",
+        fuelType: result.data?.fuelType || "",
+        bodyType: result.data?.bodyType || "",
+        drivetrain: result.data?.drivetrain || "fwd",
+        engineCylinders: result.data?.engineCylinders || "",
+        engineDisplacement: result.data?.engineDisplacement || "",
+        features: [],
+        listingLink: result.data?.listingLink || result.url || "",
+        carfaxLink: result.data?.carfaxLink || "",
+        notes: `Imported from: ${result.url}`,
+      }));
+
+      const response = await fetch('/api/cars/bulk-import', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          dealershipId: selectedDealershipBulk,
+          cars: carsToImport
+        })
+      });
+
+      const result = await response.json();
+      
+      if (response.ok) {
+        toast({ 
+          title: `✓ Import Complete!`, 
+          description: `Successfully added ${result.successCount}/${result.totalProcessed} vehicles to database`, 
+          variant: result.failureCount === 0 ? "default" : "destructive" 
+        });
+
+        setBulkUrls("");
+        setBulkResults([]);
+        setSelectedDealershipBulk("");
+        setShowRawHtml(false);
+      } else {
+        toast({ 
+          title: "Import Failed", 
+          description: result.error || "Failed to import vehicles", 
+          variant: "destructive" 
+        });
+      }
+    } catch (error) {
+      console.error("Error importing vehicles:", error);
+      toast({ 
+        title: "Import Error", 
+        description: error instanceof Error ? error.message : "Failed to import vehicles", 
+        variant: "destructive" 
+      });
+    } finally {
+      setIsSavingBulk(false);
+    }
   };
 
   const handleDecodeVin = async () => {
@@ -1449,8 +1526,8 @@ export default function UploadPage() {
         <TabsContent value="bulk" className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-300">
             <Card className="border-0 shadow-sm ring-1 ring-gray-200">
                 <CardHeader>
-                    <CardTitle>Bulk URL Extract</CardTitle>
-                    <CardDescription>Paste multiple vehicle listing URLs (one per line) to extract and save all at once.</CardDescription>
+                    <CardTitle>Bulk URL Import</CardTitle>
+                    <CardDescription>Paste multiple vehicle listing URLs, extract data, and import to database in bulk.</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
                     {bulkResults.length === 0 && (
@@ -1511,52 +1588,73 @@ export default function UploadPage() {
                     )}
 
                     {bulkResults.length > 0 && (
-                        <div className="space-y-4">
-                            <div className="flex items-center justify-between mb-4">
-                                <h3 className="font-semibold text-lg">Extraction Results</h3>
-                                <span className="text-sm text-gray-600">
-                                    {bulkResults.filter(r => r.status === 'success').length}/{bulkResults.length} successful
-                                </span>
-                            </div>
-
-                            <div className="space-y-3 max-h-[400px] overflow-y-auto">
-                                {bulkResults.map((result, idx) => (
-                                    <div key={idx} className={`p-4 rounded-lg border flex items-start gap-4 ${
-                                        result.status === 'success' ? 'bg-green-50 border-green-200' :
-                                        result.status === 'error' ? 'bg-red-50 border-red-200' :
-                                        result.status === 'loading' ? 'bg-blue-50 border-blue-200' :
-                                        'bg-gray-50 border-gray-200'
-                                    }`}>
-                                        <div className="flex-shrink-0 mt-1">
-                                            {result.status === 'success' && <CheckCircle2 className="w-5 h-5 text-green-600" />}
-                                            {result.status === 'error' && <AlertCircle className="w-5 h-5 text-red-600" />}
-                                            {result.status === 'loading' && <Loader2 className="w-5 h-5 text-blue-600 animate-spin" />}
-                                            {result.status === 'pending' && <div className="w-5 h-5 rounded-full border-2 border-gray-300" />}
-                                        </div>
-                                        <div className="flex-grow min-w-0">
-                                            <p className="text-sm font-medium truncate">{result.url}</p>
-                                            {result.status === 'success' && result.data && (
-                                                <p className="text-sm text-gray-600 mt-1">
-                                                    {result.data.year} {result.data.make} {result.data.model} {result.data.trim ? `- ${result.data.trim}` : ''}
-                                                </p>
-                                            )}
-                                            {result.status === 'error' && (
-                                                <p className="text-sm text-red-600 mt-1">{result.error}</p>
-                                            )}
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-
-                            <div className="bg-blue-50 border border-blue-100 rounded-lg p-4 flex items-start gap-3">
-                                <CheckCircle2 className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
-                                <div className="text-sm text-blue-700">
-                                    <p className="font-semibold mb-1">Ready to save</p>
-                                    <p>{bulkResults.filter(r => r.status === 'success').length} vehicles extracted and ready to be added to your inventory.</p>
+                        <div className="space-y-6">
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <h3 className="font-semibold text-lg">Extraction Results</h3>
+                                    <p className="text-sm text-gray-600 mt-1">
+                                        {bulkResults.filter(r => r.status === 'success').length} successful out of {bulkResults.length} URLs
+                                    </p>
+                                </div>
+                                <div className="text-right">
+                                    <div className="text-2xl font-bold text-green-600">{bulkResults.filter(r => r.status === 'success').length}</div>
+                                    <div className="text-xs text-gray-500">Vehicles Extracted</div>
                                 </div>
                             </div>
 
-                            <div className="flex gap-3 justify-end">
+                            {/* Data Table */}
+                            <div className="border rounded-lg overflow-hidden bg-white">
+                                <div className="overflow-x-auto">
+                                    <table className="w-full text-sm">
+                                        <thead className="bg-gray-50 border-b">
+                                            <tr>
+                                                <th className="px-4 py-3 text-left font-semibold text-gray-700">Year</th>
+                                                <th className="px-4 py-3 text-left font-semibold text-gray-700">Make</th>
+                                                <th className="px-4 py-3 text-left font-semibold text-gray-700">Model</th>
+                                                <th className="px-4 py-3 text-left font-semibold text-gray-700">Trim</th>
+                                                <th className="px-4 py-3 text-left font-semibold text-gray-700">Price</th>
+                                                <th className="px-4 py-3 text-left font-semibold text-gray-700">Kilometers</th>
+                                                <th className="px-4 py-3 text-left font-semibold text-gray-700">VIN</th>
+                                                <th className="px-4 py-3 text-left font-semibold text-gray-700">Status</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y">
+                                            {bulkResults.filter(r => r.status === 'success' && r.data).map((result, idx) => (
+                                                <tr key={idx} className="hover:bg-gray-50">
+                                                    <td className="px-4 py-3 text-gray-900">{result.data?.year || "—"}</td>
+                                                    <td className="px-4 py-3 text-gray-900">{result.data?.make || "—"}</td>
+                                                    <td className="px-4 py-3 text-gray-900">{result.data?.model || "—"}</td>
+                                                    <td className="px-4 py-3 text-gray-900 text-xs">{result.data?.trim || "—"}</td>
+                                                    <td className="px-4 py-3 text-gray-900 font-medium">${Number(result.data?.price || 0).toLocaleString()}</td>
+                                                    <td className="px-4 py-3 text-gray-600">{Number(result.data?.kilometers || 0).toLocaleString()} km</td>
+                                                    <td className="px-4 py-3 font-mono text-xs text-gray-600">{result.data?.vin ? result.data.vin.substring(0, 8) + "..." : "—"}</td>
+                                                    <td className="px-4 py-3"><span className="px-2 py-1 bg-green-100 text-green-700 rounded text-xs font-medium">✓</span></td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+                            {/* Failed Items Summary */}
+                            {bulkResults.some(r => r.status === 'error') && (
+                                <div className="bg-red-50 border border-red-100 rounded-lg p-4">
+                                    <p className="text-sm font-semibold text-red-900 mb-2">
+                                        {bulkResults.filter(r => r.status === 'error').length} Failed Extractions
+                                    </p>
+                                    <div className="space-y-2 max-h-[200px] overflow-y-auto">
+                                        {bulkResults.filter(r => r.status === 'error').map((result, idx) => (
+                                            <div key={idx} className="text-sm text-red-700 flex items-start gap-2">
+                                                <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                                                <div className="truncate">{result.url}: {result.error}</div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Action Buttons */}
+                            <div className="flex gap-3 justify-end flex-wrap">
                                 <Button 
                                     variant="outline" 
                                     onClick={() => {
@@ -1568,12 +1666,29 @@ export default function UploadPage() {
                                     Start Over
                                 </Button>
                                 <Button 
-                                    onClick={handleBulkSaveAll}
+                                    variant="outline"
+                                    onClick={downloadBulkCsv}
                                     disabled={!bulkResults.some(r => r.status === 'success')}
+                                >
+                                    <FileText className="w-4 h-4 mr-2" />
+                                    Download CSV
+                                </Button>
+                                <Button 
+                                    onClick={handleBulkSaveAll}
+                                    disabled={!bulkResults.some(r => r.status === 'success') || isSavingBulk}
                                     size="lg"
                                 >
-                                    <Plus className="w-4 h-4 mr-2" />
-                                    Save All to Inventory
+                                    {isSavingBulk ? (
+                                        <>
+                                            <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                                            Importing...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <UploadIcon className="w-4 h-4 mr-2" />
+                                            Import {bulkResults.filter(r => r.status === 'success').length} to Database
+                                        </>
+                                    )}
                                 </Button>
                             </div>
                         </div>
