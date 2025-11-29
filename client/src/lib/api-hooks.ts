@@ -57,6 +57,30 @@ export interface CarCounts {
   pending: number;
 }
 
+export interface CarFilterParams {
+  dealershipId?: string;
+  search?: string;
+  status?: string;
+  make?: string;
+  model?: string;
+  vin?: string;
+  vinStart?: string;
+  color?: string;
+  trim?: string;
+  yearMin?: number;
+  yearMax?: number;
+  priceMin?: number;
+  priceMax?: number;
+  kmsMin?: number;
+  kmsMax?: number;
+  province?: string;
+  transmission?: string[];
+  drivetrain?: string[];
+  fuelType?: string[];
+  bodyType?: string[];
+  engineCylinders?: string[];
+}
+
 // API functions
 async function fetchDealerships(): Promise<Dealership[]> {
   const response = await fetch('/api/dealerships');
@@ -67,16 +91,35 @@ async function fetchDealerships(): Promise<Dealership[]> {
 async function fetchCarsPaginated(
   page: number = 1,
   pageSize: number = 50,
-  dealershipId?: string,
-  search?: string,
-  status?: string
+  filters?: CarFilterParams
 ): Promise<PaginatedResult<Car>> {
   const params = new URLSearchParams();
   params.append('page', page.toString());
   params.append('pageSize', pageSize.toString());
-  if (dealershipId) params.append('dealershipId', dealershipId);
-  if (search) params.append('search', search);
-  if (status) params.append('status', status);
+  
+  if (filters) {
+    if (filters.dealershipId) params.append('dealershipId', filters.dealershipId);
+    if (filters.search) params.append('search', filters.search);
+    if (filters.status) params.append('status', filters.status);
+    if (filters.make) params.append('make', filters.make);
+    if (filters.model) params.append('model', filters.model);
+    if (filters.vin) params.append('vin', filters.vin);
+    if (filters.vinStart) params.append('vinStart', filters.vinStart);
+    if (filters.color) params.append('color', filters.color);
+    if (filters.trim) params.append('trim', filters.trim);
+    if (filters.yearMin !== undefined) params.append('yearMin', filters.yearMin.toString());
+    if (filters.yearMax !== undefined) params.append('yearMax', filters.yearMax.toString());
+    if (filters.priceMin !== undefined) params.append('priceMin', filters.priceMin.toString());
+    if (filters.priceMax !== undefined) params.append('priceMax', filters.priceMax.toString());
+    if (filters.kmsMin !== undefined) params.append('kmsMin', filters.kmsMin.toString());
+    if (filters.kmsMax !== undefined) params.append('kmsMax', filters.kmsMax.toString());
+    if (filters.province) params.append('province', filters.province);
+    if (filters.transmission?.length) params.append('transmission', filters.transmission.join(','));
+    if (filters.drivetrain?.length) params.append('drivetrain', filters.drivetrain.join(','));
+    if (filters.fuelType?.length) params.append('fuelType', filters.fuelType.join(','));
+    if (filters.bodyType?.length) params.append('bodyType', filters.bodyType.join(','));
+    if (filters.engineCylinders?.length) params.append('engineCylinders', filters.engineCylinders.join(','));
+  }
   
   const response = await fetch(`/api/cars/paginated?${params.toString()}`);
   if (!response.ok) throw new Error('Failed to fetch cars');
@@ -189,13 +232,11 @@ export function useCars(dealershipId?: string, search?: string) {
 export function useCarsPaginated(
   page: number = 1,
   pageSize: number = 50,
-  dealershipId?: string,
-  search?: string,
-  status?: string
+  filters?: CarFilterParams
 ) {
   return useQuery({
-    queryKey: ['cars-paginated', page, pageSize, dealershipId, search, status],
-    queryFn: () => fetchCarsPaginated(page, pageSize, dealershipId, search, status),
+    queryKey: ['cars-paginated', page, pageSize, filters],
+    queryFn: () => fetchCarsPaginated(page, pageSize, filters),
     placeholderData: (previousData) => previousData,
     staleTime: 30000,
   });

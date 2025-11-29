@@ -82,16 +82,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const page = parseInt(req.query.page as string) || 1;
       const pageSize = Math.min(parseInt(req.query.pageSize as string) || 50, 100);
-      const dealershipId = req.query.dealershipId as string;
-      const search = req.query.search as string;
-      const status = req.query.status as string;
       
-      const result = await storage.getCarsPaginated(
-        { page, pageSize },
-        dealershipId || undefined,
-        search || undefined,
-        status || undefined
-      );
+      // Parse all filter parameters
+      const filters = {
+        dealershipId: req.query.dealershipId as string || undefined,
+        search: req.query.search as string || undefined,
+        status: req.query.status as string || undefined,
+        make: req.query.make as string || undefined,
+        model: req.query.model as string || undefined,
+        vin: req.query.vin as string || undefined,
+        vinStart: req.query.vinStart as string || undefined,
+        color: req.query.color as string || undefined,
+        trim: req.query.trim as string || undefined,
+        yearMin: req.query.yearMin ? parseInt(req.query.yearMin as string) : undefined,
+        yearMax: req.query.yearMax ? parseInt(req.query.yearMax as string) : undefined,
+        priceMin: req.query.priceMin ? parseInt(req.query.priceMin as string) : undefined,
+        priceMax: req.query.priceMax ? parseInt(req.query.priceMax as string) : undefined,
+        kmsMin: req.query.kmsMin ? parseInt(req.query.kmsMin as string) : undefined,
+        kmsMax: req.query.kmsMax ? parseInt(req.query.kmsMax as string) : undefined,
+        province: req.query.province as string || undefined,
+        transmission: req.query.transmission ? (req.query.transmission as string).split(',').filter(Boolean) : undefined,
+        drivetrain: req.query.drivetrain ? (req.query.drivetrain as string).split(',').filter(Boolean) : undefined,
+        fuelType: req.query.fuelType ? (req.query.fuelType as string).split(',').filter(Boolean) : undefined,
+        bodyType: req.query.bodyType ? (req.query.bodyType as string).split(',').filter(Boolean) : undefined,
+        engineCylinders: req.query.engineCylinders ? (req.query.engineCylinders as string).split(',').filter(Boolean) : undefined,
+      };
+      
+      const result = await storage.getCarsPaginated({ page, pageSize }, filters);
       
       res.json(result);
     } catch (error) {

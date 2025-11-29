@@ -145,26 +145,35 @@ export default function Inventory() {
   const [filterBodyType, setFilterBodyType] = useState<string[]>([]);
   const [filterEngineCylinders, setFilterEngineCylinders] = useState<string[]>([]);
   
-  // Check if any advanced filters are active (requires full data load)
-  const hasAdvancedFilters = useMemo(() => {
-    return filterMake !== "" || 
-           filterModel !== "" || 
-           filterVin !== "" || 
-           filterVinStart !== "" || 
-           filterColor !== "" || 
-           filterTrim !== "" || 
-           filterYearRange[0] > 1995 || filterYearRange[1] < 2025 ||
-           filterPriceRange[0] > 0 || filterPriceRange[1] < 200000 ||
-           filterKmsRange[0] > 0 || filterKmsRange[1] < 300000 ||
-           filterProvince !== "" ||
-           filterTransmission.length > 0 || 
-           filterDrivetrain.length > 0 || 
-           filterFuelType.length > 0 || 
-           filterBodyType.length > 0 || 
-           filterEngineCylinders.length > 0;
-  }, [filterMake, filterModel, filterVin, filterVinStart, filterColor, filterTrim, 
-      filterYearRange, filterPriceRange, filterKmsRange, filterProvince,
-      filterTransmission, filterDrivetrain, filterFuelType, filterBodyType, filterEngineCylinders]);
+  // Build filter params for server-side filtering
+  const filterParams = useMemo(() => {
+    const params: any = {};
+    if (selectedDealership?.id) params.dealershipId = selectedDealership.id;
+    if (debouncedSearchTerm) params.search = debouncedSearchTerm;
+    if (statusFilter !== "all") params.status = statusFilter;
+    if (filterMake) params.make = filterMake;
+    if (filterModel) params.model = filterModel;
+    if (filterVin) params.vin = filterVin;
+    if (filterVinStart) params.vinStart = filterVinStart;
+    if (filterColor) params.color = filterColor;
+    if (filterTrim) params.trim = filterTrim;
+    if (filterYearRange[0] > 1995) params.yearMin = filterYearRange[0];
+    if (filterYearRange[1] < 2025) params.yearMax = filterYearRange[1];
+    if (filterPriceRange[0] > 0) params.priceMin = filterPriceRange[0];
+    if (filterPriceRange[1] < 200000) params.priceMax = filterPriceRange[1];
+    if (filterKmsRange[0] > 0) params.kmsMin = filterKmsRange[0];
+    if (filterKmsRange[1] < 300000) params.kmsMax = filterKmsRange[1];
+    if (filterProvince) params.province = filterProvince;
+    if (filterTransmission.length > 0) params.transmission = filterTransmission;
+    if (filterDrivetrain.length > 0) params.drivetrain = filterDrivetrain;
+    if (filterFuelType.length > 0) params.fuelType = filterFuelType;
+    if (filterBodyType.length > 0) params.bodyType = filterBodyType;
+    if (filterEngineCylinders.length > 0) params.engineCylinders = filterEngineCylinders;
+    return params;
+  }, [selectedDealership?.id, debouncedSearchTerm, statusFilter, filterMake, filterModel, 
+      filterVin, filterVinStart, filterColor, filterTrim, filterYearRange, filterPriceRange, 
+      filterKmsRange, filterProvince, filterTransmission, filterDrivetrain, filterFuelType, 
+      filterBodyType, filterEngineCylinders]);
   
   // Debounce search term
   useEffect(() => {
@@ -175,39 +184,21 @@ export default function Inventory() {
     return () => clearTimeout(timer);
   }, [searchTerm]);
   
-  // Data fetching - use legacy endpoint when advanced filters are active
+  // Data fetching - all server-side via paginated endpoint
   const { data: dealerships = [], isLoading: dealershipsLoading } = useDealerships();
   const { data: carCounts } = useCarCounts(selectedDealership?.id);
   
-  // Paginated data (for when no advanced filters)
+  // Paginated data with server-side filtering
   const { 
     data: paginatedData, 
-    isLoading: paginatedLoading,
-    isFetching: paginatedFetching 
-  } = useCarsPaginated(
-    currentPage, 
-    pageSize, 
-    selectedDealership?.id, 
-    debouncedSearchTerm || undefined,
-    statusFilter !== "all" ? statusFilter : undefined
-  );
+    isLoading: carsLoading,
+    isFetching: carsFetching 
+  } = useCarsPaginated(currentPage, pageSize, filterParams);
   
-  // Full data (for when advanced filters are active)
-  const { 
-    data: fullData = [], 
-    isLoading: fullDataLoading,
-    isFetching: fullDataFetching 
-  } = useCars(
-    hasAdvancedFilters ? selectedDealership?.id : undefined, 
-    hasAdvancedFilters ? debouncedSearchTerm : undefined
-  );
-  
-  // Choose which data source to use
-  const allCars = hasAdvancedFilters ? fullData : (paginatedData?.data || []);
-  const totalCars = hasAdvancedFilters ? fullData.length : (paginatedData?.total || 0);
-  const totalPages = hasAdvancedFilters ? 1 : (paginatedData?.totalPages || 1);
-  const carsLoading = hasAdvancedFilters ? fullDataLoading : paginatedLoading;
-  const carsFetching = hasAdvancedFilters ? fullDataFetching : paginatedFetching;
+  // Get cars from paginated result
+  const allCars = paginatedData?.data || [];
+  const totalCars = paginatedData?.total || 0;
+  const totalPages = paginatedData?.totalPages || 1;
   
   const createDealershipMutation = useCreateDealership();
   const updateDealershipMutation = useUpdateDealership();
@@ -546,7 +537,7 @@ export default function Inventory() {
     }
   };
 
-  const getAllCars = () => {
+  const getEnrichedCars = () => {
     return allCars.map(car => {
       const dealership = dealerships.find(d => d.id === car.dealershipId);
       return {
@@ -555,72 +546,10 @@ export default function Inventory() {
         dealershipLocation: dealership?.location,
         dealershipProvince: dealership?.province
       };
-    });
-  };
-
-  const getFilteredCars = () => {
-    let cars = getAllCars();
-
-    if (selectedDealership) {
-      cars = cars.filter(c => c.dealershipId === selectedDealership.id);
-    }
-
-    if (searchTerm) {
-      const term = searchTerm.toLowerCase();
-      cars = cars.filter(car =>
-        car.vin?.toLowerCase().includes(term) ||
-        car.make?.toLowerCase().includes(term) ||
-        car.model?.toLowerCase().includes(term) ||
-        car.color?.toLowerCase().includes(term) ||
-        car.dealershipName?.toLowerCase().includes(term) ||
-        // @ts-ignore
-        car.dealershipProvince?.toLowerCase().includes(term) ||
-        car.transmission?.toLowerCase().includes(term) || 
-        car.year?.toString().includes(term) ||
-        car.trim?.toLowerCase().includes(term) ||
-        car.carfaxStatus?.toLowerCase().includes(term) ||
-        car.bodyType?.toLowerCase().includes(term) ||
-        car.fuelType?.toLowerCase().includes(term) ||
-        car.drivetrain?.toLowerCase().includes(term) ||
-        car.engineCylinders?.toLowerCase().includes(term) ||
-        car.features?.some(f => f.toLowerCase().includes(term)) ||
-        car.notes?.toLowerCase().includes(term)
-      );
-    }
-
-    if (filterMake) cars = cars.filter(c => c.make?.toLowerCase().includes(filterMake.toLowerCase()));
-    if (filterModel) cars = cars.filter(c => c.model?.toLowerCase().includes(filterModel.toLowerCase()));
-    if (filterVin) cars = cars.filter(c => c.vin?.toLowerCase().includes(filterVin.toLowerCase()));
-    if (filterVinStart) cars = cars.filter(c => c.vin?.toUpperCase().startsWith(filterVinStart.toUpperCase()));
-    if (filterColor) cars = cars.filter(c => c.color?.toLowerCase().includes(filterColor.toLowerCase()));
-    if (filterTrim) cars = cars.filter(c => c.trim?.toLowerCase().includes(filterTrim.toLowerCase()));
-    // Year range filter (only apply if not at default full range)
-    if (filterYearRange[0] > 1995 || filterYearRange[1] < 2025) {
-      cars = cars.filter(c => c.year && parseInt(c.year.toString()) >= filterYearRange[0] && parseInt(c.year.toString()) <= filterYearRange[1]);
-    }
-    // Price range filter (only apply if not at default full range)
-    if (filterPriceRange[0] > 0 || filterPriceRange[1] < 200000) {
-      cars = cars.filter(c => parseFloat(c.price || "0") >= filterPriceRange[0] && parseFloat(c.price || "0") <= filterPriceRange[1]);
-    }
-    // Kilometers range filter (only apply if not at default full range)
-    if (filterKmsRange[0] > 0 || filterKmsRange[1] < 300000) {
-      cars = cars.filter(c => parseFloat(c.kilometers || "0") >= filterKmsRange[0] && parseFloat(c.kilometers || "0") <= filterKmsRange[1]);
-    }
-    // @ts-ignore
-    if (filterProvince) cars = cars.filter(c => c.dealershipProvince?.toLowerCase().includes(filterProvince.toLowerCase()));
-
-    // New Filters (multi-select)
-    if (filterTransmission.length > 0) cars = cars.filter(c => filterTransmission.includes(c.transmission?.toLowerCase() || ""));
-    if (filterDrivetrain.length > 0) cars = cars.filter(c => filterDrivetrain.includes(c.drivetrain?.toLowerCase() || ""));
-    if (filterFuelType.length > 0) cars = cars.filter(c => filterFuelType.includes(c.fuelType?.toLowerCase() || ""));
-    if (filterBodyType.length > 0) cars = cars.filter(c => filterBodyType.includes(c.bodyType?.toLowerCase() || ""));
-    if (filterEngineCylinders.length > 0) cars = cars.filter(c => filterEngineCylinders.includes(c.engineCylinders?.toString() || ""));
-
-
-    cars.sort((a, b) => {
-        // @ts-ignore
+    }).sort((a, b) => {
+      // @ts-ignore
       let aVal = a[sortBy];
-       // @ts-ignore
+      // @ts-ignore
       let bVal = b[sortBy];
 
       if (sortBy === "price" || sortBy === "kilometers") {
@@ -637,8 +566,6 @@ export default function Inventory() {
         return aVal < bVal ? 1 : -1;
       }
     });
-
-    return cars;
   };
 
   const clearFilters = () => {
@@ -667,7 +594,7 @@ export default function Inventory() {
   }, [selectedDealership?.id]);
 
   const totalInventory = carCounts?.total || totalCars;
-  const filteredCars = getFilteredCars();
+  const filteredCars = getEnrichedCars();
 
   return (
     <div className="p-4 md:p-8 font-sans animate-in fade-in duration-500">

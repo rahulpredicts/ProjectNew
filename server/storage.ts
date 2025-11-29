@@ -1,6 +1,6 @@
 import { drizzle } from "drizzle-orm/neon-http";
 import { neon } from "@neondatabase/serverless";
-import { eq, desc, ilike, or, and, sql as sqlFn, count } from "drizzle-orm";
+import { eq, desc, ilike, or, and, sql as sqlFn, count, gte, lte, inArray, like } from "drizzle-orm";
 import * as schema from "@shared/schema";
 import type { 
   Dealership, 
@@ -17,6 +17,32 @@ const db = drizzle(sql, { schema });
 export interface PaginationParams {
   page: number;
   pageSize: number;
+}
+
+export interface CarFilterParams {
+  dealershipId?: string;
+  search?: string;
+  status?: string;
+  make?: string;
+  model?: string;
+  vin?: string;
+  vinStart?: string;
+  color?: string;
+  trim?: string;
+  yearMin?: number;
+  yearMax?: number;
+  priceMin?: number;
+  priceMax?: number;
+  kmsMin?: number;
+  kmsMax?: number;
+  province?: string;
+  transmission?: string[];
+  drivetrain?: string[];
+  fuelType?: string[];
+  bodyType?: string[];
+  engineCylinders?: string[];
+  sortBy?: string;
+  sortOrder?: 'asc' | 'desc';
 }
 
 export interface PaginatedResult<T> {
@@ -38,7 +64,7 @@ export interface IStorage {
   
   // Car operations
   getAllCars(): Promise<Car[]>;
-  getCarsPaginated(params: PaginationParams, dealershipId?: string, search?: string, status?: string): Promise<PaginatedResult<Car>>;
+  getCarsPaginated(params: PaginationParams, filters?: CarFilterParams): Promise<PaginatedResult<Car>>;
   getCarsByDealership(dealershipId: string): Promise<Car[]>;
   getCar(id: string): Promise<Car | undefined>;
   getCarByVin(vin: string): Promise<Car | undefined>;
@@ -91,25 +117,23 @@ export class DatabaseStorage implements IStorage {
 
   async getCarsPaginated(
     params: PaginationParams, 
-    dealershipId?: string, 
-    search?: string, 
-    status?: string
+    filters?: CarFilterParams
   ): Promise<PaginatedResult<Car>> {
     const { page, pageSize } = params;
     const offset = (page - 1) * pageSize;
     
     const conditions: any[] = [];
     
-    if (dealershipId) {
-      conditions.push(eq(schema.cars.dealershipId, dealershipId));
+    if (filters?.dealershipId) {
+      conditions.push(eq(schema.cars.dealershipId, filters.dealershipId));
     }
     
-    if (status && status !== 'all') {
-      conditions.push(eq(schema.cars.status, status));
+    if (filters?.status && filters.status !== 'all') {
+      conditions.push(eq(schema.cars.status, filters.status));
     }
     
-    if (search) {
-      const searchTerm = `%${search}%`;
+    if (filters?.search) {
+      const searchTerm = `%${filters.search}%`;
       conditions.push(
         or(
           ilike(schema.cars.vin, searchTerm),
@@ -121,6 +145,78 @@ export class DatabaseStorage implements IStorage {
           ilike(schema.cars.stockNumber, searchTerm)
         )
       );
+    }
+    
+    if (filters?.make) {
+      conditions.push(ilike(schema.cars.make, `%${filters.make}%`));
+    }
+    
+    if (filters?.model) {
+      conditions.push(ilike(schema.cars.model, `%${filters.model}%`));
+    }
+    
+    if (filters?.vin) {
+      conditions.push(ilike(schema.cars.vin, `%${filters.vin}%`));
+    }
+    
+    if (filters?.vinStart) {
+      conditions.push(like(schema.cars.vin, `${filters.vinStart}%`));
+    }
+    
+    if (filters?.color) {
+      conditions.push(ilike(schema.cars.color, `%${filters.color}%`));
+    }
+    
+    if (filters?.trim) {
+      conditions.push(ilike(schema.cars.trim, `%${filters.trim}%`));
+    }
+    
+    if (filters?.yearMin !== undefined) {
+      conditions.push(gte(sqlFn`CAST(${schema.cars.year} AS INTEGER)`, filters.yearMin));
+    }
+    
+    if (filters?.yearMax !== undefined) {
+      conditions.push(lte(sqlFn`CAST(${schema.cars.year} AS INTEGER)`, filters.yearMax));
+    }
+    
+    if (filters?.priceMin !== undefined) {
+      conditions.push(gte(schema.cars.price, filters.priceMin));
+    }
+    
+    if (filters?.priceMax !== undefined) {
+      conditions.push(lte(schema.cars.price, filters.priceMax));
+    }
+    
+    if (filters?.kmsMin !== undefined) {
+      conditions.push(gte(schema.cars.kms, filters.kmsMin));
+    }
+    
+    if (filters?.kmsMax !== undefined) {
+      conditions.push(lte(schema.cars.kms, filters.kmsMax));
+    }
+    
+    if (filters?.province) {
+      conditions.push(ilike(schema.cars.province, `%${filters.province}%`));
+    }
+    
+    if (filters?.transmission && filters.transmission.length > 0) {
+      conditions.push(inArray(schema.cars.transmission, filters.transmission));
+    }
+    
+    if (filters?.drivetrain && filters.drivetrain.length > 0) {
+      conditions.push(inArray(schema.cars.drivetrain, filters.drivetrain));
+    }
+    
+    if (filters?.fuelType && filters.fuelType.length > 0) {
+      conditions.push(inArray(schema.cars.fuelType, filters.fuelType));
+    }
+    
+    if (filters?.bodyType && filters.bodyType.length > 0) {
+      conditions.push(inArray(schema.cars.bodyType, filters.bodyType));
+    }
+    
+    if (filters?.engineCylinders && filters.engineCylinders.length > 0) {
+      conditions.push(inArray(schema.cars.engineCylinders, filters.engineCylinders));
     }
     
     const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
