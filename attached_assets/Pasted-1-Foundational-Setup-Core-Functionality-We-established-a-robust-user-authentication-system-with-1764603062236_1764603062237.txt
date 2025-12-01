@@ -1,0 +1,19 @@
+1. Foundational Setup & Core Functionality:
+
+We established a robust user authentication system with two distinct roles: Admins and Dealers.
+We created the core "Buy" and "Sell" forms, allowing dealers to submit vehicle requests and list their inventory.
+We built an admin area with pages to manage dealer applications, view all inventory, and see customer demand.
+2. Major Architectural Shift (Moving Off Black Book):
+
+We completely removed the dependency on the external Black Book API for vehicle valuations. This involved deleting the .env file, the Black Book service, and several AI flows.
+We re-engineered the appraisal logic to source all vehicle and market data directly from your own internal Firestore database, making your app self-reliant.
+3. Advanced Feature Development & UI Enhancements:
+
+Advanced Inventory Filtering: We built a comprehensive filtering system for the inventory page, including sliders for price/year, multi-select dropdowns for make/model, and various other criteria to allow for precise data analysis.
+VIN Search Tool: We created a dedicated page where dealers can enter a VIN, have our AI decode it to identify the vehicle, and then instantly see similar cars from your existing inventory.
+Performance Optimization: We significantly improved the speed and responsiveness of the inventory page by implementing component memoization and debouncing the search input, ensuring a smooth experience even with large amounts of data.
+4. Security, Access Control, and Bug Fixes:
+
+We resolved multiple Missing or insufficient permissions errors by updating both the Firestore security rules and client-side code to ensure all authorized admin emails have the correct access.
+We refined the navigation logic to create a clear separation between user roles. Admins now see only management tools, and we streamlined the Dealer view to provide a focused experience, showing them only the "Carsellia Appraisals" tool as you requested.
+In short, we've transformed the application from a simple listing service into a powerful, data-driven appraisal and inventory management platform with distinct, secure roles for admins and dealers, all powered by your own internal data.
