@@ -234,34 +234,6 @@ export default function LandingPage() {
           <p className="text-xl text-slate-400 mb-8 max-w-2xl mx-auto">
             Accurate, transparent, and efficient. Carsellia empowers dealers with powerful inventory management, appraisal tools, and market insights.
           </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button 
-              size="lg" 
-              onClick={() => window.location.href = '/api/login'}
-              className="bg-blue-600 hover:bg-blue-700 text-lg px-8"
-              data-testid="button-dealer-login"
-            >
-              Dealer Login
-            </Button>
-            <Button 
-              size="lg" 
-              variant="outline" 
-              onClick={() => window.location.href = '/api/login'}
-              className="border-purple-600 text-purple-300 hover:bg-purple-800/20 text-lg px-8"
-              data-testid="button-analyst-login"
-            >
-              Data Analyst Login
-            </Button>
-            <Button 
-              size="lg" 
-              variant="outline" 
-              onClick={() => window.location.href = '/api/login'}
-              className="border-yellow-600 text-yellow-300 hover:bg-yellow-800/20 text-lg px-8"
-              data-testid="button-admin-login"
-            >
-              Admin Login
-            </Button>
-          </div>
         </div>
       </section>
 
@@ -363,6 +335,32 @@ export default function LandingPage() {
               </ul>
             </div>
           </div>
+
+          {/* Login Buttons */}
+          <div className="border-t border-slate-700 mt-8 pt-8">
+            <h4 className="font-semibold mb-4 text-center">Admin & Data Analyst Access</h4>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Button 
+                size="lg"
+                variant="outline"
+                onClick={() => window.location.href = '/api/login'}
+                className="border-purple-600 text-purple-300 hover:bg-purple-800/20 px-6"
+                data-testid="button-analyst-login"
+              >
+                Data Analyst Login
+              </Button>
+              <Button 
+                size="lg"
+                variant="outline"
+                onClick={() => window.location.href = '/api/login'}
+                className="border-yellow-600 text-yellow-300 hover:bg-yellow-800/20 px-6"
+                data-testid="button-admin-login"
+              >
+                Admin Login
+              </Button>
+            </div>
+          </div>
+
           <div className="border-t border-slate-700 mt-8 pt-8 text-center text-slate-400 text-sm">
             © 2025 Carsellia. All rights reserved.
           </div>
