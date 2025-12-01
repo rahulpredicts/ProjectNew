@@ -1,4 +1,5 @@
-import { useState, useRef, useEffect, useMemo } from "react";
+import { useState, useRef, useEffect, useMemo, useCallback } from "react";
+import { FixedSizeList as List } from "react-window";
 import {
   Search,
   Plus,
@@ -1052,7 +1053,7 @@ export default function Inventory() {
           </div>
 
           {/* Main Content */}
-          <div className="lg:col-span-9 space-y-2">
+          <div className="lg:col-span-9">
                 {/* Loading indicator */}
                 {carsFetching && (
                   <div className="flex items-center justify-center py-4">
@@ -1061,10 +1062,29 @@ export default function Inventory() {
                   </div>
                 )}
                 
-                {filteredCars.map(car => (
-                    <Card key={car.id} className="hover:shadow-md transition-shadow bg-white border border-gray-200" data-testid={`card-vehicle-${car.id}`}>
-                        <CardContent className="p-3">
-                            <div className="flex items-center gap-3">
+                {/* Vehicle count header */}
+                {filteredCars.length > 0 && (
+                  <div className="text-sm text-gray-500 mb-2 px-1">
+                    Showing all {filteredCars.length.toLocaleString()} vehicles
+                  </div>
+                )}
+                
+                {/* Virtualized list - only renders visible rows for instant performance */}
+                {filteredCars.length > 0 && (
+                  <List
+                    height={700}
+                    itemCount={filteredCars.length}
+                    itemSize={60}
+                    width="100%"
+                    className="scrollbar-thin scrollbar-thumb-gray-300"
+                  >
+                    {({ index, style }) => {
+                      const car = filteredCars[index];
+                      return (
+                        <div style={style} className="pr-2">
+                          <Card className="hover:shadow-md transition-shadow bg-white border border-gray-200 h-[56px]" data-testid={`card-vehicle-${car.id}`}>
+                            <CardContent className="p-3">
+                              <div className="flex items-center gap-3">
                                 {/* Status Badges */}
                                 <div className="flex flex-col gap-1">
                                     {car.status === 'sold' && (
@@ -1138,10 +1158,14 @@ export default function Inventory() {
                                         <Trash2 className="w-3 h-3" />
                                     </Button>
                                 </div>
-                            </div>
-                        </CardContent>
-                    </Card>
-                ))}
+                              </div>
+                            </CardContent>
+                          </Card>
+                        </div>
+                      );
+                    }}
+                  </List>
+                )}
                 
                 {/* Pagination Controls */}
                 {totalPages > 1 && (

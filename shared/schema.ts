@@ -66,7 +66,15 @@ export const cars = pgTable("cars", {
   notes: text("notes").notNull(),
   status: text("status").notNull().default('available'),
   createdAt: timestamp("created_at").defaultNow().notNull(),
-});
+}, (table) => [
+  index("IDX_cars_dealership_status").on(table.dealershipId, table.status),
+  index("IDX_cars_make_model").on(table.make, table.model),
+  index("IDX_cars_year").on(table.year),
+  index("IDX_cars_price").on(table.price),
+  index("IDX_cars_kilometers").on(table.kilometers),
+  index("IDX_cars_created_at").on(table.createdAt),
+  index("IDX_cars_status").on(table.status),
+]);
 
 // Dealership schemas
 export const insertDealershipSchema = createInsertSchema(dealerships).omit({
