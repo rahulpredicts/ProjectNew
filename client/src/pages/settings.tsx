@@ -60,19 +60,19 @@ export default function SettingsPage() {
 
         <Tabs defaultValue="values" className="space-y-6">
           <TabsList className="bg-slate-800 border border-slate-700">
-            <TabsTrigger value="values" className="data-[state=active]:bg-blue-600">
+            <TabsTrigger value="values" className="data-[state=active]:bg-blue-600 text-white data-[state=inactive]:text-slate-300">
               <Calculator className="w-4 h-4 mr-2" />
               Values & Risk
             </TabsTrigger>
-            <TabsTrigger value="market" className="data-[state=active]:bg-blue-600">
+            <TabsTrigger value="market" className="data-[state=active]:bg-blue-600 text-white data-[state=inactive]:text-slate-300">
               <Target className="w-4 h-4 mr-2" />
               Target Market
             </TabsTrigger>
-            <TabsTrigger value="alerts" className="data-[state=active]:bg-blue-600">
+            <TabsTrigger value="alerts" className="data-[state=active]:bg-blue-600 text-white data-[state=inactive]:text-slate-300">
               <Bell className="w-4 h-4 mr-2" />
               Alerts
             </TabsTrigger>
-            <TabsTrigger value="appearance" className="data-[state=active]:bg-blue-600">
+            <TabsTrigger value="appearance" className="data-[state=active]:bg-blue-600 text-white data-[state=inactive]:text-slate-300">
               <Palette className="w-4 h-4 mr-2" />
               Appearance
             </TabsTrigger>
@@ -90,38 +90,38 @@ export default function SettingsPage() {
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="space-y-2">
-                  <Label htmlFor="profitMargin">Target Profit Margin (%)</Label>
+                  <Label htmlFor="profitMargin" className="text-white font-semibold">Target Profit Margin (%)</Label>
                   <Input 
                     id="profitMargin"
                     type="number"
                     value={riskSettings.profitMargin}
                     onChange={(e) => setRiskSettings({...riskSettings, profitMargin: parseInt(e.target.value)})}
-                    className="bg-slate-900 border-slate-700"
+                    className="bg-slate-700 border-slate-600 text-white placeholder-slate-500"
                   />
-                  <p className="text-xs text-slate-400">Minimum profit margin for pricing recommendations</p>
+                  <p className="text-xs text-slate-300">Minimum profit margin for pricing recommendations</p>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="maxDays">Max Days on Lot</Label>
+                  <Label htmlFor="maxDays" className="text-white font-semibold">Max Days on Lot</Label>
                   <Input 
                     id="maxDays"
                     type="number"
                     value={riskSettings.maxDaysOnLot}
                     onChange={(e) => setRiskSettings({...riskSettings, maxDaysOnLot: parseInt(e.target.value)})}
-                    className="bg-slate-900 border-slate-700"
+                    className="bg-slate-700 border-slate-600 text-white placeholder-slate-500"
                   />
-                  <p className="text-xs text-slate-400">Alert threshold for slow-moving inventory</p>
+                  <p className="text-xs text-slate-300">Alert threshold for slow-moving inventory</p>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="depreciation">Monthly Depreciation Rate (%)</Label>
+                  <Label htmlFor="depreciation" className="text-white font-semibold">Monthly Depreciation Rate (%)</Label>
                   <Input 
                     id="depreciation"
                     type="number"
                     step="0.1"
                     value={riskSettings.depreciation}
                     onChange={(e) => setRiskSettings({...riskSettings, depreciation: parseFloat(e.target.value)})}
-                    className="bg-slate-900 border-slate-700"
+                    className="bg-slate-700 border-slate-600 text-white placeholder-slate-500"
                   />
-                  <p className="text-xs text-slate-400">Average monthly depreciation for value calculations</p>
+                  <p className="text-xs text-slate-300">Average monthly depreciation for value calculations</p>
                 </div>
               </CardContent>
             </Card>
@@ -138,30 +138,30 @@ export default function SettingsPage() {
                 <CardDescription>Define your target audience for listings</CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
-                <div className="flex items-center justify-between p-4 bg-slate-900 rounded-lg">
+                <div className="flex items-center justify-between p-4 bg-slate-700 rounded-lg border border-slate-600">
                   <div>
-                    <p className="font-medium">Retail States/Provinces</p>
-                    <p className="text-sm text-slate-400">Show listings to retail dealers in all regions</p>
+                    <p className="font-medium text-white">Retail States/Provinces</p>
+                    <p className="text-sm text-slate-300">Show listings to retail dealers in all regions</p>
                   </div>
                   <Switch 
                     checked={targetMarket.retailStates}
                     onCheckedChange={(checked) => setTargetMarket({...targetMarket, retailStates: checked})}
                   />
                 </div>
-                <div className="flex items-center justify-between p-4 bg-slate-900 rounded-lg">
+                <div className="flex items-center justify-between p-4 bg-slate-700 rounded-lg border border-slate-600">
                   <div>
-                    <p className="font-medium">Wholesalers</p>
-                    <p className="text-sm text-slate-400">Make inventory visible to wholesale buyers</p>
+                    <p className="font-medium text-white">Wholesalers</p>
+                    <p className="text-sm text-slate-300">Make inventory visible to wholesale buyers</p>
                   </div>
                   <Switch 
                     checked={targetMarket.wholesalers}
                     onCheckedChange={(checked) => setTargetMarket({...targetMarket, wholesalers: checked})}
                   />
                 </div>
-                <div className="flex items-center justify-between p-4 bg-slate-900 rounded-lg">
+                <div className="flex items-center justify-between p-4 bg-slate-700 rounded-lg border border-slate-600">
                   <div>
-                    <p className="font-medium">Transporters</p>
-                    <p className="text-sm text-slate-400">Connect with vehicle transport services</p>
+                    <p className="font-medium text-white">Transporters</p>
+                    <p className="text-sm text-slate-300">Connect with vehicle transport services</p>
                   </div>
                   <Switch 
                     checked={targetMarket.transporters}
@@ -183,40 +183,40 @@ export default function SettingsPage() {
                 <CardDescription>Configure notification settings</CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
-                <div className="flex items-center justify-between p-4 bg-slate-900 rounded-lg">
+                <div className="flex items-center justify-between p-4 bg-slate-700 rounded-lg border border-slate-600">
                   <div>
-                    <p className="font-medium">Price Drop Alerts</p>
-                    <p className="text-sm text-slate-400">Notify when market prices drop significantly</p>
+                    <p className="font-medium text-white">Price Drop Alerts</p>
+                    <p className="text-sm text-slate-300">Notify when market prices drop significantly</p>
                   </div>
                   <Switch 
                     checked={alerts.priceDrops}
                     onCheckedChange={(checked) => setAlerts({...alerts, priceDrops: checked})}
                   />
                 </div>
-                <div className="flex items-center justify-between p-4 bg-slate-900 rounded-lg">
+                <div className="flex items-center justify-between p-4 bg-slate-700 rounded-lg border border-slate-600">
                   <div>
-                    <p className="font-medium">New Listing Alerts</p>
-                    <p className="text-sm text-slate-400">Get notified about new matching vehicles</p>
+                    <p className="font-medium text-white">New Listing Alerts</p>
+                    <p className="text-sm text-slate-300">Get notified about new matching vehicles</p>
                   </div>
                   <Switch 
                     checked={alerts.newListings}
                     onCheckedChange={(checked) => setAlerts({...alerts, newListings: checked})}
                   />
                 </div>
-                <div className="flex items-center justify-between p-4 bg-slate-900 rounded-lg">
+                <div className="flex items-center justify-between p-4 bg-slate-700 rounded-lg border border-slate-600">
                   <div>
-                    <p className="font-medium">Market Trend Updates</p>
-                    <p className="text-sm text-slate-400">Weekly market analysis and insights</p>
+                    <p className="font-medium text-white">Market Trend Updates</p>
+                    <p className="text-sm text-slate-300">Weekly market analysis and insights</p>
                   </div>
                   <Switch 
                     checked={alerts.marketTrends}
                     onCheckedChange={(checked) => setAlerts({...alerts, marketTrends: checked})}
                   />
                 </div>
-                <div className="flex items-center justify-between p-4 bg-slate-900 rounded-lg">
+                <div className="flex items-center justify-between p-4 bg-slate-700 rounded-lg border border-slate-600">
                   <div>
-                    <p className="font-medium">Weekly Report</p>
-                    <p className="text-sm text-slate-400">Summary of your inventory performance</p>
+                    <p className="font-medium text-white">Weekly Report</p>
+                    <p className="text-sm text-slate-300">Summary of your inventory performance</p>
                   </div>
                   <Switch 
                     checked={alerts.weeklyReport}
