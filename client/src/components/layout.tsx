@@ -94,16 +94,16 @@ export function Layout({ children }: { children: React.ReactNode }) {
           })}
         </nav>
 
-        {/* Logout Button */}
+        {/* Sign Out Button */}
         <div className="p-4 border-t border-slate-800">
           <Button
-            variant="ghost"
-            className="w-full justify-start text-slate-300 hover:text-white hover:bg-slate-800"
+            variant="destructive"
+            className="w-full justify-center bg-red-600 hover:bg-red-700 text-white font-medium"
             onClick={handleLogout}
             data-testid="button-logout"
           >
-            <LogOut className="w-5 h-5 mr-3 text-slate-400" />
-            Logout
+            <LogOut className="w-5 h-5 mr-2" />
+            Sign Out
           </Button>
         </div>
       </aside>

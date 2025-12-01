@@ -21,8 +21,8 @@ export default function LandingPage() {
               className="bg-blue-600 hover:bg-blue-700"
               data-testid="button-login"
             >
-              <ArrowRight className="w-4 h-4 mr-2" />
-              Login
+              Sign In
+              <ArrowRight className="w-4 h-4 ml-2" />
             </Button>
           </div>
         </div>
@@ -50,7 +50,16 @@ export default function LandingPage() {
               size="lg" 
               variant="outline" 
               onClick={() => window.location.href = '/api/login'}
-              className="border-slate-600 text-slate-300 hover:bg-slate-800 text-lg px-8"
+              className="border-purple-600 text-purple-300 hover:bg-purple-800/20 text-lg px-8"
+              data-testid="button-analyst-login"
+            >
+              Data Analyst Login
+            </Button>
+            <Button 
+              size="lg" 
+              variant="outline" 
+              onClick={() => window.location.href = '/api/login'}
+              className="border-yellow-600 text-yellow-300 hover:bg-yellow-800/20 text-lg px-8"
               data-testid="button-admin-login"
             >
               Admin Login
