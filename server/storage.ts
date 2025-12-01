@@ -8,7 +8,9 @@ import type {
   UpdateDealership,
   Car,
   InsertCar,
-  UpdateCar 
+  UpdateCar,
+  User,
+  UpsertUser
 } from "@shared/schema";
 
 const sql = neon(process.env.DATABASE_URL!);
@@ -54,6 +56,12 @@ export interface PaginatedResult<T> {
 }
 
 export interface IStorage {
+  // User operations - Required for Replit Auth
+  getUser(id: string): Promise<User | undefined>;
+  upsertUser(user: UpsertUser): Promise<User>;
+  updateUserRole(id: string, role: string): Promise<User | undefined>;
+  getAllUsers(): Promise<User[]>;
+
   // Dealership operations
   getAllDealerships(): Promise<Dealership[]>;
   getDealership(id: string): Promise<Dealership | undefined>;
@@ -78,6 +86,40 @@ export interface IStorage {
 }
 
 export class DatabaseStorage implements IStorage {
+  // User operations - Required for Replit Auth
+  async getUser(id: string): Promise<User | undefined> {
+    const [user] = await db.select().from(schema.users).where(eq(schema.users.id, id));
+    return user;
+  }
+
+  async upsertUser(userData: UpsertUser): Promise<User> {
+    const [user] = await db
+      .insert(schema.users)
+      .values(userData)
+      .onConflictDoUpdate({
+        target: schema.users.id,
+        set: {
+          ...userData,
+          updatedAt: new Date(),
+        },
+      })
+      .returning();
+    return user;
+  }
+
+  async updateUserRole(id: string, role: string): Promise<User | undefined> {
+    const [user] = await db
+      .update(schema.users)
+      .set({ role, updatedAt: new Date() })
+      .where(eq(schema.users.id, id))
+      .returning();
+    return user;
+  }
+
+  async getAllUsers(): Promise<User[]> {
+    return await db.select().from(schema.users).orderBy(desc(schema.users.createdAt));
+  }
+
   // Dealership operations
   async getAllDealerships(): Promise<Dealership[]> {
     return await db.select().from(schema.dealerships).orderBy(desc(schema.dealerships.createdAt));
