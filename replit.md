@@ -26,7 +26,7 @@ Carsellia is a comprehensive, production-ready vehicle trading and dealership ma
 **Authentication:**
 - Replit Auth (OpenID Connect) with multi-provider support (Google, GitHub, Apple, Email/Password)
 - Session-based authentication with PostgreSQL session store
-- Role-based access control (Admin/Dealer)
+- Role-based access control (Admin/Dealer/Data Analyst)
 - Secure token refresh mechanism
 
 **Backend:**
@@ -52,6 +52,7 @@ Carsellia is a comprehensive, production-ready vehicle trading and dealership ma
     - appraisal.tsx (Vehicle valuation tool)
     - landing.tsx (Public landing page)
     - admin-dashboard.tsx (Admin user management)
+    - data-analyst-dashboard.tsx (Bulk upload hub for data team)
   /components
     - layout.tsx (Role-based sidebar navigation)
     - ui/* (shadcn/ui components)
@@ -78,7 +79,7 @@ Carsellia is a comprehensive, production-ready vehicle trading and dealership ma
 - email: Unique email address
 - firstName, lastName: User profile
 - profileImageUrl: Avatar from auth provider
-- role: 'admin' or 'dealer'
+- role: 'admin', 'dealer', or 'data_analyst'
 - createdAt, updatedAt: Timestamps
 
 **Sessions Table (Authentication):**
@@ -122,6 +123,7 @@ Carsellia is a comprehensive, production-ready vehicle trading and dealership ma
 - After login, user redirected to role-specific dashboard
 - Admin users see: Admin Dashboard, User Management
 - Dealer users see: Inventory, Add Vehicles, Appraisal Tool
+- Data Analysts see: Data Analyst Hub, Add Vehicles (bulk upload focused)
 
 **State Management:**
 - TanStack Query for server state and caching
@@ -131,6 +133,7 @@ Carsellia is a comprehensive, production-ready vehicle trading and dealership ma
 **Role-Based Access Control:**
 - Admins: Full system access, user management, analytics
 - Dealers: Inventory, uploads, appraisals (own data only)
+- Data Analysts: Bulk vehicle uploads, specialized import tools
 - Routes protected via useAuth hook
 
 ### Performance Optimizations

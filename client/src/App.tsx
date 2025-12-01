@@ -11,10 +11,11 @@ import UploadPage from "@/pages/upload";
 import AppraisalPage from "@/pages/appraisal";
 import LandingPage from "@/pages/landing";
 import AdminDashboard from "@/pages/admin-dashboard";
+import DataAnalystDashboard from "@/pages/data-analyst-dashboard";
 import { Loader2 } from "lucide-react";
 
 function Router() {
-  const { isAuthenticated, isLoading, isAdmin } = useAuth();
+  const { isAuthenticated, isLoading, isAdmin, isDataAnalyst } = useAuth();
 
   if (isLoading) {
     return (
@@ -39,8 +40,9 @@ function Router() {
   return (
     <Layout>
       <Switch>
-        <Route path="/" component={isAdmin ? AdminDashboard : Inventory} />
+        <Route path="/" component={isAdmin ? AdminDashboard : isDataAnalyst ? DataAnalystDashboard : Inventory} />
         <Route path="/admin" component={AdminDashboard} />
+        <Route path="/data-analyst" component={DataAnalystDashboard} />
         <Route path="/inventory" component={Inventory} />
         <Route path="/upload" component={UploadPage} />
         <Route path="/appraisal" component={AppraisalPage} />

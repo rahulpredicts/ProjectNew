@@ -1,5 +1,5 @@
 import { Link, useLocation } from "wouter";
-import { LayoutDashboard, PlusCircle, Car, Calculator, LogOut, Users, Shield } from "lucide-react";
+import { LayoutDashboard, PlusCircle, Car, Calculator, LogOut, Users, Shield, Database } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
@@ -7,16 +7,19 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 export function Layout({ children }: { children: React.ReactNode }) {
   const [location] = useLocation();
-  const { user, isAdmin } = useAuth();
+  const { user, isAdmin, isDataAnalyst } = useAuth();
+  const currentIsDataAnalyst = isDataAnalyst;
 
   const navItems = [
     ...(isAdmin 
       ? [{ href: "/admin", label: "Admin Dashboard", icon: Shield, adminOnly: true }]
+      : isDataAnalyst
+      ? [{ href: "/data-analyst", label: "Data Analyst Hub", icon: PlusCircle, adminOnly: false }]
       : [{ href: "/", label: "Inventory", icon: LayoutDashboard, adminOnly: false }]
     ),
-    { href: "/inventory", label: "Inventory", icon: LayoutDashboard, adminOnly: false, hidden: isAdmin },
+    { href: "/inventory", label: "Inventory", icon: LayoutDashboard, adminOnly: false, hidden: isAdmin || isDataAnalyst },
     { href: "/upload", label: "Add Vehicles", icon: PlusCircle, adminOnly: false, hidden: isAdmin },
-    { href: "/appraisal", label: "Appraisal Tool", icon: Calculator, adminOnly: false, hidden: isAdmin },
+    { href: "/appraisal", label: "Appraisal Tool", icon: Calculator, adminOnly: false, hidden: isAdmin || isDataAnalyst },
   ];
 
   const filteredNavItems = navItems.filter(item => !item.hidden);
@@ -36,7 +39,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
           <div>
             <h2 className="font-bold text-lg leading-none text-white">Carsellia</h2>
             <p className="text-xs text-slate-400 mt-1">
-              {isAdmin ? 'Admin Panel' : 'Dealer Portal'}
+              {isAdmin ? 'Admin Panel' : currentIsDataAnalyst ? 'Data Analyst Hub' : 'Dealer Portal'}
             </p>
           </div>
         </div>
@@ -58,10 +61,12 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 <div className="flex items-center gap-1">
                   {isAdmin ? (
                     <Shield className="w-3 h-3 text-yellow-400" />
+                  ) : currentIsDataAnalyst ? (
+                    <Database className="w-3 h-3 text-purple-400" />
                   ) : (
                     <Users className="w-3 h-3 text-blue-400" />
                   )}
-                  <span className="text-xs text-slate-400 capitalize">{user.role}</span>
+                  <span className="text-xs text-slate-400 capitalize">{user.role?.replace('_', ' ')}</span>
                 </div>
               </div>
             </div>

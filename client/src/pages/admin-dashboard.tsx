@@ -37,8 +37,9 @@ export default function AdminDashboard() {
 
   const dealerCount = allUsers.filter(u => u.role === 'dealer').length;
   const adminCount = allUsers.filter(u => u.role === 'admin').length;
+  const dataAnalystCount = allUsers.filter(u => u.role === 'data_analyst').length;
 
-  const handleRoleChange = async (userId: string, newRole: 'admin' | 'dealer') => {
+  const handleRoleChange = async (userId: string, newRole: 'admin' | 'dealer' | 'data_analyst') => {
     try {
       setUpdatingRole(userId);
       const response = await fetch(`/api/admin/users/${userId}/role`, {
@@ -76,7 +77,7 @@ export default function AdminDashboard() {
         </div>
 
         {/* Stats Grid */}
-        <div className="grid md:grid-cols-4 gap-6 mb-8">
+        <div className="grid md:grid-cols-5 gap-6 mb-8">
           <Card className="bg-slate-800 border-slate-700">
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
@@ -109,6 +110,18 @@ export default function AdminDashboard() {
                   <p className="text-3xl font-bold">{adminCount}</p>
                 </div>
                 <Shield className="w-10 h-10 text-yellow-400" />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-slate-800 border-slate-700">
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-slate-400 text-sm">Data Analysts</p>
+                  <p className="text-3xl font-bold">{dataAnalystCount}</p>
+                </div>
+                <Users className="w-10 h-10 text-purple-400" />
               </div>
             </CardContent>
           </Card>
@@ -168,22 +181,7 @@ export default function AdminDashboard() {
                         </td>
                         <td className="py-3 px-4">
                           <div className="flex gap-2">
-                            {u.role !== 'admin' ? (
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                className="border-yellow-600 text-yellow-400 hover:bg-yellow-600/10"
-                                onClick={() => handleRoleChange(u.id, 'admin')}
-                                disabled={updatingRole === u.id}
-                                data-testid={`button-promote-${u.id}`}
-                              >
-                                {updatingRole === u.id ? (
-                                  <Loader2 className="w-3 h-3 animate-spin" />
-                                ) : (
-                                  'Promote'
-                                )}
-                              </Button>
-                            ) : (
+                            {u.role === 'admin' ? (
                               <Button
                                 size="sm"
                                 variant="outline"
@@ -195,9 +193,71 @@ export default function AdminDashboard() {
                                 {updatingRole === u.id ? (
                                   <Loader2 className="w-3 h-3 animate-spin" />
                                 ) : (
-                                  'Demote'
+                                  'Demote to Dealer'
                                 )}
                               </Button>
+                            ) : u.role === 'dealer' ? (
+                              <>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="border-yellow-600 text-yellow-400 hover:bg-yellow-600/10"
+                                  onClick={() => handleRoleChange(u.id, 'admin')}
+                                  disabled={updatingRole === u.id}
+                                  data-testid={`button-promote-admin-${u.id}`}
+                                >
+                                  {updatingRole === u.id ? (
+                                    <Loader2 className="w-3 h-3 animate-spin" />
+                                  ) : (
+                                    'Admin'
+                                  )}
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="border-purple-600 text-purple-400 hover:bg-purple-600/10"
+                                  onClick={() => handleRoleChange(u.id, 'data_analyst')}
+                                  disabled={updatingRole === u.id}
+                                  data-testid={`button-promote-analyst-${u.id}`}
+                                >
+                                  {updatingRole === u.id ? (
+                                    <Loader2 className="w-3 h-3 animate-spin" />
+                                  ) : (
+                                    'Analyst'
+                                  )}
+                                </Button>
+                              </>
+                            ) : (
+                              <>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="border-yellow-600 text-yellow-400 hover:bg-yellow-600/10"
+                                  onClick={() => handleRoleChange(u.id, 'admin')}
+                                  disabled={updatingRole === u.id}
+                                  data-testid={`button-promote-admin-${u.id}`}
+                                >
+                                  {updatingRole === u.id ? (
+                                    <Loader2 className="w-3 h-3 animate-spin" />
+                                  ) : (
+                                    'Admin'
+                                  )}
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="border-blue-600 text-blue-400 hover:bg-blue-600/10"
+                                  onClick={() => handleRoleChange(u.id, 'dealer')}
+                                  disabled={updatingRole === u.id}
+                                  data-testid={`button-demote-dealer-${u.id}`}
+                                >
+                                  {updatingRole === u.id ? (
+                                    <Loader2 className="w-3 h-3 animate-spin" />
+                                  ) : (
+                                    'Dealer'
+                                  )}
+                                </Button>
+                              </>
                             )}
                           </div>
                         </td>

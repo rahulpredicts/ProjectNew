@@ -21,7 +21,7 @@ export const users = pgTable("users", {
   firstName: varchar("first_name"),
   lastName: varchar("last_name"),
   profileImageUrl: varchar("profile_image_url"),
-  role: varchar("role").notNull().default('dealer'), // 'admin' or 'dealer'
+  role: varchar("role").notNull().default('dealer'), // 'admin', 'dealer', or 'data_analyst'
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
