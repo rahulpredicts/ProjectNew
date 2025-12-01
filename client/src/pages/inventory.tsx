@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useMemo, useCallback } from "react";
-import { FixedSizeList as List } from "react-window";
+import { Virtuoso } from "react-virtuoso";
 import {
   Search,
   Plus,
@@ -120,7 +120,7 @@ export default function Inventory() {
   
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize] = useState(10000); // Load all data on one page
+  const [pageSize] = useState(10000); // Load all data for virtualization
   const [statusFilter, setStatusFilter] = useState<string>("all");
   
   // Filters
@@ -543,36 +543,22 @@ export default function Inventory() {
     }
   };
 
-  const getEnrichedCars = () => {
+  // Memoized enrichment - server already handles sorting, so just enrich with dealership info
+  const filteredCars = useMemo(() => {
+    // Create a lookup map for O(1) dealership access instead of O(n) find per car
+    const dealershipMap = new Map(dealerships.map(d => [d.id, d]));
+    
     return allCars.map(car => {
-      const dealership = dealerships.find(d => d.id === car.dealershipId);
+      const dealership = dealershipMap.get(car.dealershipId);
       return {
         ...car,
         dealershipName: dealership?.name,
         dealershipLocation: dealership?.location,
         dealershipProvince: dealership?.province
       };
-    }).sort((a, b) => {
-      // @ts-ignore
-      let aVal = a[sortBy];
-      // @ts-ignore
-      let bVal = b[sortBy];
-
-      if (sortBy === "price" || sortBy === "kilometers") {
-        aVal = parseFloat(aVal || "0");
-        bVal = parseFloat(bVal || "0");
-      } else if (sortBy === "year") {
-        aVal = parseInt(aVal || "0");
-        bVal = parseInt(bVal || "0");
-      }
-
-      if (sortOrder === "asc") {
-        return aVal > bVal ? 1 : -1;
-      } else {
-        return aVal < bVal ? 1 : -1;
-      }
     });
-  };
+    // Sorting is handled server-side, no need to sort again here
+  }, [allCars, dealerships]);
 
   const clearFilters = () => {
     setSearchTerm("");
@@ -600,7 +586,6 @@ export default function Inventory() {
   }, [selectedDealership?.id]);
 
   const totalInventory = carCounts?.total || totalCars;
-  const filteredCars = getEnrichedCars();
 
   return (
     <div className="p-4 md:p-8 font-sans animate-in fade-in duration-500">
@@ -1069,102 +1054,95 @@ export default function Inventory() {
                   </div>
                 )}
                 
-                {/* Virtualized list - only renders visible rows for instant performance */}
+                {/* Virtualized vehicle list - only renders visible rows for instant performance */}
                 {filteredCars.length > 0 && (
-                  <List
-                    height={700}
-                    itemCount={filteredCars.length}
-                    itemSize={60}
-                    width="100%"
-                    className="scrollbar-thin scrollbar-thumb-gray-300"
-                  >
-                    {({ index, style }) => {
-                      const car = filteredCars[index];
-                      return (
-                        <div style={style} className="pr-2">
-                          <Card className="hover:shadow-md transition-shadow bg-white border border-gray-200 h-[56px]" data-testid={`card-vehicle-${car.id}`}>
-                            <CardContent className="p-3">
-                              <div className="flex items-center gap-3">
-                                {/* Status Badges */}
-                                <div className="flex flex-col gap-1">
-                                    {car.status === 'sold' && (
-                                        <Badge className="bg-red-500 text-white text-[10px] px-1.5 py-0">SOLD</Badge>
-                                    )}
-                                    {car.status === 'pending' && (
-                                        <Badge className="bg-yellow-500 text-white text-[10px] px-1.5 py-0">PENDING</Badge>
-                                    )}
-                                    {car.status === 'available' && (
-                                        <Badge className="bg-green-500 text-white text-[10px] px-1.5 py-0">AVAILABLE</Badge>
-                                    )}
-                                    {car.carfaxStatus === 'clean' && (
-                                        <Badge className="bg-blue-600 text-white text-[10px] px-1.5 py-0 flex items-center gap-0.5">
-                                            <CheckCircle2 className="w-2 h-2" /> Clean
-                                        </Badge>
-                                    )}
-                                </div>
-
-                                {/* Vehicle Info */}
-                                <div className="flex-1 grid grid-cols-12 gap-2 items-center text-sm">
-                                    <div className="col-span-3">
-                                        <div className="font-bold text-gray-900">{car.year} {car.make} {car.model}</div>
-                                        <div className="text-xs text-gray-500">{car.trim}</div>
-                                    </div>
-                                    <div className="col-span-2 text-blue-600 font-bold">${parseInt(car.price).toLocaleString()}</div>
-                                    <div className="col-span-2 text-gray-600 text-xs">{parseInt(car.kilometers).toLocaleString()} km</div>
-                                    <div className="col-span-1 text-gray-600 text-xs capitalize">{car.color}</div>
-                                    <div className="col-span-2 text-gray-600 text-xs">
-                                        <span className="capitalize">{car.transmission}</span> • <span className="capitalize">{car.fuelType}</span>
-                                    </div>
-                                    {!selectedDealership && (
-                                        <div className="col-span-2 flex items-center gap-1 text-xs text-gray-400">
-                                            <Building2 className="w-3 h-3" />
-                                            <span className="truncate">{car.dealershipName}</span>
-                                        </div>
-                                    )}
-                                </div>
-
-                                {/* Actions */}
-                                <div className="flex gap-1">
-                                    <Button 
-                                        size="sm"
-                                        variant={car.status === 'sold' ? "outline" : "default"} 
-                                        className={cn(
-                                            "h-7 px-2 text-[10px]",
-                                            car.status === 'sold' 
-                                                ? "border-green-600 text-green-600 hover:bg-green-50" 
-                                                : "bg-green-600 hover:bg-green-700 text-white"
-                                        )}
-                                        onClick={() => toggleSoldStatusMutation.mutate(car)}
-                                        data-testid={`button-toggle-status-${car.id}`}
-                                    >
-                                        {car.status === 'sold' ? 'Available' : 'Sold'}
-                                    </Button>
-                                    {car.listingLink && (
-                                        <Button 
-                                            variant="ghost" 
-                                            size="sm" 
-                                            className="h-7 w-7 p-0 hover:bg-purple-50 hover:text-purple-600" 
-                                            onClick={() => window.open(car.listingLink, '_blank')}
-                                            title="View Listing"
-                                            data-testid={`button-view-listing-${car.id}`}
-                                        >
-                                            <ExternalLink className="w-3 h-3" />
-                                        </Button>
-                                    )}
-                                    <Button variant="ghost" size="sm" className="h-7 w-7 p-0 hover:bg-blue-50 hover:text-blue-600" onClick={() => { setEditingCar({ ...car, dealershipId: car.dealershipId }); }} data-testid={`button-edit-${car.id}`}>
-                                        <Edit2 className="w-3 h-3" />
-                                    </Button>
-                                    <Button variant="ghost" size="sm" className="h-7 w-7 p-0 hover:bg-red-50 hover:text-red-600" onClick={() => handleDeleteCar(car.id)} data-testid={`button-delete-${car.id}`}>
-                                        <Trash2 className="w-3 h-3" />
-                                    </Button>
-                                </div>
+                  <Virtuoso
+                    style={{ height: "calc(100vh - 300px)" }}
+                    data={filteredCars}
+                    itemContent={(index, car) => (
+                      <div className="pb-2">
+                        <Card className="hover:shadow-md transition-shadow bg-white border border-gray-200" data-testid={`card-vehicle-${car.id}`}>
+                          <CardContent className="p-3">
+                            <div className="flex items-center gap-3">
+                              {/* Status Badges */}
+                              <div className="flex flex-col gap-1">
+                                  {car.status === 'sold' && (
+                                      <Badge className="bg-red-500 text-white text-[10px] px-1.5 py-0">SOLD</Badge>
+                                  )}
+                                  {car.status === 'pending' && (
+                                      <Badge className="bg-yellow-500 text-white text-[10px] px-1.5 py-0">PENDING</Badge>
+                                  )}
+                                  {car.status === 'available' && (
+                                      <Badge className="bg-green-500 text-white text-[10px] px-1.5 py-0">AVAILABLE</Badge>
+                                  )}
+                                  {car.carfaxStatus === 'clean' && (
+                                      <Badge className="bg-blue-600 text-white text-[10px] px-1.5 py-0 flex items-center gap-0.5">
+                                          <CheckCircle2 className="w-2 h-2" /> Clean
+                                      </Badge>
+                                  )}
                               </div>
-                            </CardContent>
-                          </Card>
-                        </div>
-                      );
-                    }}
-                  </List>
+
+                              {/* Vehicle Info */}
+                              <div className="flex-1 grid grid-cols-12 gap-2 items-center text-sm">
+                                  <div className="col-span-3">
+                                      <div className="font-bold text-gray-900">{car.year} {car.make} {car.model}</div>
+                                      <div className="text-xs text-gray-500">{car.trim}</div>
+                                  </div>
+                                  <div className="col-span-2 text-blue-600 font-bold">${parseInt(car.price).toLocaleString()}</div>
+                                  <div className="col-span-2 text-gray-600 text-xs">{parseInt(car.kilometers).toLocaleString()} km</div>
+                                  <div className="col-span-1 text-gray-600 text-xs capitalize">{car.color}</div>
+                                  <div className="col-span-2 text-gray-600 text-xs">
+                                      <span className="capitalize">{car.transmission}</span> • <span className="capitalize">{car.fuelType}</span>
+                                  </div>
+                                  {!selectedDealership && (
+                                      <div className="col-span-2 flex items-center gap-1 text-xs text-gray-400">
+                                          <Building2 className="w-3 h-3" />
+                                          <span className="truncate">{car.dealershipName}</span>
+                                      </div>
+                                  )}
+                              </div>
+
+                              {/* Actions */}
+                              <div className="flex gap-1">
+                                  <Button 
+                                      size="sm"
+                                      variant={car.status === 'sold' ? "outline" : "default"} 
+                                      className={cn(
+                                          "h-7 px-2 text-[10px]",
+                                          car.status === 'sold' 
+                                              ? "border-green-600 text-green-600 hover:bg-green-50" 
+                                              : "bg-green-600 hover:bg-green-700 text-white"
+                                      )}
+                                      onClick={() => toggleSoldStatusMutation.mutate(car)}
+                                      data-testid={`button-toggle-status-${car.id}`}
+                                  >
+                                      {car.status === 'sold' ? 'Available' : 'Sold'}
+                                  </Button>
+                                  {car.listingLink && (
+                                      <Button 
+                                          variant="ghost" 
+                                          size="sm" 
+                                          className="h-7 w-7 p-0 hover:bg-purple-50 hover:text-purple-600" 
+                                          onClick={() => window.open(car.listingLink, '_blank')}
+                                          title="View Listing"
+                                          data-testid={`button-view-listing-${car.id}`}
+                                      >
+                                          <ExternalLink className="w-3 h-3" />
+                                      </Button>
+                                  )}
+                                  <Button variant="ghost" size="sm" className="h-7 w-7 p-0 hover:bg-blue-50 hover:text-blue-600" onClick={() => { setEditingCar({ ...car, dealershipId: car.dealershipId }); }} data-testid={`button-edit-${car.id}`}>
+                                      <Edit2 className="w-3 h-3" />
+                                  </Button>
+                                  <Button variant="ghost" size="sm" className="h-7 w-7 p-0 hover:bg-red-50 hover:text-red-600" onClick={() => handleDeleteCar(car.id)} data-testid={`button-delete-${car.id}`}>
+                                      <Trash2 className="w-3 h-3" />
+                                  </Button>
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      </div>
+                    )}
+                  />
                 )}
                 
                 {/* Pagination Controls */}
