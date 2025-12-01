@@ -36,27 +36,35 @@ export function Layout({ children }: { children: React.ReactNode }) {
     window.location.href = '/api/logout';
   };
 
-  // Admin navigation
+  // Admin navigation - Full access to all features including Appraise and Export
   const adminNavItems = [
     { href: "/admin", label: "Admin Dashboard", icon: Shield },
     { href: "/inventory", label: "All Inventory", icon: Package },
+    { href: "/appraisal", label: "Appraise", icon: Calculator },
+    { href: "/export", label: "Export Calculator", icon: FileDown },
     { href: "/upload", label: "Add Vehicles", icon: PlusCircle },
+    { href: "/canadian-retail", label: "Canadian Retail", icon: MapPin },
+    { href: "/reference", label: "Reference", icon: BookOpen },
     { href: "/settings", label: "Settings", icon: Settings },
   ];
 
-  // Data Analyst navigation
+  // Data Analyst navigation - Access to inventory, appraise, export, and data tools
   const dataAnalystNavItems = [
     { href: "/data-analyst", label: "Data Analyst Hub", icon: Database },
+    { href: "/inventory", label: "All Inventory", icon: Package },
+    { href: "/appraisal", label: "Appraise", icon: Calculator },
+    { href: "/export", label: "Export Calculator", icon: FileDown },
     { href: "/upload", label: "Add Vehicles", icon: PlusCircle },
+    { href: "/canadian-retail", label: "Canadian Retail", icon: MapPin },
+    { href: "/reference", label: "Reference", icon: BookOpen },
   ];
 
-  // Dealer navigation (main user flow from design)
+  // Dealer navigation - Only their own inventory for buying/selling (NO Appraise, NO Export)
   const dealerNavItems = [
     { href: "/", label: "Dashboard", icon: LayoutDashboard },
-    { href: "/inventory", label: "Your Inventory", icon: Package },
+    { href: "/dealer-inventory", label: "Your Inventory", icon: Package },
+    { href: "/upload", label: "Add Vehicles", icon: PlusCircle },
     { href: "/canadian-retail", label: "Canadian Retail", icon: MapPin },
-    { href: "/appraisal", label: "Appraise", icon: Calculator },
-    { href: "/export", label: "Export", icon: FileDown },
     { href: "/reference", label: "Reference", icon: BookOpen },
     { href: "/settings", label: "Settings", icon: Settings },
   ];
