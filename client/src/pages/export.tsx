@@ -194,6 +194,36 @@ const TRUCK_PREMIUMS: Record<string, { multiplier: number; bestStates: string[] 
   "Sierra": { multiplier: 1.07, bestStates: ["TX", "MI", "OH", "IN", "MO"] },
 };
 
+const VIN_TARIFF_MAP: Record<string, { tariffRate: number; country: string; note: string }> = {
+  "1G1": { tariffRate: 0.025, country: "USA (General Motors)", note: "2.5% base tariff" },
+  "1FA": { tariffRate: 0.025, country: "USA (Ford)", note: "2.5% base tariff" },
+  "1FT": { tariffRate: 0.025, country: "USA (Ford Truck)", note: "2.5% base tariff" },
+  "1GT": { tariffRate: 0.025, country: "USA (GMC)", note: "2.5% base tariff" },
+  "1HD": { tariffRate: 0.025, country: "USA (Honda)", note: "2.5% base tariff" },
+  "1N1": { tariffRate: 0.025, country: "USA (Nissan)", note: "2.5% base tariff" },
+  "1VW": { tariffRate: 0.025, country: "USA (Volkswagen)", note: "2.5% base tariff" },
+  "2G1": { tariffRate: 0.025, country: "USA (Chevrolet)", note: "2.5% base tariff" },
+  "2HM": { tariffRate: 0.025, country: "USA (Hyundai)", note: "2.5% base tariff" },
+  "3G1": { tariffRate: 0.025, country: "USA (Pontiac)", note: "2.5% base tariff" },
+  "3VW": { tariffRate: 0.025, country: "USA (Audi/VW)", note: "2.5% base tariff" },
+  "4T1": { tariffRate: 0.025, country: "USA (Toyota)", note: "2.5% base tariff" },
+  "4T3": { tariffRate: 0.025, country: "USA (Toyota Truck)", note: "2.5% base tariff" },
+  "5FN": { tariffRate: 0.0, country: "USA (Honda - NAFTA)", note: "NAFTA/USMCA exempt" },
+  "JH2": { tariffRate: 0.025, country: "Japan (Honda)", note: "2.5% base tariff" },
+  "JMZ": { tariffRate: 0.025, country: "Japan (Mazda)", note: "2.5% base tariff" },
+  "JN1": { tariffRate: 0.025, country: "Japan (Nissan)", note: "2.5% base tariff" },
+  "JT2": { tariffRate: 0.025, country: "Japan (Toyota)", note: "2.5% base tariff" },
+  "KMH": { tariffRate: 0.025, country: "South Korea (Hyundai)", note: "2.5% base tariff" },
+  "SAJ": { tariffRate: 0.025, country: "Spain (Seat)", note: "2.5% base tariff" },
+  "WBA": { tariffRate: 0.025, country: "Germany (BMW)", note: "2.5% base tariff" },
+  "WBX": { tariffRate: 0.025, country: "Germany (BMW X)", note: "2.5% base tariff" },
+  "WDB": { tariffRate: 0.025, country: "Germany (Mercedes)", note: "2.5% base tariff" },
+  "WVW": { tariffRate: 0.025, country: "Germany (Volkswagen)", note: "2.5% base tariff" },
+  "YV1": { tariffRate: 0.025, country: "Sweden (Volvo)", note: "2.5% base tariff" },
+  "ZAR": { tariffRate: 0.0, country: "Canada (Free under USMCA)", note: "USMCA exempt - 0% tariff" },
+  "2C1": { tariffRate: 0.0, country: "Canada (Domestic)", note: "USMCA exempt - 0% tariff" },
+};
+
 interface ExportFormData {
   vin: string;
   year: string;
@@ -244,6 +274,7 @@ interface ExportResult {
   };
   riskFactors: string[];
   costBreakdown: { label: string; amount: number; type: "cost" | "fee" | "tax" }[];
+  tariffInfo?: { wmi: string; country: string; rate: number; note: string };
 }
 
 interface StateProfit {
@@ -548,6 +579,14 @@ export default function ExportPage() {
     return { multiplier: 1.0, reason: "Standard market" };
   };
 
+  const getTariffInfo = (vin: string): { wmi: string; country: string; rate: number; note: string } | null => {
+    if (!vin || vin.length < 3) return null;
+    const wmi = vin.substring(0, 3).toUpperCase();
+    const tariff = VIN_TARIFF_MAP[wmi];
+    if (!tariff) return null;
+    return { wmi, country: tariff.country, rate: tariff.tariffRate, note: tariff.note };
+  };
+
   const getRiskFactors = (): string[] => {
     const risks: string[] = [];
     const km = parseInt(formData.odometer) || 0;
@@ -718,6 +757,8 @@ export default function ExportPage() {
         costBreakdown.push({ label: "Reconditioning", amount: reconditioningCost, type: "cost" });
       }
       
+      const tariffInfo = getTariffInfo(formData.vin) || undefined;
+      
     setResult({
       purchasePriceCAD,
       purchasePriceUSD,
@@ -741,6 +782,7 @@ export default function ExportPage() {
       recommendation,
       riskFactors,
       costBreakdown,
+      tariffInfo,
     });
     
     setIsCalculating(false);
@@ -1274,6 +1316,32 @@ export default function ExportPage() {
                     </div>
                   </CardContent>
                 </Card>
+
+                {result.tariffInfo && (
+                  <Card className="bg-blue-500/10 border-blue-500/30">
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-blue-400 text-sm flex items-center gap-2">
+                        <Landmark className="w-4 h-4" />
+                        Tariff Information (VIN: {result.tariffInfo.wmi})
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-2 text-sm">
+                        <div className="flex justify-between">
+                          <span className="text-slate-400">Origin:</span>
+                          <span className="text-white font-medium">{result.tariffInfo.country}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-slate-400">Tariff Rate:</span>
+                          <span className="text-blue-400 font-bold">{(result.tariffInfo.rate * 100).toFixed(1)}%</span>
+                        </div>
+                        <div className="text-slate-300 text-xs italic pt-1 border-t border-blue-500/20">
+                          {result.tariffInfo.note}
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
 
                 {result.riskFactors.length > 0 && (
                   <Card className="bg-amber-500/10 border-amber-500/30">
