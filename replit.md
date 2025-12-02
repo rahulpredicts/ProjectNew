@@ -185,15 +185,23 @@ Carsellia is a comprehensive, production-ready vehicle trading and dealership ma
 ### Transportation Module
 
 **Transport Estimate Calculator (/transport):**
-- Canadian distance matrix between 15 major cities across provinces
-- Distance-based pricing tiers: $0.95/km (0-500km), $0.85/km (501-1000km), $0.75/km (1001-2000km), $0.65/km (2000+km)
-- Minimum charge: $195
-- Vehicle type surcharges: Sedan (base), SUV (+$45), Pickup (+$55), Full-Size (+$85), Luxury (+$125), Motorcycle (-$50)
-- Additional options: Non-running (+$85), Enclosed (+$175), Lift gate (+$45)
-- Multi-vehicle discounts: 5% (2-3), 10% (4+)
-- Service levels: Standard (1x, 5-7 days), 2-Day Expedited (1.5x), 1-Day Expedited (2x)
+- Canadian distance matrix between 21 major cities across provinces (expanded Quebec-Ontario coverage)
+- 6-tier distance-based pricing: 
+  - 0-100km: $3.50/km
+  - 101-300km: $2.75/km
+  - 301-500km: $2.25/km
+  - 501-1000km: $1.85/km
+  - 1001-2000km: $1.65/km
+  - 2001+km: $1.45/km
+- Minimum charge: $150
+- Vehicle type surcharges: Sedan/Compact ($0), Mid-Size SUV (+$50), Full-Size SUV (+$100), Pickup (+$75), Full-Size Truck (+$150), Luxury (+$100), Motorcycle (-$100)
+- Additional options: Non-running (+$150), Enclosed (+50% of subtotal), Lift gate (+$75)
+- Multi-vehicle discounts: 2 vehicles (10%), 3 vehicles (15%), 4-5 vehicles (20%), 6-10 vehicles (25%)
+- Service levels: Standard (1x, 3-5 days), 2-Day Expedited (1.3x, min +$75), 1-Day Expedited (1.5x, min +$150)
 - 8% fuel surcharge
 - Quote generation with 7-day validity
+- Popular routes quick-reference section with one-click quote generation
+- Competitive advantage banner highlighting own fleet, direct pricing, real-time tracking
 
 **Transport Dashboard (/transport-dashboard):**
 - Operations overview with active orders, pending pickups, in-transit, completed counts
