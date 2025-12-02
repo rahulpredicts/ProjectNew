@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback, memo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -379,7 +379,7 @@ export default function ExportPage() {
     fetchExchangeRate();
   }, []);
 
-  const handleDecodeVin = async () => {
+  const handleDecodeVin = useCallback(async () => {
     if (!formData.vin || formData.vin.length < 11) {
       toast({ title: "Invalid VIN", description: "Please enter a valid VIN (at least 11 characters)", variant: "destructive" });
       return;
@@ -450,7 +450,7 @@ export default function ExportPage() {
     } finally {
       setIsDecodingVin(false);
     }
-  };
+  }, [formData.vin, toast]);
 
   const loadFromInventory = (car: Car) => {
     setSelectedInventoryCar(car);
@@ -629,12 +629,10 @@ export default function ExportPage() {
     };
   };
 
-  const calculateExport = () => {
+  const calculateExport = useCallback(() => {
     setIsCalculating(true);
-    
-    setTimeout(() => {
-      const purchasePriceCAD = parseFloat(formData.purchasePriceCAD) || 0;
-      const purchasePriceUSD = purchasePriceCAD * exchangeRate;
+    const purchasePriceCAD = parseFloat(formData.purchasePriceCAD) || 0;
+    const purchasePriceUSD = purchasePriceCAD * exchangeRate;
       const odometerKm = formData.odometerUnit === "miles" 
         ? (parseFloat(formData.odometer) || 0) * 1.60934 
         : parseFloat(formData.odometer) || 0;
@@ -720,34 +718,33 @@ export default function ExportPage() {
         costBreakdown.push({ label: "Reconditioning", amount: reconditioningCost, type: "cost" });
       }
       
-      setResult({
-        purchasePriceCAD,
-        purchasePriceUSD,
-        exchangeRate,
-        transportCost,
-        customsDuty,
-        mpf,
-        customsBond,
-        brokerFee,
-        stateFees,
-        auctionFees,
-        otherCosts,
-        totalLandedCost,
-        expectedSalePrice,
-        grossProfitUSD,
-        grossProfitCAD,
-        profitMargin,
-        canadaProfit,
-        canadaMargin,
-        profitDifference: grossProfitCAD - canadaProfit,
-        recommendation,
-        riskFactors,
-        costBreakdown,
-      });
-      
-      setIsCalculating(false);
-    }, 800);
-  };
+    setResult({
+      purchasePriceCAD,
+      purchasePriceUSD,
+      exchangeRate,
+      transportCost,
+      customsDuty,
+      mpf,
+      customsBond,
+      brokerFee,
+      stateFees,
+      auctionFees,
+      otherCosts,
+      totalLandedCost,
+      expectedSalePrice,
+      grossProfitUSD,
+      grossProfitCAD,
+      profitMargin,
+      canadaProfit,
+      canadaMargin,
+      profitDifference: grossProfitCAD - canadaProfit,
+      recommendation,
+      riskFactors,
+      costBreakdown,
+    });
+    
+    setIsCalculating(false);
+  }, [formData, exchangeRate]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800 text-white p-6">
