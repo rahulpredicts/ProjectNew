@@ -144,6 +144,48 @@ const BODY_TYPE_DEPRECIATION: Record<string, { year1: number, annual: number }> 
   "convertible": { year1: 0.28, annual: 0.18 }
 };
 
+function normalizeBodyType(bodyClass: string | undefined): string {
+  if (!bodyClass) return "sedan";
+  const lower = bodyClass.toLowerCase();
+  if (lower.includes("pickup") || lower.includes("truck")) return "truck";
+  if (lower.includes("suv") || lower.includes("sport utility")) return "suv";
+  if (lower.includes("sedan") || lower.includes("saloon")) return "sedan";
+  if (lower.includes("coupe") || lower.includes("coupé")) return "coupe";
+  if (lower.includes("hatchback") || lower.includes("hatch")) return "hatchback";
+  if (lower.includes("van") || lower.includes("minivan") || lower.includes("mpv")) return "van";
+  if (lower.includes("convertible") || lower.includes("roadster") || lower.includes("cabriolet")) return "convertible";
+  if (lower.includes("wagon") || lower.includes("estate")) return "wagon";
+  if (lower.includes("crossover")) return "suv";
+  return "sedan";
+}
+
+function normalizeTransmission(transmission: string | undefined): string {
+  if (!transmission) return "automatic";
+  const lower = transmission.toLowerCase();
+  if (lower.includes("cvt") || lower.includes("continuously variable")) return "cvt";
+  if (lower.includes("manual")) return "manual";
+  return "automatic";
+}
+
+function normalizeDrivetrain(driveType: string | undefined): string {
+  if (!driveType) return "fwd";
+  const lower = driveType.toLowerCase();
+  if (lower.includes("4wd") || lower.includes("4x4") || lower.includes("4-wheel")) return "4wd";
+  if (lower.includes("awd") || lower.includes("all-wheel") || lower.includes("all wheel")) return "awd";
+  if (lower.includes("rwd") || lower.includes("rear-wheel") || lower.includes("rear wheel")) return "rwd";
+  return "fwd";
+}
+
+function normalizeFuelType(fuelType: string | undefined): string {
+  if (!fuelType) return "gasoline";
+  const lower = fuelType.toLowerCase();
+  if (lower.includes("diesel")) return "diesel";
+  if (lower.includes("electric") && !lower.includes("hybrid")) return "electric";
+  if (lower.includes("hybrid") || lower.includes("plug-in")) return "hybrid";
+  if (lower.includes("flex") || lower.includes("e85")) return "flex";
+  return "gasoline";
+}
+
 type DecisionType = "buy" | "wholesale" | "reject";
 
 interface MarketIntelligence {
@@ -534,19 +576,37 @@ export default function AppraisalPage() {
     setIsDecoding(true);
     try {
       const decoded = await decodeVIN(formData.vin);
-      if (decoded) {
+      if (decoded && !decoded.error) {
+        const normalizedBodyType = normalizeBodyType(decoded.bodyClass);
+        const normalizedTransmission = normalizeTransmission(decoded.transmission);
+        const normalizedDrivetrain = normalizeDrivetrain(decoded.driveType);
+        const normalizedFuelType = normalizeFuelType(decoded.fuelType);
+        
         setFormData(prev => ({
           ...prev,
           make: decoded.make || prev.make,
           model: decoded.model || prev.model,
           year: decoded.year?.toString() || prev.year,
-          bodyType: decoded.bodyClass?.toLowerCase() || prev.bodyType,
+          trim: decoded.trim || decoded.series || prev.trim,
+          bodyType: normalizedBodyType,
           engineCylinders: decoded.engineCylinders || prev.engineCylinders,
-          fuelType: decoded.fuelType?.toLowerCase() || prev.fuelType,
-          drivetrain: decoded.driveType?.toLowerCase() || prev.drivetrain,
-          transmission: decoded.transmission?.toLowerCase() || prev.transmission
+          engineDisplacement: decoded.engineDisplacement || prev.engineDisplacement,
+          fuelType: normalizedFuelType,
+          drivetrain: normalizedDrivetrain,
+          transmission: normalizedTransmission
         }));
-        toast({ title: "VIN Decoded", description: `Found ${decoded.year} ${decoded.make} ${decoded.model}` });
+        
+        const details = [decoded.year, decoded.make, decoded.model].filter(Boolean).join(" ");
+        toast({ 
+          title: "VIN Decoded Successfully", 
+          description: details ? `Found: ${details}` : "Vehicle information retrieved"
+        });
+      } else {
+        toast({ 
+          title: "Decode failed", 
+          description: decoded.error || "Could not decode VIN", 
+          variant: "destructive" 
+        });
       }
     } catch (error) {
       toast({ title: "Decode failed", description: "Could not decode VIN", variant: "destructive" });
