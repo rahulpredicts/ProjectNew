@@ -92,6 +92,13 @@ export interface IStorage {
   searchCars(query: string): Promise<Car[]>;
   getCarsCount(dealershipId?: string, status?: string): Promise<{ total: number; available: number; sold: number; pending: number }>;
   getCarCountsByDealership(): Promise<Record<string, number>>;
+
+  // Transport quote operations
+  createTransportQuote(quote: schema.InsertTransportQuote): Promise<schema.TransportQuote>;
+  getTransportQuote(id: string): Promise<schema.TransportQuote | undefined>;
+  getTransportQuoteByNumber(quoteNumber: string): Promise<schema.TransportQuote | undefined>;
+  getAllTransportQuotes(): Promise<schema.TransportQuote[]>;
+  getTransportQuotesByUser(userId: string): Promise<schema.TransportQuote[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -482,6 +489,32 @@ export class DatabaseStorage implements IStorage {
       counts[row.dealershipId] = row.count;
     }
     return counts;
+  }
+
+  // Transport quote operations
+  async createTransportQuote(quote: schema.InsertTransportQuote): Promise<schema.TransportQuote> {
+    const results = await db.insert(schema.transportQuotes).values(quote).returning();
+    return results[0];
+  }
+
+  async getTransportQuote(id: string): Promise<schema.TransportQuote | undefined> {
+    const results = await db.select().from(schema.transportQuotes).where(eq(schema.transportQuotes.id, id));
+    return results[0];
+  }
+
+  async getTransportQuoteByNumber(quoteNumber: string): Promise<schema.TransportQuote | undefined> {
+    const results = await db.select().from(schema.transportQuotes).where(eq(schema.transportQuotes.quoteNumber, quoteNumber));
+    return results[0];
+  }
+
+  async getAllTransportQuotes(): Promise<schema.TransportQuote[]> {
+    return await db.select().from(schema.transportQuotes).orderBy(desc(schema.transportQuotes.createdAt));
+  }
+
+  async getTransportQuotesByUser(userId: string): Promise<schema.TransportQuote[]> {
+    return await db.select().from(schema.transportQuotes)
+      .where(eq(schema.transportQuotes.userId, userId))
+      .orderBy(desc(schema.transportQuotes.createdAt));
   }
 }
 

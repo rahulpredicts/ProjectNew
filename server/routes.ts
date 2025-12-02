@@ -1236,6 +1236,75 @@ ${chunk}`;
     return chunks.length > 0 ? chunks : [content.substring(0, maxChunkSize)];
   }
 
+  // Transport Quote Routes
+  app.post("/api/transport/quotes", async (req: any, res) => {
+    try {
+      const quoteData = req.body;
+      
+      // Generate unique quote number
+      const timestamp = Date.now().toString(36).toUpperCase();
+      const random = Math.random().toString(36).substring(2, 6).toUpperCase();
+      const quoteNumber = `TQ-${timestamp}-${random}`;
+      
+      // Set validity period (7 days from now)
+      const validUntil = new Date();
+      validUntil.setDate(validUntil.getDate() + 7);
+      
+      const newQuote = await storage.createTransportQuote({
+        quoteNumber,
+        pickupCity: quoteData.pickupCity,
+        pickupProvince: quoteData.pickupProvince,
+        deliveryCity: quoteData.deliveryCity,
+        deliveryProvince: quoteData.deliveryProvince,
+        distanceKm: quoteData.distanceKm,
+        vehicleYear: quoteData.vehicleYear,
+        vehicleMake: quoteData.vehicleMake,
+        vehicleModel: quoteData.vehicleModel,
+        vehicleType: quoteData.vehicleType,
+        vehicleVin: quoteData.vehicleVin,
+        isRunning: quoteData.isRunning,
+        isEnclosed: quoteData.isEnclosed,
+        liftGateRequired: quoteData.liftGateRequired,
+        vehicleCount: quoteData.vehicleCount,
+        serviceLevel: quoteData.serviceLevel,
+        basePrice: quoteData.basePrice,
+        surcharges: quoteData.surcharges,
+        discount: quoteData.discount,
+        totalPrice: quoteData.totalPrice,
+        validUntil,
+        status: "quoted",
+      });
+      
+      res.status(201).json(newQuote);
+    } catch (error) {
+      console.error("Error creating transport quote:", error);
+      res.status(500).json({ error: "Failed to create transport quote" });
+    }
+  });
+
+  app.get("/api/transport/quotes", async (req: any, res) => {
+    try {
+      const quotes = await storage.getAllTransportQuotes();
+      res.json(quotes);
+    } catch (error) {
+      console.error("Error fetching transport quotes:", error);
+      res.status(500).json({ error: "Failed to fetch transport quotes" });
+    }
+  });
+
+  app.get("/api/transport/quotes/:id", async (req: any, res) => {
+    try {
+      const quote = await storage.getTransportQuote(req.params.id);
+      if (!quote) {
+        return res.status(404).json({ error: "Quote not found" });
+      }
+      res.json(quote);
+    } catch (error) {
+      console.error("Error fetching transport quote:", error);
+      res.status(500).json({ error: "Failed to fetch transport quote" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

@@ -54,7 +54,8 @@ import {
   Loader2,
   Search,
   CheckCircle,
-  XCircle
+  XCircle,
+  Truck
 } from "lucide-react";
 import type { User } from "@shared/schema";
 
@@ -62,7 +63,7 @@ interface CreateUserForm {
   email: string;
   firstName: string;
   lastName: string;
-  role: "admin" | "dealer" | "data_analyst";
+  role: "admin" | "dealer" | "data_analyst" | "transportation";
   password: string;
 }
 
@@ -75,6 +76,7 @@ const roleConfig = {
   admin: { label: "Admin", icon: Shield, color: "bg-yellow-500/20 text-yellow-400 border-yellow-500/30" },
   dealer: { label: "Dealer", icon: Users, color: "bg-blue-500/20 text-blue-400 border-blue-500/30" },
   data_analyst: { label: "Data Analyst", icon: Database, color: "bg-purple-500/20 text-purple-400 border-purple-500/30" },
+  transportation: { label: "Transportation", icon: Truck, color: "bg-orange-500/20 text-orange-400 border-orange-500/30" },
 };
 
 export default function UserManagementPage() {
@@ -278,6 +280,7 @@ export default function UserManagementPage() {
     admin: users?.filter(u => u.role === 'admin').length || 0,
     dealer: users?.filter(u => u.role === 'dealer').length || 0,
     data_analyst: users?.filter(u => u.role === 'data_analyst').length || 0,
+    transportation: users?.filter(u => u.role === 'transportation').length || 0,
   };
 
   return (
@@ -345,7 +348,7 @@ export default function UserManagementPage() {
                   <Label htmlFor="role">Role</Label>
                   <Select
                     value={createForm.role}
-                    onValueChange={(value: "admin" | "dealer" | "data_analyst") => 
+                    onValueChange={(value: "admin" | "dealer" | "data_analyst" | "transportation") => 
                       setCreateForm({ ...createForm, role: value })
                     }
                   >
@@ -369,6 +372,12 @@ export default function UserManagementPage() {
                         <div className="flex items-center gap-2">
                           <Database className="w-4 h-4 text-purple-500" />
                           Data Analyst
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="transportation">
+                        <div className="flex items-center gap-2">
+                          <Truck className="w-4 h-4 text-orange-500" />
+                          Transportation
                         </div>
                       </SelectItem>
                     </SelectContent>
@@ -408,7 +417,7 @@ export default function UserManagementPage() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
         <Card>
           <CardHeader className="pb-2">
             <CardDescription>Total Users</CardDescription>
@@ -442,6 +451,15 @@ export default function UserManagementPage() {
             <CardTitle className="text-3xl">{userCounts.data_analyst}</CardTitle>
           </CardHeader>
         </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardDescription className="flex items-center gap-2">
+              <Truck className="w-4 h-4 text-orange-500" />
+              Transportation
+            </CardDescription>
+            <CardTitle className="text-3xl">{userCounts.transportation}</CardTitle>
+          </CardHeader>
+        </Card>
       </div>
 
       {/* Filters */}
@@ -465,6 +483,7 @@ export default function UserManagementPage() {
             <SelectItem value="admin">Admin</SelectItem>
             <SelectItem value="dealer">Dealer</SelectItem>
             <SelectItem value="data_analyst">Data Analyst</SelectItem>
+            <SelectItem value="transportation">Transportation</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -546,6 +565,12 @@ export default function UserManagementPage() {
                             <div className="flex items-center gap-2">
                               <Database className="w-4 h-4 text-purple-500" />
                               Data Analyst
+                            </div>
+                          </SelectItem>
+                          <SelectItem value="transportation">
+                            <div className="flex items-center gap-2">
+                              <Truck className="w-4 h-4 text-orange-500" />
+                              Transportation
                             </div>
                           </SelectItem>
                         </SelectContent>

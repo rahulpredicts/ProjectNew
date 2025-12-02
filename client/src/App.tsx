@@ -19,6 +19,9 @@ import ExportPage from "@/pages/export";
 import ReferencePage from "@/pages/reference";
 import SettingsPage from "@/pages/settings";
 import UserManagementPage from "@/pages/user-management";
+import TransportPage from "@/pages/transport";
+import TransportDashboard from "@/pages/transport-dashboard";
+import TransportOrdersPage from "@/pages/transport-orders";
 import { Loader2 } from "lucide-react";
 
 // Admin-only route guard
@@ -69,8 +72,27 @@ function ExportRoute({ component: Component }: { component: React.ComponentType 
   return <Component />;
 }
 
+// Transportation team route guard (for fleet/order management)
+function TransportationRoute({ component: Component }: { component: React.ComponentType }) {
+  const { isAdmin, isTransportation } = useAuth();
+  // Only Admin and Transportation team can access transport dashboard/orders
+  if (!isAdmin && !isTransportation) {
+    return <Redirect to="/" />;
+  }
+  return <Component />;
+}
+
+// Transport quote calculator - Admin, Dealer, and Transportation can access
+function TransportQuoteRoute({ component: Component }: { component: React.ComponentType }) {
+  const { isAdmin, isDealer, isTransportation } = useAuth();
+  if (!isAdmin && !isDealer && !isTransportation) {
+    return <Redirect to="/" />;
+  }
+  return <Component />;
+}
+
 function Router() {
-  const { isAuthenticated, isLoading, isAdmin, isDataAnalyst } = useAuth();
+  const { isAuthenticated, isLoading, isAdmin, isDataAnalyst, isTransportation } = useAuth();
 
   if (isLoading) {
     return (
@@ -96,7 +118,7 @@ function Router() {
     <Layout>
       <Switch>
         {/* Role-based dashboard routing */}
-        <Route path="/" component={isAdmin ? AdminDashboard : isDataAnalyst ? DataAnalystDashboard : DashboardPage} />
+        <Route path="/" component={isAdmin ? AdminDashboard : isDataAnalyst ? DataAnalystDashboard : isTransportation ? TransportDashboard : DashboardPage} />
         
         {/* Admin-only routes */}
         <Route path="/admin">{() => <AdminRoute component={AdminDashboard} />}</Route>
@@ -117,6 +139,11 @@ function Router() {
         
         {/* Export Calculator - Admin and Dealer only */}
         <Route path="/export">{() => <ExportRoute component={ExportPage} />}</Route>
+        
+        {/* Transport - Admin, Dealer, Transportation can get quotes; Dashboard/Orders for Admin/Transport only */}
+        <Route path="/transport">{() => <TransportQuoteRoute component={TransportPage} />}</Route>
+        <Route path="/transport-dashboard">{() => <TransportationRoute component={TransportDashboard} />}</Route>
+        <Route path="/transport-orders">{() => <TransportationRoute component={TransportOrdersPage} />}</Route>
         
         {/* Shared routes - all roles can access */}
         <Route path="/canadian-retail" component={CanadianRetailPage} />
