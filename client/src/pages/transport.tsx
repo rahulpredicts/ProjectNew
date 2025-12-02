@@ -504,12 +504,12 @@ const DISTANCE_MATRIX: Record<string, Record<string, number>> = {
 
 const VEHICLE_TYPES = [
   { value: "sedan", label: "Sedan/Compact", surcharge: 0 },
-  { value: "suv", label: "Mid-Size SUV", surcharge: 50 },
-  { value: "fullsize_suv", label: "Full-Size SUV", surcharge: 100 },
-  { value: "pickup", label: "Pickup Truck", surcharge: 75 },
-  { value: "fullsize_truck", label: "Full-Size Truck (F-250+)", surcharge: 150 },
-  { value: "luxury", label: "Luxury Vehicle", surcharge: 100 },
-  { value: "motorcycle", label: "Motorcycle", surcharge: -100 },
+  { value: "suv", label: "Mid-Size SUV", surcharge: 0 },
+  { value: "fullsize_suv", label: "Full-Size SUV", surcharge: 0 },
+  { value: "pickup", label: "Pickup Truck", surcharge: 0 },
+  { value: "fullsize_truck", label: "Full-Size Truck (F-250+)", surcharge: 0 },
+  { value: "luxury", label: "Luxury Vehicle", surcharge: 0 },
+  { value: "motorcycle", label: "Motorcycle", surcharge: 0 },
 ];
 
 const SERVICE_LEVELS = [
@@ -550,36 +550,36 @@ function calculateRate(distance: number): number {
   let remaining = distance;
   
   if (remaining <= 100) {
-    return remaining * 3.50;
+    return remaining * 0.85;
   }
-  total += 100 * 3.50;
+  total += 100 * 0.85;
   remaining -= 100;
   
   if (remaining <= 200) {
-    return total + remaining * 2.75;
+    return total + remaining * 0.75;
   }
-  total += 200 * 2.75;
+  total += 200 * 0.75;
   remaining -= 200;
   
   if (remaining <= 200) {
-    return total + remaining * 2.25;
+    return total + remaining * 0.65;
   }
-  total += 200 * 2.25;
+  total += 200 * 0.65;
   remaining -= 200;
   
   if (remaining <= 500) {
-    return total + remaining * 1.85;
+    return total + remaining * 0.55;
   }
-  total += 500 * 1.85;
+  total += 500 * 0.55;
   remaining -= 500;
   
   if (remaining <= 1000) {
-    return total + remaining * 1.65;
+    return total + remaining * 0.50;
   }
-  total += 1000 * 1.65;
+  total += 1000 * 0.50;
   remaining -= 1000;
   
-  return total + remaining * 1.45;
+  return total + remaining * 0.45;
 }
 
 export default function TransportPage() {
@@ -666,31 +666,31 @@ export default function TransportPage() {
       return null;
     }
 
-    let basePrice = Math.max(calculateRate(distance), 150);
+    let basePrice = Math.max(calculateRate(distance), 95);
 
     const vehicleTypeData = VEHICLE_TYPES.find((v) => v.value === vehicleType);
     const vehicleSurcharge = (vehicleTypeData?.surcharge || 0) * vehicleCount;
 
-    const nonRunningFee = !isRunning ? 150 * vehicleCount : 0;
-    const liftGateFee = liftGateRequired ? 75 * vehicleCount : 0;
+    const nonRunningFee = 0;
+    const liftGateFee = 0;
 
     let multiVehicleDiscount = 0;
     if (vehicleCount >= 6) {
-      multiVehicleDiscount = (basePrice + vehicleSurcharge) * 0.25;
+      multiVehicleDiscount = basePrice * 0.25;
     } else if (vehicleCount >= 4) {
-      multiVehicleDiscount = (basePrice + vehicleSurcharge) * 0.20;
+      multiVehicleDiscount = basePrice * 0.20;
     } else if (vehicleCount >= 3) {
-      multiVehicleDiscount = (basePrice + vehicleSurcharge) * 0.15;
+      multiVehicleDiscount = basePrice * 0.15;
     } else if (vehicleCount >= 2) {
-      multiVehicleDiscount = (basePrice + vehicleSurcharge) * 0.10;
+      multiVehicleDiscount = basePrice * 0.10;
     }
 
     const serviceLevelData = SERVICE_LEVELS.find((s) => s.value === serviceLevel);
     const serviceLevelMultiplier = serviceLevelData?.multiplier || 1.0;
     const minPremium = serviceLevelData?.minPremium || 0;
 
-    const subtotalBeforeEnclosed = basePrice + vehicleSurcharge + nonRunningFee + liftGateFee - multiVehicleDiscount;
-    const enclosedFee = isEnclosed ? subtotalBeforeEnclosed * 0.50 : 0;
+    const subtotalBeforeEnclosed = basePrice - multiVehicleDiscount;
+    const enclosedFee = 0;
     
     const subtotalBeforeMultiplier = subtotalBeforeEnclosed + enclosedFee;
     let subtotal = subtotalBeforeMultiplier * serviceLevelMultiplier;
@@ -866,14 +866,14 @@ export default function TransportPage() {
           <CardContent className="p-4">
             <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-2">
               {[
-                { from: "Montreal", fromProv: "QC", to: "Toronto", toProv: "ON", price: 485 },
-                { from: "Montreal", fromProv: "QC", to: "Ottawa", toProv: "ON", price: 275 },
-                { from: "Quebec City", fromProv: "QC", to: "Toronto", toProv: "ON", price: 650 },
-                { from: "Toronto", fromProv: "ON", to: "Montreal", toProv: "QC", price: 485 },
-                { from: "Ottawa", fromProv: "ON", to: "Toronto", toProv: "ON", price: 425 },
-                { from: "Montreal", fromProv: "QC", to: "Hamilton", toProv: "ON", price: 525 },
-                { from: "Montreal", fromProv: "QC", to: "London", toProv: "ON", price: 595 },
-                { from: "Toronto", fromProv: "ON", to: "Calgary", toProv: "AB", price: 2200 },
+                { from: "Montreal", fromProv: "QC", to: "Toronto", toProv: "ON", price: 387 },
+                { from: "Montreal", fromProv: "QC", to: "Ottawa", toProv: "ON", price: 160 },
+                { from: "Quebec City", fromProv: "QC", to: "Toronto", toProv: "ON", price: 530 },
+                { from: "Toronto", fromProv: "ON", to: "Montreal", toProv: "QC", price: 387 },
+                { from: "Ottawa", fromProv: "ON", to: "Toronto", toProv: "ON", price: 335 },
+                { from: "Montreal", fromProv: "QC", to: "Hamilton", toProv: "ON", price: 425 },
+                { from: "Montreal", fromProv: "QC", to: "London", toProv: "ON", price: 495 },
+                { from: "Toronto", fromProv: "ON", to: "Calgary", toProv: "AB", price: 1770 },
               ].map((route, idx) => (
                 <Button
                   key={idx}
@@ -1153,7 +1153,7 @@ export default function TransportPage() {
                       <div>
                         <div className="text-sm font-medium text-white">Vehicle Running</div>
                         <div className="text-xs text-slate-400">
-                          {isRunning ? "Runs & drives" : "+$150 non-running"}
+                          {isRunning ? "Runs & drives" : "Non-running (included)"}
                         </div>
                       </div>
                     </div>
@@ -1170,7 +1170,7 @@ export default function TransportPage() {
                       <div>
                         <div className="text-sm font-medium text-white">Enclosed Transport</div>
                         <div className="text-xs text-slate-400">
-                          {isEnclosed ? "+50% enclosed carrier" : "Open carrier"}
+                          {isEnclosed ? "Enclosed (included)" : "Open carrier"}
                         </div>
                       </div>
                     </div>
@@ -1187,7 +1187,7 @@ export default function TransportPage() {
                       <div>
                         <div className="text-sm font-medium text-white">Lift Gate Required</div>
                         <div className="text-xs text-slate-400">
-                          {liftGateRequired ? "+$75 lift gate" : "Not required"}
+                          {liftGateRequired ? "Lift gate (included)" : "Not required"}
                         </div>
                       </div>
                     </div>
@@ -1430,10 +1430,11 @@ export default function TransportPage() {
                       <strong className="text-slate-300">Pricing Notes:</strong>
                     </p>
                     <ul className="space-y-1 list-disc list-inside">
-                      <li>Minimum charge: $150</li>
-                      <li>Tiered rates decrease for longer distances</li>
-                      <li>Multi-vehicle discounts available (10-25%)</li>
-                      <li>8% fuel surcharge applies</li>
+                      <li>Minimum charge: $95</li>
+                      <li>All vehicle types included at base rate</li>
+                      <li>Non-running, enclosed & lift gate included</li>
+                      <li>Only expedited delivery has surcharges</li>
+                      <li>Multi-vehicle discounts: 10-25%</li>
                     </ul>
                   </div>
                 </div>
