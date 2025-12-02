@@ -861,8 +861,8 @@ export default function ExportPage() {
                   </div>
                 )}
 
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <div className="md:col-span-2">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                  <div className="sm:col-span-2">
                     <Label className="text-slate-300 text-xs mb-1 block">VIN</Label>
                     <div className="flex gap-2">
                       <Input
@@ -933,7 +933,7 @@ export default function ExportPage() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                   <div>
                     <Label className="text-slate-300 text-xs mb-1 block">Trim</Label>
                     <Input
@@ -1004,7 +1004,7 @@ export default function ExportPage() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   <div>
                     <Label className="text-slate-300 text-xs mb-1 block">Purchase Price (CAD) *</Label>
                     <div className="relative">
@@ -1052,7 +1052,7 @@ export default function ExportPage() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                   <div>
                     <Label className="text-slate-300 text-xs mb-1 block">Sale Channel</Label>
                     <Select value={formData.saleChannel} onValueChange={(v) => setFormData({ ...formData, saleChannel: v })}>
@@ -1179,7 +1179,7 @@ export default function ExportPage() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <Card className="bg-slate-800/50 border-slate-700/50">
                     <CardHeader className="pb-2">
                       <CardTitle className="text-white text-sm flex items-center gap-2">
