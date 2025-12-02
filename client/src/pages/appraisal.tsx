@@ -367,10 +367,10 @@ export default function AppraisalPage() {
           make: decoded.make || prev.make,
           model: decoded.model || prev.model,
           year: decoded.year?.toString() || prev.year,
-          bodyType: decoded.bodyType?.toLowerCase() || prev.bodyType,
+          bodyType: decoded.bodyClass?.toLowerCase() || prev.bodyType,
           engineCylinders: decoded.engineCylinders || prev.engineCylinders,
           fuelType: decoded.fuelType?.toLowerCase() || prev.fuelType,
-          drivetrain: decoded.drivetrain?.toLowerCase() || prev.drivetrain,
+          drivetrain: decoded.driveType?.toLowerCase() || prev.drivetrain,
           transmission: decoded.transmission?.toLowerCase() || prev.transmission
         }));
         toast({ title: "VIN Decoded", description: `Found ${decoded.year} ${decoded.make} ${decoded.model}` });
