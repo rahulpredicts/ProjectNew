@@ -829,6 +829,72 @@ export default function TransportPage() {
           </div>
         </div>
 
+        {/* Competitive Advantage Banner */}
+        <div className="mb-6 p-4 bg-gradient-to-r from-blue-600/20 via-blue-500/10 to-green-600/20 rounded-xl border border-blue-500/30">
+          <div className="flex flex-wrap items-center justify-center gap-4 md:gap-8 text-sm">
+            <div className="flex items-center gap-2 text-blue-300">
+              <Truck className="w-4 h-4" />
+              <span>Own Fleet</span>
+            </div>
+            <div className="flex items-center gap-2 text-green-300">
+              <DollarSign className="w-4 h-4" />
+              <span>Direct Pricing</span>
+            </div>
+            <div className="flex items-center gap-2 text-cyan-300">
+              <MapPin className="w-4 h-4" />
+              <span>Real-Time Tracking</span>
+            </div>
+            <div className="flex items-center gap-2 text-amber-300">
+              <Zap className="w-4 h-4" />
+              <span>1-Day & 2-Day Rush</span>
+            </div>
+            <div className="flex items-center gap-2 text-purple-300">
+              <Shield className="w-4 h-4" />
+              <span>Fully Insured</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Popular Routes Quick Reference */}
+        <Card className="bg-slate-900 border-slate-700 mb-6">
+          <CardHeader className="border-b border-slate-700 py-3">
+            <CardTitle className="text-white flex items-center gap-2 text-lg">
+              <Zap className="w-5 h-5 text-amber-400" />
+              Popular Quebec-Ontario Routes (Click for Instant Quote)
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-4">
+            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-2">
+              {[
+                { from: "Montreal", fromProv: "QC", to: "Toronto", toProv: "ON", price: 485 },
+                { from: "Montreal", fromProv: "QC", to: "Ottawa", toProv: "ON", price: 275 },
+                { from: "Quebec City", fromProv: "QC", to: "Toronto", toProv: "ON", price: 650 },
+                { from: "Toronto", fromProv: "ON", to: "Montreal", toProv: "QC", price: 485 },
+                { from: "Ottawa", fromProv: "ON", to: "Toronto", toProv: "ON", price: 425 },
+                { from: "Montreal", fromProv: "QC", to: "Hamilton", toProv: "ON", price: 525 },
+                { from: "Montreal", fromProv: "QC", to: "London", toProv: "ON", price: 595 },
+                { from: "Toronto", fromProv: "ON", to: "Calgary", toProv: "AB", price: 2200 },
+              ].map((route, idx) => (
+                <Button
+                  key={idx}
+                  variant="outline"
+                  className="flex flex-col h-auto py-2 px-3 border-slate-600 hover:border-blue-500 hover:bg-blue-500/10 text-left"
+                  onClick={() => {
+                    setPickupProvince(route.fromProv);
+                    setPickupCity(route.from);
+                    setDeliveryProvince(route.toProv);
+                    setDeliveryCity(route.to);
+                  }}
+                  data-testid={`button-popular-route-${idx}`}
+                >
+                  <span className="text-xs text-slate-400 truncate w-full">{route.from} → {route.to}</span>
+                  <span className="text-sm font-semibold text-green-400">${route.price}</span>
+                </Button>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 space-y-6">
             <Card className="bg-slate-900 border-slate-700">
