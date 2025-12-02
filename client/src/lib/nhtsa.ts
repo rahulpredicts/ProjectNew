@@ -216,34 +216,38 @@ export async function decodeVIN(vin: string): Promise<EnhancedVINResult> {
 
     const vehicle = data.Results[0];
 
+    console.log("NHTSA API Response:", vehicle);
+
     // Extract comprehensive vehicle data
     const result: EnhancedVINResult = {
       vin: cleanVIN,
-      year: vehicle.ModelYear || undefined,
+      year: vehicle.ModelYear || vehicle.Model_Year || undefined,
       make: vehicle.Make || undefined,
       model: vehicle.Model || undefined,
       trim: vehicle.Trim || undefined,
       series: vehicle.Series || undefined,
-      bodyClass: vehicle.BodyClass || undefined,
-      vehicleType: vehicle.VehicleType || undefined,
+      bodyClass: vehicle.BodyClass || vehicle.Body_Class || undefined,
+      vehicleType: vehicle.VehicleType || vehicle.Vehicle_Type || undefined,
       doors: vehicle.Doors || undefined,
       
       // Engine
-      engineDescription: vehicle.EngineModel || vehicle.EngineConfiguration || undefined,
-      engineCylinders: vehicle.EngineCylinders || undefined,
-      engineDisplacement: vehicle.DisplacementL || vehicle.DisplacementCC || undefined,
-      fuelType: vehicle.FuelTypePrimary || undefined,
+      engineDescription: vehicle.EngineModel || vehicle.EngineConfiguration || vehicle.Engine_Model || undefined,
+      engineCylinders: vehicle.EngineCylinders || vehicle.Engine_Cylinders || undefined,
+      engineDisplacement: vehicle.DisplacementL || vehicle.DisplacementCC || vehicle.Displacement_L || vehicle.Displacement_CC || undefined,
+      fuelType: vehicle.FuelTypePrimary || vehicle.Fuel_Type_Primary || undefined,
       
       // Drivetrain
-      driveType: vehicle.DriveType || undefined,
-      transmission: vehicle.TransmissionStyle || undefined,
+      driveType: vehicle.DriveType || vehicle.Drive_Type || undefined,
+      transmission: vehicle.TransmissionStyle || vehicle.Transmission_Style || undefined,
       
       // Manufacturing
       manufacturer: vehicle.Manufacturer || undefined,
-      plantCountry: vehicle.PlantCountry || undefined,
-      plantState: vehicle.PlantState || undefined,
-      plantCity: vehicle.PlantCity || undefined,
+      plantCountry: vehicle.PlantCountry || vehicle.Plant_Country || undefined,
+      plantState: vehicle.PlantState || vehicle.Plant_State || undefined,
+      plantCity: vehicle.PlantCity || vehicle.Plant_City || undefined,
     };
+
+    console.log("Extracted result:", result);
 
     // Check if we got any useful data
     if (!result.make && !result.model && !result.year) {
