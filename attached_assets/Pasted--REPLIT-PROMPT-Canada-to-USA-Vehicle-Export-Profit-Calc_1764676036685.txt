@@ -1,0 +1,846 @@
+# REPLIT PROMPT: Canada to USA Vehicle Export Profit Calculator
+
+## Project Overview
+
+Build a comprehensive **Export Profit Calculator** module for the existing dealership appraisal app. This calculator helps Canadian dealers determine profitability when exporting vehicles from Canada to the USA. The system should automatically calculate all costs, fetch live data, compare Canada vs USA selling scenarios, and provide intelligent buy/no-buy recommendations with state-by-state profit analysis.
+
+---
+
+## SECTION 1: VEHICLE INPUT & DATA COLLECTION
+
+### 1.1 Primary Input Fields
+
+| Field | Type | Details |
+|-------|------|---------|
+| VIN | Text (17 chars) | Auto-decode year, make, model, trim, engine, transmission using existing VIN decoder |
+| Odometer | Number | With KM/Miles toggle, auto-convert between units |
+| Purchase Price | Currency (CAD) | What dealer pays/paid for vehicle in Canada |
+| Vehicle Condition | Dropdown | Excellent / Good / Average / Below Average / Poor |
+| Province of Purchase | Dropdown | All Canadian provinces (affects transport cost) |
+| Target US State | Dropdown | All 50 US states OR "Best State" auto-recommendation |
+| Sale Channel | Dropdown | Auction (Manheim/ADESA) / Direct to Dealer / Retail |
+
+### 1.2 Auto-Populated Data (from VIN decode)
+
+- Year, Make, Model, Trim
+- Body Style (Sedan, SUV, Truck, etc.)
+- Engine Type (Gas, Diesel, Hybrid, EV)
+- Drivetrain (FWD, RWD, AWD, 4WD)
+- MSRP (original)
+- Country of Manufacture
+- USMCA Eligibility Status
+
+### 1.3 Optional Input Fields
+
+| Field | Default | Purpose |
+|-------|---------|---------|
+| Accident History | None | Minor/Moderate/Major - affects value |
+| Title Status | Clean | Clean/Rebuilt/Salvage |
+| Number of Owners | 1 | Affects value |
+| Service Records | Yes | Complete/Partial/None |
+| Reconditioning Needed | $0 | Manual entry for known repairs |
+
+---
+
+## SECTION 2: AUTOMATIC DATA PULLS & APIs
+
+### 2.1 Exchange Rate (Critical)
+
+**Primary Source:** Bank of Canada API or ExchangeRate-API
+- Auto-fetch live CAD/USD rate daily
+- Display current rate prominently: "1 CAD = X.XX USD"
+- Allow manual override for locked-in rates
+- Store historical rates for reporting
+
+**API Endpoint Example:**
+```
+https://api.exchangerate-api.com/v4/latest/CAD
+```
+
+### 2.2 Canadian Market Value
+
+Pull from existing database or Canadian Black Book:
+- Wholesale value (CAD)
+- Trade-in value (CAD)
+- Retail value (CAD)
+- Days on market average
+
+### 2.3 USA Market Value
+
+**Sources to integrate (priority order):**
+
+1. **Manheim MMR (Wholesale)** - Most trusted US wholesale benchmark
+   - Based on 10M+ annual auction transactions
+   - Updated nightly
+   - Adjusted for mileage, condition, region
+
+2. **Black Book USA** - Secondary wholesale reference
+
+3. **Retail Estimates** - From CarGurus, AutoTrader USA data
+
+**Display Format:**
+```
+USA Market Values:
+├── MMR Wholesale:     $XX,XXX USD
+├── Black Book:        $XX,XXX USD
+├── Avg Wholesale:     $XX,XXX USD
+└── Est. Retail:       $XX,XXX USD
+```
+
+### 2.4 Vehicle History (if not already pulled)
+- CARFAX report data
+- Accident count and severity
+- Service history completeness
+- Title brand status
+
+---
+
+## SECTION 3: COST CALCULATION ENGINE
+
+### 3.1 Purchase & Currency Conversion
+
+```
+Purchase Price (CAD):           [User Input]
+Exchange Rate:                  [Auto/Manual] (e.g., 0.72)
+Purchase Price (USD):           CAD ÷ Exchange Rate
+```
+
+### 3.2 Transport Costs Matrix
+
+**Base rates from Canadian provinces to US regions (USD):**
+
+| Origin Province | Northeast US | Southeast US | Midwest US | Southwest US | West Coast |
+|-----------------|--------------|--------------|------------|--------------|------------|
+| Ontario | $400-600 | $700-1,000 | $500-800 | $1,000-1,400 | $1,400-1,800 |
+| Quebec | $450-650 | $800-1,100 | $600-900 | $1,100-1,500 | $1,500-1,900 |
+| British Columbia | $1,200-1,600 | $1,400-1,800 | $1,000-1,400 | $800-1,200 | $300-500 |
+| Alberta | $1,000-1,400 | $1,200-1,600 | $800-1,200 | $700-1,000 | $500-800 |
+| Saskatchewan | $900-1,300 | $1,100-1,500 | $700-1,000 | $800-1,200 | $700-1,000 |
+| Manitoba | $700-1,000 | $900-1,200 | $500-800 | $900-1,300 | $900-1,300 |
+| Atlantic (NB/NS/PE/NL) | $600-900 | $900-1,200 | $800-1,100 | $1,200-1,600 | $1,600-2,000 |
+
+**Vehicle Size Multipliers:**
+- Compact/Sedan: 1.0x (base rate)
+- Mid-size SUV: 1.1x
+- Full-size SUV: 1.2x
+- Pickup Truck: 1.25x
+- Full-size Truck (F-250+): 1.35x
+
+**Seasonal Adjustments:**
+- Peak (Oct-Nov, Mar-Apr): +15%
+- Off-peak (Jan-Feb, Jul-Aug): -10%
+
+### 3.3 US Import Costs (Customs & Fees)
+
+| Fee Type | Calculation | Notes |
+|----------|-------------|-------|
+| **US Customs Duty** | 2.5% of vehicle value | Standard rate for passenger vehicles from Canada |
+| **USMCA Exemption** | 0% | If vehicle qualifies under USMCA rules of origin (manufactured in NA after July 2020) |
+| **Merchandise Processing Fee (MPF)** | 0.3464% of value | Min: $33.58, Max: $651.50 (as of Oct 2025) |
+| **Customs Bond** | ~$100-300 | Single entry bond (or use continuous bond if frequent importer) |
+| **Customs Broker Fee** | $150-400 | Flat fee, default $250 |
+
+**Duty Calculation Logic:**
+```javascript
+function calculateDuty(vehicleValue, isUSMCAEligible) {
+  if (isUSMCAEligible) {
+    return 0; // Duty-free under USMCA
+  }
+  return vehicleValue * 0.025; // 2.5% duty
+}
+
+function calculateMPF(vehicleValue) {
+  let mpf = vehicleValue * 0.003464;
+  mpf = Math.max(mpf, 33.58);  // Minimum
+  mpf = Math.min(mpf, 651.50); // Maximum
+  return mpf;
+}
+```
+
+### 3.4 Compliance Costs
+
+| Item | Cost Range | When Required |
+|------|------------|---------------|
+| **EPA Compliance** | $0 | Most Canadian vehicles are EPA-identical |
+| **DOT Compliance** | $0 | Most Canadian vehicles meet FMVSS |
+| **Manufacturer Letter** | $0-100 | Sometimes needed for EPA/DOT verification |
+| **Recall Check/Completion** | $0-500 | If active recalls exist |
+
+**Note:** Canadian vehicles (2000+) are generally compliant. System should flag non-compliant vehicles.
+
+### 3.5 US State Fees (Registration/Title)
+
+**Store state-by-state fee table:**
+
+| State | Title Fee | Registration Fee | Inspection | Sales Tax | Total Est. |
+|-------|-----------|------------------|------------|-----------|------------|
+| Texas | $33 | $50-65 | $25 | 6.25% | Variable |
+| California | $23 | $60-175 | $50 | 7.25%+ | Variable |
+| Florida | $75 | $225 (initial) | $0 | 6% | Variable |
+| New York | $50 | $26-140 | $21 | 4%+ | Variable |
+| Michigan | $15 | $100-200 | $0 | 6% | Variable |
+| Arizona | $4 | $8+$32 | $0 | 5.6% | Variable |
+| Georgia | $18 | $20 | $25 | 6.6% TAVT | Variable |
+| ... | ... | ... | ... | ... | ... |
+
+**Include all 50 states with current 2024/2025 fees**
+
+### 3.6 Auction Fees (if selling at auction)
+
+| Auction | Seller Fee Structure |
+|---------|---------------------|
+| **Manheim USA** | $200-400 base + 2-3% of sale price |
+| **ADESA USA** | $200-350 base + 2-3% of sale price |
+| **Direct to Dealer** | $0 (negotiated sale) |
+
+**Calculation:**
+```javascript
+function calculateAuctionFee(salePrice, auctionType) {
+  const fees = {
+    'manheim': { base: 300, percent: 0.025 },
+    'adesa': { base: 275, percent: 0.025 },
+    'direct': { base: 0, percent: 0 }
+  };
+  const fee = fees[auctionType];
+  return fee.base + (salePrice * fee.percent);
+}
+```
+
+### 3.7 Other Costs
+
+| Item | Default | Editable |
+|------|---------|----------|
+| Wire Transfer Fees | $35 USD | Yes |
+| Miscellaneous Buffer | $100 USD | Yes |
+| Storage/Holding (per day) | $25-50 USD | Yes |
+| Insurance (transit) | $100-200 USD | Yes |
+
+---
+
+## SECTION 4: PROFIT CALCULATION FORMULAS
+
+### 4.1 Core Formula
+
+```
+TOTAL LANDED COST (USD) = 
+    Purchase Price (USD)
+  + Transport Cost
+  + Customs Duty (2.5% or 0% if USMCA)
+  + MPF
+  + Customs Bond
+  + Broker Fee
+  + Compliance Costs
+  + State Fees (Title/Registration)
+  + Auction Fees (if applicable)
+  + Other Costs
+
+GROSS PROFIT (USD) = Expected Sale Price (USD) - Total Landed Cost (USD)
+
+PROFIT MARGIN (%) = (Gross Profit / Expected Sale Price) × 100
+
+PROFIT (CAD) = Gross Profit (USD) × Exchange Rate
+```
+
+### 4.2 Display Format
+
+```
+╔══════════════════════════════════════════════════════════════╗
+║                    EXPORT PROFIT SUMMARY                      ║
+╠══════════════════════════════════════════════════════════════╣
+║ Vehicle: 2023 Toyota RAV4 XLE AWD                            ║
+║ VIN: JTMR4RFV5PD123456                                       ║
+╠══════════════════════════════════════════════════════════════╣
+║ PURCHASE                                                      ║
+║   Purchase Price (CAD):              $42,000 CAD              ║
+║   Exchange Rate:                     0.72                     ║
+║   Purchase Price (USD):              $30,240 USD              ║
+╠══════════════════════════════════════════════════════════════╣
+║ EXPORT COSTS                                                  ║
+║   Transport (ON → TX):               $850 USD                 ║
+║   Customs Duty (USMCA Exempt):       $0 USD                   ║
+║   MPF:                               $104.72 USD              ║
+║   Customs Bond:                      $150 USD                 ║
+║   Broker Fee:                        $250 USD                 ║
+║   State Fees (Texas):                $125 USD                 ║
+║   Auction Fee (Manheim):             $1,175 USD               ║
+║   Other:                             $135 USD                 ║
+║   ─────────────────────────────────────────────────          ║
+║   TOTAL COSTS:                       $2,789.72 USD            ║
+╠══════════════════════════════════════════════════════════════╣
+║ TOTAL LANDED COST:                   $33,029.72 USD           ║
+║ EXPECTED SALE PRICE (MMR):           $38,500 USD              ║
+╠══════════════════════════════════════════════════════════════╣
+║ GROSS PROFIT:                        $5,470.28 USD            ║
+║ PROFIT MARGIN:                       14.2%                    ║
+║ PROFIT (CAD):                        $7,597.61 CAD            ║
+╚══════════════════════════════════════════════════════════════╝
+```
+
+---
+
+## SECTION 5: COMPARISON VIEW - USA vs CANADA
+
+### 5.1 Side-by-Side Analysis
+
+Display both scenarios simultaneously:
+
+| Metric | Sell in Canada | Export to USA |
+|--------|---------------|---------------|
+| Market Value | $45,000 CAD | $38,500 USD ($53,472 CAD) |
+| Total Costs | $1,500 CAD | $2,790 USD ($3,875 CAD) |
+| Net Profit | $1,500 CAD | $5,470 USD ($7,597 CAD) |
+| Profit Margin | 3.3% | 14.2% |
+| Est. Days to Sell | 45 days | 14 days |
+| **Profit Difference** | — | **+$6,097 CAD** |
+| **RECOMMENDATION** | ❌ | ✅ **EXPORT** |
+
+### 5.2 Visual Indicators
+
+Use color coding:
+- 🟢 Green: Strong recommendation (export significantly better)
+- 🟡 Yellow: Marginal (small difference, consider other factors)
+- 🔴 Red: Do not export (Canada sale is better)
+
+---
+
+## SECTION 6: RECOMMENDATION ENGINE
+
+### 6.1 Decision Logic
+
+```javascript
+function getRecommendation(usaProfit, canadaProfit, profitMargin, riskFactors) {
+  const profitDifference = usaProfit - canadaProfit;
+  
+  // STRONG EXPORT
+  if (profitDifference > 1500 && profitMargin > 12 && riskFactors.length === 0) {
+    return {
+      status: 'STRONG_EXPORT',
+      color: 'green',
+      message: 'Strong Export Opportunity - Significantly higher profit in USA',
+      confidence: 'HIGH'
+    };
+  }
+  
+  // MARGINAL EXPORT
+  if (profitDifference > 500 && profitMargin > 8) {
+    return {
+      status: 'MARGINAL_EXPORT',
+      color: 'yellow', 
+      message: 'Consider Export - Moderate profit advantage, review timing',
+      confidence: 'MEDIUM'
+    };
+  }
+  
+  // SELL IN CANADA
+  if (profitDifference < 500 || profitMargin < 8) {
+    return {
+      status: 'SELL_CANADA',
+      color: 'red',
+      message: 'Sell in Canada - Export costs outweigh benefits',
+      confidence: 'HIGH'
+    };
+  }
+  
+  // DO NOT BUY
+  if (usaProfit < 0 && canadaProfit < 0) {
+    return {
+      status: 'NO_BUY',
+      color: 'darkred',
+      message: 'Do Not Buy - Negative profit in both markets',
+      confidence: 'HIGH'
+    };
+  }
+}
+```
+
+### 6.2 Recommendation Thresholds (Configurable by Admin)
+
+| Recommendation | Profit Difference (CAD) | Margin % | Risk Level |
+|----------------|------------------------|----------|------------|
+| ✅ STRONG EXPORT | > $1,500 | > 12% | Low |
+| ⚠️ MARGINAL EXPORT | $500 - $1,500 | 8-12% | Low-Medium |
+| ❌ SELL IN CANADA | < $500 | < 8% | Any |
+| 🚫 DO NOT BUY | Negative both | Negative | High |
+
+### 6.3 Risk Factors That Affect Recommendation
+
+Flag these issues:
+- Salvage/Rebuilt title → Auto-downgrade to "SELL IN CANADA" or "NO BUY"
+- High mileage (>150,000 km) → Warning flag
+- Major accident history → Value reduction + warning
+- Older than 10 years → May have compliance issues
+- EV battery degradation → Special consideration
+- Active recalls → Must resolve before export
+
+---
+
+## SECTION 7: STATE-BY-STATE PROFIT ANALYSIS
+
+### 7.1 All 50 States Comparison
+
+Calculate and rank all states by net profit:
+
+| Rank | State | Market Value | Transport | Fees | Total Cost | Net Profit | Margin |
+|------|-------|-------------|-----------|------|------------|------------|--------|
+| 1 | Texas | $39,200 | $850 | $350 | $34,100 | $5,100 | 13.0% |
+| 2 | Florida | $38,800 | $950 | $500 | $34,250 | $4,550 | 11.7% |
+| 3 | Arizona | $38,500 | $1,100 | $200 | $34,100 | $4,400 | 11.4% |
+| 4 | Georgia | $38,200 | $900 | $400 | $34,100 | $4,100 | 10.7% |
+| 5 | Michigan | $37,800 | $600 | $350 | $33,750 | $4,050 | 10.7% |
+| ... | ... | ... | ... | ... | ... | ... | ... |
+
+### 7.2 Best States Highlight
+
+Show top 5 most profitable states prominently with reasoning:
+
+```
+🏆 TOP 5 EXPORT DESTINATIONS FOR THIS VEHICLE:
+
+1. TEXAS 🌟
+   - Profit: $5,100 USD | Margin: 13.0%
+   - Why: High truck/SUV demand, no state income tax, large market
+   
+2. FLORIDA ☀️
+   - Profit: $4,550 USD | Margin: 11.7%
+   - Why: No state income tax, strong used car market, warm climate
+   
+3. ARIZONA 🏜️
+   - Profit: $4,400 USD | Margin: 11.4%
+   - Why: Low fees, growing population, rust-free premium
+
+4. GEORGIA 🍑
+   - Profit: $4,100 USD | Margin: 10.7%
+   - Why: Major auction hub (Atlanta), competitive transport rates
+
+5. MICHIGAN 🚗
+   - Profit: $4,050 USD | Margin: 10.7%
+   - Why: Short transport distance, strong automotive culture
+```
+
+### 7.3 Regional Demand Factors
+
+Apply demand multipliers based on vehicle type and region:
+
+| Vehicle Type | Best Regions | Demand Multiplier |
+|--------------|-------------|-------------------|
+| Full-size Trucks (F-150, Silverado, RAM) | Texas, Midwest, Southeast | +5-10% |
+| Full-size SUVs (Tahoe, Suburban, Expedition) | Texas, Florida, Southeast | +5-8% |
+| Diesel Trucks | Texas, Midwest, Mountain | +8-12% |
+| Luxury SUVs (BMW X5, Mercedes GLE) | California, NY, Florida | +3-7% |
+| Compact SUVs (RAV4, CR-V) | All regions | Baseline |
+| Sedans | Limited demand | -3-5% |
+| EVs | California, Washington, Northeast | Variable |
+| Minivans | Midwest, Southeast | Baseline |
+
+---
+
+## SECTION 8: VEHICLE TYPE SPECIFIC LOGIC
+
+### 8.1 Trucks & Full-Size SUVs (High Export Value)
+
+```javascript
+const truckPremiums = {
+  'F-150': { baseMultiplier: 1.08, bestStates: ['TX', 'FL', 'AZ', 'OK', 'LA'] },
+  'Silverado': { baseMultiplier: 1.07, bestStates: ['TX', 'MI', 'OH', 'IN', 'MO'] },
+  'RAM 1500': { baseMultiplier: 1.06, bestStates: ['TX', 'FL', 'NC', 'TN', 'GA'] },
+  'Tahoe': { baseMultiplier: 1.10, bestStates: ['TX', 'FL', 'CA', 'AZ', 'NV'] },
+  'Suburban': { baseMultiplier: 1.12, bestStates: ['TX', 'FL', 'AZ', 'CA', 'CO'] },
+};
+```
+
+### 8.2 EVs (Special Considerations)
+
+```javascript
+const evFactors = {
+  batteryHealthPenalty: function(degradation) {
+    // 1% degradation = 1.5% value reduction
+    return degradation * 0.015;
+  },
+  bestStates: ['CA', 'WA', 'OR', 'CO', 'MA', 'NJ', 'NY'],
+  warningStates: ['WY', 'WV', 'MS', 'AL'], // Low EV infrastructure
+  federalCreditEligible: false, // Used EVs don't qualify
+};
+```
+
+### 8.3 Luxury Vehicles
+
+- Higher transport insurance recommended
+- Enclosed transport option (+$300-500)
+- Stronger markets: CA, NY, FL, TX, NJ
+- Longer auction cycle typical
+
+---
+
+## SECTION 9: BUILD LOAD FEATURE
+
+### 9.1 Multi-Vehicle Load Builder
+
+Allow dealers to group multiple vehicles for combined transport:
+
+```
+╔══════════════════════════════════════════════════════════════╗
+║                      BUILD LOAD                               ║
+╠══════════════════════════════════════════════════════════════╣
+║ Load Name: Texas Export Load #47                             ║
+║ Destination: Houston, TX                                      ║
+║ Carrier: [Select Carrier]                                     ║
+╠══════════════════════════════════════════════════════════════╣
+║ VEHICLES IN LOAD:                                             ║
+║ ☑ 2023 Toyota RAV4 XLE      - Est. Profit: $5,100           ║
+║ ☑ 2022 Ford F-150 XLT       - Est. Profit: $6,800           ║
+║ ☑ 2023 Honda CR-V EX        - Est. Profit: $4,200           ║
+║ ☑ 2021 Chevy Tahoe LT       - Est. Profit: $7,500           ║
+╠══════════════════════════════════════════════════════════════╣
+║ LOAD SUMMARY:                                                 ║
+║   Vehicles:                  4                                ║
+║   Combined Transport:        $2,800 (vs $3,400 individual)   ║
+║   Transport Savings:         $600                             ║
+║   Total Investment:          $142,000 CAD                     ║
+║   Total Expected Profit:     $23,600 USD ($32,778 CAD)       ║
+║   Average Margin:            12.8%                            ║
+╚══════════════════════════════════════════════════════════════╝
+```
+
+### 9.2 Volume Discounts
+
+Apply transport discounts for multi-vehicle loads:
+- 2-3 vehicles: 10% transport discount
+- 4-6 vehicles: 15% transport discount
+- 7+ vehicles: 20% transport discount + dedicated carrier option
+
+---
+
+## SECTION 10: SAVED EXPORTS & TRACKING
+
+### 10.1 Export Pipeline Statuses
+
+| Status | Description |
+|--------|-------------|
+| 📝 Appraised | Export calculation saved, not yet purchased |
+| 💰 Purchased | Vehicle acquired, pending export |
+| 📋 Documents Ready | All paperwork prepared |
+| 🚛 In Transit | Vehicle being transported |
+| 🏁 At Auction/Destination | Arrived at US location |
+| 🔨 Listed/Selling | On auction block or listed for sale |
+| ✅ Sold | Vehicle sold, pending settlement |
+| 💵 Settled | Payment received, deal complete |
+
+### 10.2 Tracking Data Per Export
+
+- Actual purchase price vs estimated
+- Actual transport cost vs estimated
+- Actual sale price vs estimated
+- Actual profit vs projected
+- Days in pipeline
+- Notes/issues encountered
+
+---
+
+## SECTION 11: REPORTS & ANALYTICS
+
+### 11.1 Dashboard Metrics
+
+```
+╔══════════════════════════════════════════════════════════════╗
+║               EXPORT PERFORMANCE DASHBOARD                    ║
+╠══════════════════════════════════════════════════════════════╣
+║ MONTH TO DATE (November 2024)                                ║
+║   Exports Completed:        12                                ║
+║   Total Revenue:            $456,000 USD                      ║
+║   Total Profit:             $54,720 USD                       ║
+║   Average Profit/Vehicle:   $4,560 USD                        ║
+║   Average Margin:           12.0%                             ║
+╠══════════════════════════════════════════════════════════════╣
+║ YEAR TO DATE                                                  ║
+║   Exports Completed:        147                               ║
+║   Total Profit:             $612,000 USD                      ║
+║   Best Month:               March ($78,000)                   ║
+║   Top Vehicle Type:         Full-size SUVs                    ║
+║   Top Destination:          Texas (52 vehicles)               ║
+╠══════════════════════════════════════════════════════════════╣
+║ ACTIVE PIPELINE                                               ║
+║   In Transit:               8 vehicles                        ║
+║   At Auction:               3 vehicles                        ║
+║   Projected Profit:         $48,000 USD                       ║
+╚══════════════════════════════════════════════════════════════╝
+```
+
+### 11.2 Reports Available
+
+1. **Profit by State** - Which US states are most profitable
+2. **Profit by Vehicle Type** - Which vehicles export best
+3. **Actual vs Projected** - Accuracy of estimates
+4. **Exchange Rate Impact** - How currency fluctuations affected profit
+5. **Seasonal Trends** - Best months to export
+6. **Transport Cost Analysis** - Carrier performance and costs
+
+---
+
+## SECTION 12: ROLE-BASED ACCESS CONTROL
+
+### 12.1 Permissions Matrix
+
+| Feature | Admin | Dealer | Data Manager |
+|---------|-------|--------|--------------|
+| Create export calculation | ✅ | ✅ | ❌ |
+| View own exports | ✅ | ✅ | ✅ |
+| View all exports | ✅ | ❌ | ✅ |
+| Edit cost settings | ✅ | ❌ | ❌ |
+| Manage transport rates | ✅ | ❌ | ✅ |
+| View profit reports | ✅ | Own only | ✅ |
+| Build loads | ✅ | ✅ | ❌ |
+| Upload vehicles | ✅ | ❌ | ✅ |
+| Delete exports | ✅ | Own only | ✅ |
+| Export to PDF | ✅ | ✅ | ✅ |
+
+---
+
+## SECTION 13: ADMIN SETTINGS
+
+### 13.1 Configurable Parameters
+
+```
+SETTINGS
+├── Exchange Rate
+│   ├── Source: [Auto/Manual]
+│   ├── API Provider: [Bank of Canada / ExchangeRate-API]
+│   └── Manual Override: [Input field]
+├── Default Costs
+│   ├── Customs Broker Fee: $250
+│   ├── Bond Fee: $150
+│   ├── Buffer Amount: $100
+│   └── Insurance: $150
+├── Recommendation Thresholds
+│   ├── Strong Export Profit Min: $1,500
+│   ├── Strong Export Margin Min: 12%
+│   ├── Marginal Export Profit Min: $500
+│   └── Marginal Export Margin Min: 8%
+├── Transport Rates
+│   └── [Edit Province → State rate matrix]
+├── State Fees
+│   └── [Edit state-by-state fee table]
+└── Auction Fees
+    ├── Manheim Base: $300
+    ├── Manheim Percent: 2.5%
+    ├── ADESA Base: $275
+    └── ADESA Percent: 2.5%
+```
+
+---
+
+## SECTION 14: TECHNICAL REQUIREMENTS
+
+### 14.1 API Integrations
+
+| API | Purpose | Priority |
+|-----|---------|----------|
+| VIN Decoder | Vehicle data | Required (existing) |
+| Exchange Rate API | Live CAD/USD | Required |
+| Canadian Black Book | Canada values | Required (existing) |
+| Manheim MMR | USA wholesale values | High |
+| Distance/Maps API | Transport cost calculation | Medium |
+| CARFAX | Vehicle history | Medium (existing) |
+
+### 14.2 Database Schema (New Tables)
+
+```sql
+-- Export calculations
+CREATE TABLE exports (
+  id SERIAL PRIMARY KEY,
+  vin VARCHAR(17) NOT NULL,
+  user_id INTEGER REFERENCES users(id),
+  purchase_price_cad DECIMAL(10,2),
+  exchange_rate DECIMAL(6,4),
+  purchase_price_usd DECIMAL(10,2),
+  target_state VARCHAR(2),
+  transport_cost DECIMAL(10,2),
+  customs_duty DECIMAL(10,2),
+  mpf DECIMAL(10,2),
+  broker_fee DECIMAL(10,2),
+  state_fees DECIMAL(10,2),
+  auction_fees DECIMAL(10,2),
+  other_costs DECIMAL(10,2),
+  total_landed_cost DECIMAL(10,2),
+  expected_sale_price DECIMAL(10,2),
+  gross_profit DECIMAL(10,2),
+  profit_margin DECIMAL(5,2),
+  recommendation VARCHAR(20),
+  status VARCHAR(20) DEFAULT 'appraised',
+  actual_sale_price DECIMAL(10,2),
+  actual_profit DECIMAL(10,2),
+  created_at TIMESTAMP DEFAULT NOW(),
+  updated_at TIMESTAMP DEFAULT NOW()
+);
+
+-- Transport rates
+CREATE TABLE transport_rates (
+  id SERIAL PRIMARY KEY,
+  origin_province VARCHAR(2),
+  destination_region VARCHAR(20),
+  base_rate DECIMAL(10,2),
+  updated_at TIMESTAMP DEFAULT NOW()
+);
+
+-- State fees
+CREATE TABLE state_fees (
+  id SERIAL PRIMARY KEY,
+  state_code VARCHAR(2),
+  title_fee DECIMAL(10,2),
+  registration_fee DECIMAL(10,2),
+  inspection_fee DECIMAL(10,2),
+  sales_tax_rate DECIMAL(5,4),
+  updated_at TIMESTAMP DEFAULT NOW()
+);
+
+-- Export settings
+CREATE TABLE export_settings (
+  id SERIAL PRIMARY KEY,
+  setting_key VARCHAR(50) UNIQUE,
+  setting_value TEXT,
+  updated_at TIMESTAMP DEFAULT NOW()
+);
+
+-- Load builder
+CREATE TABLE export_loads (
+  id SERIAL PRIMARY KEY,
+  load_name VARCHAR(100),
+  destination_state VARCHAR(2),
+  carrier VARCHAR(100),
+  total_vehicles INTEGER,
+  total_transport_cost DECIMAL(10,2),
+  status VARCHAR(20),
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
+CREATE TABLE export_load_vehicles (
+  id SERIAL PRIMARY KEY,
+  load_id INTEGER REFERENCES export_loads(id),
+  export_id INTEGER REFERENCES exports(id)
+);
+```
+
+### 14.3 Auto-Refresh Schedule
+
+- Exchange rates: Daily (or on-demand)
+- Market values: On each calculation
+- Transport rates: Admin-managed (monthly review)
+- State fees: Admin-managed (annual review)
+
+---
+
+## SECTION 15: UI/UX REQUIREMENTS
+
+### 15.1 Design Principles
+
+1. **Clean & Professional** - Match existing app styling
+2. **Mobile Responsive** - Full functionality on tablets
+3. **Clear Currency Labels** - Always show CAD vs USD
+4. **Color-Coded Indicators** - Green/Yellow/Red for recommendations
+5. **One-Click Actions** - Save, Export PDF, Build Load
+
+### 15.2 Key Screens
+
+1. **Export Calculator** - Main input/calculation screen
+2. **Comparison View** - Canada vs USA side-by-side
+3. **State Analysis** - 50-state profit ranking
+4. **Saved Exports** - List with filters and search
+5. **Load Builder** - Multi-vehicle grouping
+6. **Reports Dashboard** - Performance analytics
+7. **Settings** - Admin configuration
+
+### 15.3 Export Outputs
+
+- **PDF Summary** - Printable deal jacket
+- **CSV Export** - Data for spreadsheets
+- **Share Link** - Shareable calculation link
+
+---
+
+## SECTION 16: SAMPLE WORKFLOWS
+
+### Workflow 1: Quick Export Check
+
+1. Dealer enters VIN + Odometer + Purchase Price
+2. System auto-pulls vehicle data and market values
+3. Display instant recommendation with profit estimate
+4. Dealer decides: Save / Reject / Adjust & Recalculate
+
+### Workflow 2: Detailed Analysis
+
+1. Dealer enters all vehicle details
+2. Selects specific target state
+3. Reviews full cost breakdown
+4. Compares Canada vs USA scenarios
+5. Adjusts costs if needed
+6. Saves export with notes
+7. Generates PDF for deal file
+
+### Workflow 3: Build Export Load
+
+1. Dealer reviews saved exports
+2. Selects multiple vehicles for same destination
+3. System calculates combined transport discount
+4. Shows load summary with total profit
+5. Generates load manifest
+6. Updates individual export statuses
+
+---
+
+## SECTION 17: ERROR HANDLING & EDGE CASES
+
+### 17.1 Handle These Scenarios
+
+| Scenario | Handling |
+|----------|----------|
+| VIN not found | Allow manual entry of vehicle details |
+| No USA market data | Use Canada value + historical margin estimate |
+| Exchange rate API down | Use last cached rate with warning |
+| Vehicle not USMCA eligible | Calculate with 2.5% duty |
+| Salvage title | Auto-flag, calculate with 30-40% value reduction |
+| EV with battery concerns | Prompt for battery health %, apply reduction |
+| Very old vehicle (pre-2000) | Warn about potential compliance issues |
+| Negative profit | Show clearly, recommend "DO NOT EXPORT" |
+
+### 17.2 Validation Rules
+
+- VIN must be exactly 17 characters
+- Purchase price must be > $0
+- Odometer must be >= 0
+- Exchange rate must be between 0.50 and 1.50
+- All cost fields must be >= 0
+
+---
+
+## SECTION 18: FUTURE ENHANCEMENTS (Phase 2)
+
+- [ ] Integration with actual Manheim/ADESA auction accounts
+- [ ] Automated transport booking with carriers
+- [ ] Real-time auction results tracking
+- [ ] Predictive analytics for best export timing
+- [ ] Mobile app for on-the-go calculations
+- [ ] Integration with accounting/DMS systems
+- [ ] Bulk VIN upload for fleet analysis
+- [ ] Historical profit trend analysis
+- [ ] Competitor pricing intelligence
+
+---
+
+## END OF PROMPT
+
+**Implementation Priority:**
+1. Core calculation engine with all cost formulas
+2. Exchange rate integration
+3. USA vs Canada comparison view
+4. State-by-state analysis
+5. Recommendation engine
+6. Saved exports with status tracking
+7. Build load feature
+8. Reports dashboard
+9. Admin settings panel
+
+**Success Criteria:**
+- Accurate cost calculations within 5% of actual
+- Sub-2-second calculation response time
+- Clear, actionable recommendations
+- Full audit trail of all exports
+- Mobile-responsive interface
