@@ -319,11 +319,11 @@ const DISTANCE_MATRIX: Record<string, Record<string, number>> = {
 
 const VEHICLE_TYPES = [
   { value: "sedan", label: "Sedan", surcharge: 0 },
-  { value: "suv", label: "SUV", surcharge: 75 },
-  { value: "pickup", label: "Pickup Truck", surcharge: 100 },
-  { value: "fullsize", label: "Full-Size SUV/Truck", surcharge: 150 },
-  { value: "luxury", label: "Luxury Vehicle", surcharge: 200 },
-  { value: "motorcycle", label: "Motorcycle", surcharge: -100 },
+  { value: "suv", label: "SUV", surcharge: 45 },
+  { value: "pickup", label: "Pickup Truck", surcharge: 55 },
+  { value: "fullsize", label: "Full-Size SUV/Truck", surcharge: 85 },
+  { value: "luxury", label: "Luxury Vehicle", surcharge: 125 },
+  { value: "motorcycle", label: "Motorcycle", surcharge: -50 },
 ];
 
 const SERVICE_LEVELS = [
@@ -360,10 +360,10 @@ interface QuoteBreakdown {
 }
 
 function calculateRate(distance: number): number {
-  if (distance <= 500) return 1.75;
-  if (distance <= 1000) return 1.50;
-  if (distance <= 2000) return 1.25;
-  return 1.10;
+  if (distance <= 500) return 0.95;
+  if (distance <= 1000) return 0.85;
+  if (distance <= 2000) return 0.75;
+  return 0.65;
 }
 
 export default function TransportPage() {
@@ -451,14 +451,14 @@ export default function TransportPage() {
     }
 
     const rate = calculateRate(distance);
-    let basePrice = Math.max(distance * rate, 350);
+    let basePrice = Math.max(distance * rate, 195);
 
     const vehicleTypeData = VEHICLE_TYPES.find((v) => v.value === vehicleType);
     const vehicleSurcharge = (vehicleTypeData?.surcharge || 0) * vehicleCount;
 
-    const nonRunningFee = !isRunning ? 150 * vehicleCount : 0;
-    const enclosedFee = isEnclosed ? 300 * vehicleCount : 0;
-    const liftGateFee = liftGateRequired ? 75 * vehicleCount : 0;
+    const nonRunningFee = !isRunning ? 85 * vehicleCount : 0;
+    const enclosedFee = isEnclosed ? 175 * vehicleCount : 0;
+    const liftGateFee = liftGateRequired ? 45 * vehicleCount : 0;
 
     let multiVehicleDiscount = 0;
     if (vehicleCount >= 4) {
@@ -1133,7 +1133,7 @@ export default function TransportPage() {
                       <strong className="text-slate-300">Pricing Notes:</strong>
                     </p>
                     <ul className="space-y-1 list-disc list-inside">
-                      <li>Minimum charge: $350</li>
+                      <li>Minimum charge: $195</li>
                       <li>Rates decrease for longer distances</li>
                       <li>Multi-vehicle discounts available</li>
                       <li>8% fuel surcharge applies</li>

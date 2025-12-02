@@ -186,10 +186,10 @@ Carsellia is a comprehensive, production-ready vehicle trading and dealership ma
 
 **Transport Estimate Calculator (/transport):**
 - Canadian distance matrix between 15 major cities across provinces
-- Distance-based pricing tiers: $1.75/km (0-500km), $1.50/km (501-1000km), $1.25/km (1001-2000km), $1.10/km (2000+km)
-- Minimum charge: $350
-- Vehicle type surcharges: Sedan (base), SUV (+$75), Pickup (+$100), Full-Size (+$150), Luxury (+$200), Motorcycle (-$100)
-- Additional options: Non-running (+$150), Enclosed (+$300), Lift gate (+$75)
+- Distance-based pricing tiers: $0.95/km (0-500km), $0.85/km (501-1000km), $0.75/km (1001-2000km), $0.65/km (2000+km)
+- Minimum charge: $195
+- Vehicle type surcharges: Sedan (base), SUV (+$45), Pickup (+$55), Full-Size (+$85), Luxury (+$125), Motorcycle (-$50)
+- Additional options: Non-running (+$85), Enclosed (+$175), Lift gate (+$45)
 - Multi-vehicle discounts: 5% (2-3), 10% (4+)
 - Service levels: Standard (1x, 5-7 days), 2-Day Expedited (1.5x), 1-Day Expedited (2x)
 - 8% fuel surcharge
