@@ -49,8 +49,8 @@ const CANADIAN_PROVINCES = [
 ];
 
 const CITIES_BY_PROVINCE: Record<string, string[]> = {
-  ON: ["Toronto", "Ottawa", "Hamilton", "London"],
-  QC: ["Montreal", "Quebec City"],
+  ON: ["Toronto", "Ottawa", "Hamilton", "London", "Windsor", "Kitchener"],
+  QC: ["Montreal", "Quebec City", "Gatineau", "Trois-Rivières", "Sherbrooke"],
   BC: ["Vancouver", "Victoria"],
   AB: ["Calgary", "Edmonton"],
   MB: ["Winnipeg"],
@@ -65,8 +65,13 @@ const DISTANCE_MATRIX: Record<string, Record<string, number>> = {
     "Ottawa, ON": 450,
     "Hamilton, ON": 70,
     "London, ON": 190,
+    "Windsor, ON": 400,
+    "Kitchener, ON": 110,
     "Montreal, QC": 540,
     "Quebec City, QC": 800,
+    "Gatineau, QC": 460,
+    "Trois-Rivières, QC": 650,
+    "Sherbrooke, QC": 600,
     "Vancouver, BC": 4400,
     "Victoria, BC": 4550,
     "Calgary, AB": 3400,
@@ -82,8 +87,13 @@ const DISTANCE_MATRIX: Record<string, Record<string, number>> = {
     "Ottawa, ON": 0,
     "Hamilton, ON": 520,
     "London, ON": 640,
+    "Windsor, ON": 850,
+    "Kitchener, ON": 510,
     "Montreal, QC": 200,
     "Quebec City, QC": 450,
+    "Gatineau, QC": 10,
+    "Trois-Rivières, QC": 330,
+    "Sherbrooke, QC": 350,
     "Vancouver, BC": 4600,
     "Victoria, BC": 4750,
     "Calgary, AB": 3600,
@@ -99,8 +109,13 @@ const DISTANCE_MATRIX: Record<string, Record<string, number>> = {
     "Ottawa, ON": 520,
     "Hamilton, ON": 0,
     "London, ON": 130,
+    "Windsor, ON": 330,
+    "Kitchener, ON": 70,
     "Montreal, QC": 610,
     "Quebec City, QC": 870,
+    "Gatineau, QC": 530,
+    "Trois-Rivières, QC": 720,
+    "Sherbrooke, QC": 670,
     "Vancouver, BC": 4350,
     "Victoria, BC": 4500,
     "Calgary, AB": 3350,
@@ -116,8 +131,13 @@ const DISTANCE_MATRIX: Record<string, Record<string, number>> = {
     "Ottawa, ON": 640,
     "Hamilton, ON": 130,
     "London, ON": 0,
+    "Windsor, ON": 200,
+    "Kitchener, ON": 100,
     "Montreal, QC": 730,
     "Quebec City, QC": 990,
+    "Gatineau, QC": 650,
+    "Trois-Rivières, QC": 840,
+    "Sherbrooke, QC": 790,
     "Vancouver, BC": 4200,
     "Victoria, BC": 4350,
     "Calgary, AB": 3200,
@@ -128,13 +148,62 @@ const DISTANCE_MATRIX: Record<string, Record<string, number>> = {
     "Halifax, NS": 1990,
     "St. John's, NL": 2790,
   },
+  "Windsor, ON": {
+    "Toronto, ON": 400,
+    "Ottawa, ON": 850,
+    "Hamilton, ON": 330,
+    "London, ON": 200,
+    "Windsor, ON": 0,
+    "Kitchener, ON": 290,
+    "Montreal, QC": 900,
+    "Quebec City, QC": 1160,
+    "Gatineau, QC": 860,
+    "Trois-Rivières, QC": 1030,
+    "Sherbrooke, QC": 1050,
+    "Vancouver, BC": 4000,
+    "Victoria, BC": 4150,
+    "Calgary, AB": 3000,
+    "Edmonton, AB": 3100,
+    "Winnipeg, MB": 1800,
+    "Regina, SK": 2300,
+    "Saskatoon, SK": 2500,
+    "Halifax, NS": 2200,
+    "St. John's, NL": 3000,
+  },
+  "Kitchener, ON": {
+    "Toronto, ON": 110,
+    "Ottawa, ON": 510,
+    "Hamilton, ON": 70,
+    "London, ON": 100,
+    "Windsor, ON": 290,
+    "Kitchener, ON": 0,
+    "Montreal, QC": 610,
+    "Quebec City, QC": 870,
+    "Gatineau, QC": 520,
+    "Trois-Rivières, QC": 720,
+    "Sherbrooke, QC": 670,
+    "Vancouver, BC": 4310,
+    "Victoria, BC": 4460,
+    "Calgary, AB": 3310,
+    "Edmonton, AB": 3410,
+    "Winnipeg, MB": 2110,
+    "Regina, SK": 2610,
+    "Saskatoon, SK": 2810,
+    "Halifax, NS": 1870,
+    "St. John's, NL": 2670,
+  },
   "Montreal, QC": {
     "Toronto, ON": 540,
     "Ottawa, ON": 200,
     "Hamilton, ON": 610,
     "London, ON": 730,
+    "Windsor, ON": 900,
+    "Kitchener, ON": 610,
     "Montreal, QC": 0,
     "Quebec City, QC": 260,
+    "Gatineau, QC": 210,
+    "Trois-Rivières, QC": 130,
+    "Sherbrooke, QC": 150,
     "Vancouver, BC": 4850,
     "Victoria, BC": 5000,
     "Calgary, AB": 3700,
@@ -150,8 +219,13 @@ const DISTANCE_MATRIX: Record<string, Record<string, number>> = {
     "Ottawa, ON": 450,
     "Hamilton, ON": 870,
     "London, ON": 990,
+    "Windsor, ON": 1160,
+    "Kitchener, ON": 870,
     "Montreal, QC": 260,
     "Quebec City, QC": 0,
+    "Gatineau, QC": 460,
+    "Trois-Rivières, QC": 130,
+    "Sherbrooke, QC": 230,
     "Vancouver, BC": 5100,
     "Victoria, BC": 5250,
     "Calgary, AB": 3950,
@@ -162,13 +236,84 @@ const DISTANCE_MATRIX: Record<string, Record<string, number>> = {
     "Halifax, NS": 1000,
     "St. John's, NL": 1800,
   },
+  "Gatineau, QC": {
+    "Toronto, ON": 460,
+    "Ottawa, ON": 10,
+    "Hamilton, ON": 530,
+    "London, ON": 650,
+    "Windsor, ON": 860,
+    "Kitchener, ON": 520,
+    "Montreal, QC": 210,
+    "Quebec City, QC": 460,
+    "Gatineau, QC": 0,
+    "Trois-Rivières, QC": 340,
+    "Sherbrooke, QC": 360,
+    "Vancouver, BC": 4610,
+    "Victoria, BC": 4760,
+    "Calgary, AB": 3610,
+    "Edmonton, AB": 3710,
+    "Winnipeg, MB": 2410,
+    "Regina, SK": 2910,
+    "Saskatoon, SK": 3110,
+    "Halifax, NS": 1360,
+    "St. John's, NL": 2160,
+  },
+  "Trois-Rivières, QC": {
+    "Toronto, ON": 650,
+    "Ottawa, ON": 330,
+    "Hamilton, ON": 720,
+    "London, ON": 840,
+    "Windsor, ON": 1030,
+    "Kitchener, ON": 720,
+    "Montreal, QC": 130,
+    "Quebec City, QC": 130,
+    "Gatineau, QC": 340,
+    "Trois-Rivières, QC": 0,
+    "Sherbrooke, QC": 200,
+    "Vancouver, BC": 4980,
+    "Victoria, BC": 5130,
+    "Calgary, AB": 3830,
+    "Edmonton, AB": 3930,
+    "Winnipeg, MB": 2430,
+    "Regina, SK": 2930,
+    "Saskatoon, SK": 3130,
+    "Halifax, NS": 1120,
+    "St. John's, NL": 1920,
+  },
+  "Sherbrooke, QC": {
+    "Toronto, ON": 600,
+    "Ottawa, ON": 350,
+    "Hamilton, ON": 670,
+    "London, ON": 790,
+    "Windsor, ON": 1050,
+    "Kitchener, ON": 670,
+    "Montreal, QC": 150,
+    "Quebec City, QC": 230,
+    "Gatineau, QC": 360,
+    "Trois-Rivières, QC": 200,
+    "Sherbrooke, QC": 0,
+    "Vancouver, BC": 5000,
+    "Victoria, BC": 5150,
+    "Calgary, AB": 3850,
+    "Edmonton, AB": 3950,
+    "Winnipeg, MB": 2450,
+    "Regina, SK": 2950,
+    "Saskatoon, SK": 3150,
+    "Halifax, NS": 1100,
+    "St. John's, NL": 1900,
+  },
   "Vancouver, BC": {
     "Toronto, ON": 4400,
     "Ottawa, ON": 4600,
     "Hamilton, ON": 4350,
     "London, ON": 4200,
+    "Windsor, ON": 4000,
+    "Kitchener, ON": 4310,
     "Montreal, QC": 4850,
     "Quebec City, QC": 5100,
+    "Gatineau, QC": 4610,
+    "Trois-Rivières, QC": 4980,
+    "Sherbrooke, QC": 5000,
     "Vancouver, BC": 0,
     "Victoria, BC": 115,
     "Calgary, AB": 1050,
@@ -184,8 +329,13 @@ const DISTANCE_MATRIX: Record<string, Record<string, number>> = {
     "Ottawa, ON": 4750,
     "Hamilton, ON": 4500,
     "London, ON": 4350,
+    "Windsor, ON": 4150,
+    "Kitchener, ON": 4460,
     "Montreal, QC": 5000,
     "Quebec City, QC": 5250,
+    "Gatineau, QC": 4760,
+    "Trois-Rivières, QC": 5130,
+    "Sherbrooke, QC": 5150,
     "Vancouver, BC": 115,
     "Victoria, BC": 0,
     "Calgary, AB": 1165,
@@ -201,8 +351,13 @@ const DISTANCE_MATRIX: Record<string, Record<string, number>> = {
     "Ottawa, ON": 3600,
     "Hamilton, ON": 3350,
     "London, ON": 3200,
+    "Windsor, ON": 3000,
+    "Kitchener, ON": 3310,
     "Montreal, QC": 3700,
     "Quebec City, QC": 3950,
+    "Gatineau, QC": 3610,
+    "Trois-Rivières, QC": 3830,
+    "Sherbrooke, QC": 3850,
     "Vancouver, BC": 1050,
     "Victoria, BC": 1165,
     "Calgary, AB": 0,
@@ -218,8 +373,13 @@ const DISTANCE_MATRIX: Record<string, Record<string, number>> = {
     "Ottawa, ON": 3700,
     "Hamilton, ON": 3450,
     "London, ON": 3300,
+    "Windsor, ON": 3100,
+    "Kitchener, ON": 3410,
     "Montreal, QC": 3800,
     "Quebec City, QC": 4050,
+    "Gatineau, QC": 3710,
+    "Trois-Rivières, QC": 3930,
+    "Sherbrooke, QC": 3950,
     "Vancouver, BC": 1150,
     "Victoria, BC": 1265,
     "Calgary, AB": 300,
@@ -235,8 +395,13 @@ const DISTANCE_MATRIX: Record<string, Record<string, number>> = {
     "Ottawa, ON": 2400,
     "Hamilton, ON": 2150,
     "London, ON": 2000,
+    "Windsor, ON": 1800,
+    "Kitchener, ON": 2110,
     "Montreal, QC": 2300,
     "Quebec City, QC": 2550,
+    "Gatineau, QC": 2410,
+    "Trois-Rivières, QC": 2430,
+    "Sherbrooke, QC": 2450,
     "Vancouver, BC": 2300,
     "Victoria, BC": 2415,
     "Calgary, AB": 1350,
@@ -252,8 +417,13 @@ const DISTANCE_MATRIX: Record<string, Record<string, number>> = {
     "Ottawa, ON": 2900,
     "Hamilton, ON": 2650,
     "London, ON": 2500,
+    "Windsor, ON": 2300,
+    "Kitchener, ON": 2610,
     "Montreal, QC": 2800,
     "Quebec City, QC": 3050,
+    "Gatineau, QC": 2910,
+    "Trois-Rivières, QC": 2930,
+    "Sherbrooke, QC": 2950,
     "Vancouver, BC": 1800,
     "Victoria, BC": 1915,
     "Calgary, AB": 750,
@@ -269,8 +439,13 @@ const DISTANCE_MATRIX: Record<string, Record<string, number>> = {
     "Ottawa, ON": 3100,
     "Hamilton, ON": 2850,
     "London, ON": 2700,
+    "Windsor, ON": 2500,
+    "Kitchener, ON": 2810,
     "Montreal, QC": 3000,
     "Quebec City, QC": 3250,
+    "Gatineau, QC": 3110,
+    "Trois-Rivières, QC": 3130,
+    "Sherbrooke, QC": 3150,
     "Vancouver, BC": 1650,
     "Victoria, BC": 1765,
     "Calgary, AB": 600,
@@ -286,8 +461,13 @@ const DISTANCE_MATRIX: Record<string, Record<string, number>> = {
     "Ottawa, ON": 1350,
     "Hamilton, ON": 1870,
     "London, ON": 1990,
+    "Windsor, ON": 2200,
+    "Kitchener, ON": 1870,
     "Montreal, QC": 1250,
     "Quebec City, QC": 1000,
+    "Gatineau, QC": 1360,
+    "Trois-Rivières, QC": 1120,
+    "Sherbrooke, QC": 1100,
     "Vancouver, BC": 6100,
     "Victoria, BC": 6215,
     "Calgary, AB": 5100,
@@ -303,8 +483,13 @@ const DISTANCE_MATRIX: Record<string, Record<string, number>> = {
     "Ottawa, ON": 2150,
     "Hamilton, ON": 2670,
     "London, ON": 2790,
+    "Windsor, ON": 3000,
+    "Kitchener, ON": 2670,
     "Montreal, QC": 2050,
     "Quebec City, QC": 1800,
+    "Gatineau, QC": 2160,
+    "Trois-Rivières, QC": 1920,
+    "Sherbrooke, QC": 1900,
     "Vancouver, BC": 6900,
     "Victoria, BC": 7015,
     "Calgary, AB": 5900,
@@ -318,18 +503,19 @@ const DISTANCE_MATRIX: Record<string, Record<string, number>> = {
 };
 
 const VEHICLE_TYPES = [
-  { value: "sedan", label: "Sedan", surcharge: 0 },
-  { value: "suv", label: "SUV", surcharge: 45 },
-  { value: "pickup", label: "Pickup Truck", surcharge: 55 },
-  { value: "fullsize", label: "Full-Size SUV/Truck", surcharge: 85 },
-  { value: "luxury", label: "Luxury Vehicle", surcharge: 125 },
-  { value: "motorcycle", label: "Motorcycle", surcharge: -50 },
+  { value: "sedan", label: "Sedan/Compact", surcharge: 0 },
+  { value: "suv", label: "Mid-Size SUV", surcharge: 50 },
+  { value: "fullsize_suv", label: "Full-Size SUV", surcharge: 100 },
+  { value: "pickup", label: "Pickup Truck", surcharge: 75 },
+  { value: "fullsize_truck", label: "Full-Size Truck (F-250+)", surcharge: 150 },
+  { value: "luxury", label: "Luxury Vehicle", surcharge: 100 },
+  { value: "motorcycle", label: "Motorcycle", surcharge: -100 },
 ];
 
 const SERVICE_LEVELS = [
-  { value: "standard", label: "Standard (5-7 days)", multiplier: 1.0, daysMin: 5, daysMax: 7 },
-  { value: "expedited_2day", label: "2-Day Expedited", multiplier: 1.5, daysMin: 2, daysMax: 2 },
-  { value: "expedited_1day", label: "1-Day Expedited", multiplier: 2.0, daysMin: 1, daysMax: 1 },
+  { value: "standard", label: "Standard (3-5 days)", multiplier: 1.0, minPremium: 0, daysMin: 3, daysMax: 5 },
+  { value: "expedited_2day", label: "2-Day Expedited (+30%)", multiplier: 1.3, minPremium: 75, daysMin: 1, daysMax: 2 },
+  { value: "expedited_1day", label: "1-Day Expedited (+50%)", multiplier: 1.5, minPremium: 150, daysMin: 1, daysMax: 1 },
 ];
 
 const POPULAR_MAKES = [
@@ -360,10 +546,40 @@ interface QuoteBreakdown {
 }
 
 function calculateRate(distance: number): number {
-  if (distance <= 500) return 0.95;
-  if (distance <= 1000) return 0.85;
-  if (distance <= 2000) return 0.75;
-  return 0.65;
+  let total = 0;
+  let remaining = distance;
+  
+  if (remaining <= 100) {
+    return remaining * 3.50;
+  }
+  total += 100 * 3.50;
+  remaining -= 100;
+  
+  if (remaining <= 200) {
+    return total + remaining * 2.75;
+  }
+  total += 200 * 2.75;
+  remaining -= 200;
+  
+  if (remaining <= 200) {
+    return total + remaining * 2.25;
+  }
+  total += 200 * 2.25;
+  remaining -= 200;
+  
+  if (remaining <= 500) {
+    return total + remaining * 1.85;
+  }
+  total += 500 * 1.85;
+  remaining -= 500;
+  
+  if (remaining <= 1000) {
+    return total + remaining * 1.65;
+  }
+  total += 1000 * 1.65;
+  remaining -= 1000;
+  
+  return total + remaining * 1.45;
 }
 
 export default function TransportPage() {
@@ -450,35 +666,48 @@ export default function TransportPage() {
       return null;
     }
 
-    const rate = calculateRate(distance);
-    let basePrice = Math.max(distance * rate, 195);
+    let basePrice = Math.max(calculateRate(distance), 150);
 
     const vehicleTypeData = VEHICLE_TYPES.find((v) => v.value === vehicleType);
     const vehicleSurcharge = (vehicleTypeData?.surcharge || 0) * vehicleCount;
 
-    const nonRunningFee = !isRunning ? 85 * vehicleCount : 0;
-    const enclosedFee = isEnclosed ? 175 * vehicleCount : 0;
-    const liftGateFee = liftGateRequired ? 45 * vehicleCount : 0;
+    const nonRunningFee = !isRunning ? 150 * vehicleCount : 0;
+    const liftGateFee = liftGateRequired ? 75 * vehicleCount : 0;
 
     let multiVehicleDiscount = 0;
-    if (vehicleCount >= 4) {
-      multiVehicleDiscount = (basePrice + vehicleSurcharge) * 0.10;
+    if (vehicleCount >= 6) {
+      multiVehicleDiscount = (basePrice + vehicleSurcharge) * 0.25;
+    } else if (vehicleCount >= 4) {
+      multiVehicleDiscount = (basePrice + vehicleSurcharge) * 0.20;
+    } else if (vehicleCount >= 3) {
+      multiVehicleDiscount = (basePrice + vehicleSurcharge) * 0.15;
     } else if (vehicleCount >= 2) {
-      multiVehicleDiscount = (basePrice + vehicleSurcharge) * 0.05;
+      multiVehicleDiscount = (basePrice + vehicleSurcharge) * 0.10;
     }
 
     const serviceLevelData = SERVICE_LEVELS.find((s) => s.value === serviceLevel);
     const serviceLevelMultiplier = serviceLevelData?.multiplier || 1.0;
+    const minPremium = serviceLevelData?.minPremium || 0;
 
-    const subtotalBeforeMultiplier = basePrice + vehicleSurcharge + nonRunningFee + enclosedFee + liftGateFee - multiVehicleDiscount;
-    const subtotal = subtotalBeforeMultiplier * serviceLevelMultiplier;
+    const subtotalBeforeEnclosed = basePrice + vehicleSurcharge + nonRunningFee + liftGateFee - multiVehicleDiscount;
+    const enclosedFee = isEnclosed ? subtotalBeforeEnclosed * 0.50 : 0;
+    
+    const subtotalBeforeMultiplier = subtotalBeforeEnclosed + enclosedFee;
+    let subtotal = subtotalBeforeMultiplier * serviceLevelMultiplier;
+    
+    if (serviceLevelMultiplier > 1.0) {
+      const expeditedPremium = subtotalBeforeMultiplier * (serviceLevelMultiplier - 1.0);
+      if (expeditedPremium < minPremium) {
+        subtotal = subtotalBeforeMultiplier + minPremium;
+      }
+    }
 
     const fuelSurcharge = subtotal * 0.08;
     const total = subtotal + fuelSurcharge;
 
     const today = new Date();
-    const daysMin = serviceLevelData?.daysMin || 5;
-    const daysMax = serviceLevelData?.daysMax || 7;
+    const daysMin = serviceLevelData?.daysMin || 3;
+    const daysMax = serviceLevelData?.daysMax || 5;
     
     const estimatedDeliveryMin = new Date(today);
     estimatedDeliveryMin.setDate(today.getDate() + daysMin);
@@ -730,7 +959,7 @@ export default function TransportPage() {
                         </span>
                       </div>
                       <div className="text-sm text-slate-400">
-                        Rate: {formatCurrency(calculateRate(quote.distance))}/km
+                        Tiered pricing applied
                       </div>
                     </div>
                   </div>
@@ -875,7 +1104,7 @@ export default function TransportPage() {
                       <div>
                         <div className="text-sm font-medium text-white">Enclosed Transport</div>
                         <div className="text-xs text-slate-400">
-                          {isEnclosed ? "+$300 enclosed carrier" : "Open carrier"}
+                          {isEnclosed ? "+50% enclosed carrier" : "Open carrier"}
                         </div>
                       </div>
                     </div>
@@ -919,8 +1148,10 @@ export default function TransportPage() {
                         {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((num) => (
                           <SelectItem key={num} value={num.toString()}>
                             {num} vehicle{num > 1 ? "s" : ""}
-                            {num >= 4 && " (10% discount)"}
-                            {num >= 2 && num < 4 && " (5% discount)"}
+                            {num >= 6 && " (25% discount)"}
+                            {num >= 4 && num < 6 && " (20% discount)"}
+                            {num === 3 && " (15% discount)"}
+                            {num === 2 && " (10% discount)"}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -1133,9 +1364,9 @@ export default function TransportPage() {
                       <strong className="text-slate-300">Pricing Notes:</strong>
                     </p>
                     <ul className="space-y-1 list-disc list-inside">
-                      <li>Minimum charge: $195</li>
-                      <li>Rates decrease for longer distances</li>
-                      <li>Multi-vehicle discounts available</li>
+                      <li>Minimum charge: $150</li>
+                      <li>Tiered rates decrease for longer distances</li>
+                      <li>Multi-vehicle discounts available (10-25%)</li>
                       <li>8% fuel surcharge applies</li>
                     </ul>
                   </div>
