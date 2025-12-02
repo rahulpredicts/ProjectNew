@@ -22,6 +22,7 @@ import UserManagementPage from "@/pages/user-management";
 import TransportPage from "@/pages/transport";
 import TransportDashboard from "@/pages/transport-dashboard";
 import TransportOrdersPage from "@/pages/transport-orders";
+import BrochurePage from "@/pages/brochure";
 import { Loader2 } from "lucide-react";
 
 // Admin-only route guard
@@ -149,6 +150,7 @@ function Router() {
         <Route path="/canadian-retail" component={CanadianRetailPage} />
         <Route path="/reference" component={ReferencePage} />
         <Route path="/settings" component={SettingsPage} />
+        <Route path="/brochure" component={BrochurePage} />
         
         <Route component={NotFound} />
       </Switch>
