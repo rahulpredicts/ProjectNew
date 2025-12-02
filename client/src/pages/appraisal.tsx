@@ -908,7 +908,7 @@ export default function AppraisalPage() {
               </div>
               <div className="p-5 space-y-5">
                 <div>
-                  <Label className="text-slate-400 text-xs mb-3 block">NAAA Condition Grade</Label>
+                  <Label className="text-slate-400 text-xs mb-3 block">Carsellia Grade</Label>
                   <ConditionSelector value={conditionData.naagGrade} onChange={grade => setConditionData(prev => ({ ...prev, naagGrade: grade }))} />
                 </div>
 
