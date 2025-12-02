@@ -811,20 +811,20 @@ export default function ExportPage() {
         <div className="flex items-center gap-4 mb-6 p-4 rounded-xl bg-slate-800/50 border border-slate-700/50">
           <div className="flex items-center gap-2">
             <ArrowRightLeft className="w-5 h-5 text-emerald-400" />
-            <span className="text-slate-300 font-medium">1 CAD =</span>
+            <span className="text-slate-300 font-medium">1 USD =</span>
             {manualExchangeRate ? (
               <Input
                 type="number"
                 step="0.0001"
-                value={exchangeRate}
-                onChange={(e) => setExchangeRate(parseFloat(e.target.value) || 0.72)}
+                value={(1 / exchangeRate).toFixed(4)}
+                onChange={(e) => setExchangeRate(1 / (parseFloat(e.target.value) || 1.389))}
                 className="w-24 bg-slate-700 border-slate-600 text-white"
                 data-testid="input-exchange-rate"
               />
             ) : (
-              <span className="text-2xl font-bold text-emerald-400">{exchangeRate.toFixed(4)}</span>
+              <span className="text-2xl font-bold text-emerald-400">{(1 / exchangeRate).toFixed(4)}</span>
             )}
-            <span className="text-slate-300 font-medium">USD</span>
+            <span className="text-slate-300 font-medium">CAD</span>
           </div>
           <div className="flex items-center gap-2 ml-4">
             <Switch
