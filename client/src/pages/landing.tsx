@@ -444,7 +444,7 @@ export default function LandingPage() {
 
           {/* Login Buttons */}
           <div className="border-t border-slate-700 mt-8 pt-8">
-            <h4 className="font-semibold mb-4 text-center">Admin & Data Analyst Access</h4>
+            <h4 className="font-semibold mb-4 text-center">Admin, Data Analyst & Transportation Access</h4>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button 
                 size="lg"
@@ -463,6 +463,15 @@ export default function LandingPage() {
                 data-testid="button-admin-login"
               >
                 Admin Login
+              </Button>
+              <Button 
+                size="lg"
+                variant="outline"
+                onClick={() => window.location.href = '/api/login'}
+                className="border-orange-600 text-orange-300 hover:bg-orange-800/20 px-6"
+                data-testid="button-transport-login"
+              >
+                Transportation Login
               </Button>
             </div>
           </div>
