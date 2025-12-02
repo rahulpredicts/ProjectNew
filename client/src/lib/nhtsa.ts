@@ -219,11 +219,16 @@ export async function decodeVIN(vin: string): Promise<EnhancedVINResult> {
     console.log("NHTSA API Response:", vehicle);
 
     // Extract comprehensive vehicle data
+    const capitalize = (str: string | undefined) => {
+      if (!str) return undefined;
+      return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+    };
+
     const result: EnhancedVINResult = {
       vin: cleanVIN,
       year: vehicle.ModelYear || vehicle.Model_Year || undefined,
-      make: vehicle.Make || undefined,
-      model: vehicle.Model || undefined,
+      make: capitalize(vehicle.Make) || undefined,
+      model: capitalize(vehicle.Model) || undefined,
       trim: vehicle.Trim || undefined,
       series: vehicle.Series || undefined,
       bodyClass: vehicle.BodyClass || vehicle.Body_Class || undefined,
