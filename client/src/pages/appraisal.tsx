@@ -219,6 +219,7 @@ interface ScoredComparable extends Car {
   kmDiff: number;
   trimMatch: boolean;
   dealershipName?: string;
+  daysOnMarket: number;
 }
 
 interface AppraisalResult {
@@ -418,6 +419,7 @@ function PricePositionBar({ position, percent }: { position: "below" | "competit
 
 function ComparableCard({ car, rank }: { car: ScoredComparable; rank: number }) {
   const matchColor = car.matchScore >= 90 ? "emerald" : car.matchScore >= 70 ? "blue" : "amber";
+  const domColor = car.daysOnMarket > 60 ? "rose" : car.daysOnMarket > 30 ? "amber" : "emerald";
   
   return (
     <div className="p-3 rounded-xl bg-slate-800/50 border border-slate-700/50 hover:border-slate-600 transition-all">
@@ -443,10 +445,11 @@ function ComparableCard({ car, rank }: { car: ScoredComparable; rank: number }) 
           {car.matchScore}% match
         </Badge>
       </div>
-      <div className="grid grid-cols-3 gap-2 mb-2">
+      <div className="grid grid-cols-4 gap-2 mb-2">
         <MiniStatCard label="Price" value={`$${parseInt(car.price).toLocaleString()}`} icon={DollarSign} color="emerald" />
-        <MiniStatCard label="Kilometers" value={`${parseInt(car.kilometers).toLocaleString()}`} icon={Gauge} color="blue" />
-        <MiniStatCard label="Year Diff" value={car.yearDiff === 0 ? "Same" : `${car.yearDiff > 0 ? "+" : ""}${car.yearDiff}yr`} icon={Calendar} color="slate" />
+        <MiniStatCard label="KM" value={`${parseInt(car.kilometers).toLocaleString()}`} icon={Gauge} color="blue" />
+        <MiniStatCard label="Year" value={car.yearDiff === 0 ? "Same" : `${car.yearDiff > 0 ? "+" : ""}${car.yearDiff}yr`} icon={Calendar} color="slate" />
+        <MiniStatCard label="DOM" value={`${car.daysOnMarket}d`} icon={Clock} color={domColor} />
       </div>
       {car.dealershipName && (
         <div className="flex items-center gap-1.5 text-xs text-slate-500">
@@ -672,6 +675,7 @@ export default function AppraisalPage() {
 
   const findAndScoreComparables = useCallback((targetYear: number, targetKm: number, targetTrim: string): ScoredComparable[] => {
     const comparables: ScoredComparable[] = [];
+    const now = new Date();
     
     allCars.forEach(car => {
       if (car.make.toLowerCase() !== formData.make.toLowerCase()) return;
@@ -702,6 +706,10 @@ export default function AppraisalPage() {
       priceAdjusted += (targetKm - carKm) * kmAdjustmentPerKm;
       priceAdjusted *= Math.pow(1 + yearAdjustmentPerYear, yearDiff);
       
+      const daysOnMarket = car.createdAt 
+        ? Math.floor((now.getTime() - new Date(car.createdAt).getTime()) / (1000 * 60 * 60 * 24))
+        : 0;
+      
       comparables.push({
         ...car,
         matchScore: Math.round(matchScore),
@@ -709,7 +717,8 @@ export default function AppraisalPage() {
         yearDiff,
         kmDiff,
         trimMatch: !!trimMatch,
-        dealershipName: dealershipMap[car.dealershipId]
+        dealershipName: dealershipMap[car.dealershipId],
+        daysOnMarket
       });
     });
     
@@ -816,7 +825,10 @@ export default function AppraisalPage() {
     
     const dataQuality = Math.min(100, (comparables.length * 5) + (exactMatches * 10));
     
-    const avgDaysOnMarket = 21 + Math.random() * 14;
+    const daysOnMarketValues = comparables.map(c => c.daysOnMarket).filter(d => d > 0);
+    const avgDaysOnMarket = daysOnMarketValues.length > 0 
+      ? Math.round(daysOnMarketValues.reduce((a, b) => a + b, 0) / daysOnMarketValues.length)
+      : 0;
     const pricePerKmAvg = avgKm > 0 ? avgPrice / avgKm : 0;
     
     return {
@@ -1026,8 +1038,7 @@ export default function AppraisalPage() {
     const mechanicalCost = calculateMechanicalRecondition();
     const reconditioningCost = reconditioning !== null ? reconditioning : gradeRecondition + mechanicalCost;
     
-    const calculatedProfitMargin = retailValue * (businessSettings.profitMarginPercent / 100);
-    const profitMargin = profitOverride !== null ? profitOverride : calculatedProfitMargin;
+    const profitMargin = profitOverride !== null ? profitOverride : desiredProfit;
     
     const holdingCosts = businessSettings.holdingCostPerDay * businessSettings.estimatedHoldingDays;
     const safetyBuffer = retailValue * (businessSettings.safetyBufferPercent / 100);
@@ -1077,7 +1088,7 @@ export default function AppraisalPage() {
     });
 
     setIsCalculating(false);
-  }, [formData, conditionData.naagGrade, historyData, businessSettings, reconditioning, profitOverride, evaluateDecision, findAndScoreComparables, calculateDepreciation, calculateMileageAdjustment, getSeasonalFactor, calculateMechanicalRecondition, calculateMarketIntelligence]);
+  }, [formData, conditionData.naagGrade, historyData, businessSettings, reconditioning, profitOverride, desiredProfit, evaluateDecision, findAndScoreComparables, calculateDepreciation, calculateMileageAdjustment, getSeasonalFactor, calculateMechanicalRecondition, calculateMarketIntelligence]);
 
   const validateForm = useCallback((): { isValid: boolean; errors: string[] } => {
     const errors: string[] = [];
@@ -1780,6 +1791,24 @@ Generated by Carsellia AI Appraisal System
                         {Math.round(appraisal.marketIntelligence.minKilometers).toLocaleString()} - {Math.round(appraisal.marketIntelligence.maxKilometers).toLocaleString()} km
                       </p>
                     </div>
+                  </div>
+
+                  <div className="p-4 rounded-xl bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-500/20">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Clock className="w-4 h-4 text-amber-400" />
+                      <p className="text-slate-400 text-xs">Days on Market (Average)</p>
+                    </div>
+                    <p className={cn(
+                      "font-bold text-lg",
+                      appraisal.marketIntelligence.avgDaysOnMarket > 60 ? "text-rose-400" :
+                      appraisal.marketIntelligence.avgDaysOnMarket > 30 ? "text-amber-400" : "text-emerald-400"
+                    )}>
+                      {appraisal.marketIntelligence.avgDaysOnMarket} days
+                    </p>
+                    <p className="text-slate-500 text-xs mt-1">
+                      {appraisal.marketIntelligence.avgDaysOnMarket <= 30 ? "Fast-moving market" :
+                       appraisal.marketIntelligence.avgDaysOnMarket <= 60 ? "Moderate market velocity" : "Slow-moving inventory"}
+                    </p>
                   </div>
 
                   <PricePositionBar 
