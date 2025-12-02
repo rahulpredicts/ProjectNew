@@ -52,12 +52,12 @@ const features = [
 ];
 
 const pricingTiers = [
-  { range: "0 - 100 km", rate: "$0.85/km" },
-  { range: "101 - 300 km", rate: "$0.75/km" },
-  { range: "301 - 500 km", rate: "$0.65/km" },
-  { range: "501 - 1,000 km", rate: "$0.55/km" },
-  { range: "1,001 - 2,000 km", rate: "$0.50/km" },
-  { range: "2,001+ km", rate: "$0.45/km" }
+  { range: "0 - 100 km", rate: "$0.94/km" },
+  { range: "101 - 300 km", rate: "$0.83/km" },
+  { range: "301 - 500 km", rate: "$0.72/km" },
+  { range: "501 - 1,000 km", rate: "$0.61/km" },
+  { range: "1,001 - 2,000 km", rate: "$0.55/km" },
+  { range: "2,001+ km", rate: "$0.50/km" }
 ];
 
 const serviceLevels = [

@@ -550,36 +550,36 @@ function calculateRate(distance: number): number {
   let remaining = distance;
   
   if (remaining <= 100) {
-    return remaining * 0.85;
+    return remaining * 0.94;
   }
-  total += 100 * 0.85;
+  total += 100 * 0.94;
   remaining -= 100;
   
   if (remaining <= 200) {
-    return total + remaining * 0.75;
+    return total + remaining * 0.83;
   }
-  total += 200 * 0.75;
+  total += 200 * 0.83;
   remaining -= 200;
   
   if (remaining <= 200) {
-    return total + remaining * 0.65;
+    return total + remaining * 0.72;
   }
-  total += 200 * 0.65;
+  total += 200 * 0.72;
   remaining -= 200;
   
   if (remaining <= 500) {
-    return total + remaining * 0.55;
+    return total + remaining * 0.61;
   }
-  total += 500 * 0.55;
+  total += 500 * 0.61;
   remaining -= 500;
   
   if (remaining <= 1000) {
-    return total + remaining * 0.50;
+    return total + remaining * 0.55;
   }
-  total += 1000 * 0.50;
+  total += 1000 * 0.55;
   remaining -= 1000;
   
-  return total + remaining * 0.45;
+  return total + remaining * 0.50;
 }
 
 export default function TransportPage() {
@@ -666,7 +666,7 @@ export default function TransportPage() {
       return null;
     }
 
-    let basePrice = Math.max(calculateRate(distance), 95);
+    let basePrice = Math.max(calculateRate(distance), 105);
 
     const vehicleTypeData = VEHICLE_TYPES.find((v) => v.value === vehicleType);
     const vehicleSurcharge = (vehicleTypeData?.surcharge || 0) * vehicleCount;
@@ -866,14 +866,14 @@ export default function TransportPage() {
           <CardContent className="p-4">
             <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-2">
               {[
-                { from: "Montreal", fromProv: "QC", to: "Toronto", toProv: "ON", price: 387 },
-                { from: "Montreal", fromProv: "QC", to: "Ottawa", toProv: "ON", price: 160 },
-                { from: "Quebec City", fromProv: "QC", to: "Toronto", toProv: "ON", price: 530 },
-                { from: "Toronto", fromProv: "ON", to: "Montreal", toProv: "QC", price: 387 },
-                { from: "Ottawa", fromProv: "ON", to: "Toronto", toProv: "ON", price: 335 },
-                { from: "Montreal", fromProv: "QC", to: "Hamilton", toProv: "ON", price: 425 },
-                { from: "Montreal", fromProv: "QC", to: "London", toProv: "ON", price: 495 },
-                { from: "Toronto", fromProv: "ON", to: "Calgary", toProv: "AB", price: 1770 },
+                { from: "Montreal", fromProv: "QC", to: "Toronto", toProv: "ON", price: 426 },
+                { from: "Montreal", fromProv: "QC", to: "Ottawa", toProv: "ON", price: 176 },
+                { from: "Quebec City", fromProv: "QC", to: "Toronto", toProv: "ON", price: 583 },
+                { from: "Toronto", fromProv: "ON", to: "Montreal", toProv: "QC", price: 426 },
+                { from: "Ottawa", fromProv: "ON", to: "Toronto", toProv: "ON", price: 369 },
+                { from: "Montreal", fromProv: "QC", to: "Hamilton", toProv: "ON", price: 468 },
+                { from: "Montreal", fromProv: "QC", to: "London", toProv: "ON", price: 545 },
+                { from: "Toronto", fromProv: "ON", to: "Calgary", toProv: "AB", price: 1947 },
               ].map((route, idx) => (
                 <Button
                   key={idx}
@@ -1430,7 +1430,7 @@ export default function TransportPage() {
                       <strong className="text-slate-300">Pricing Notes:</strong>
                     </p>
                     <ul className="space-y-1 list-disc list-inside">
-                      <li>Minimum charge: $95</li>
+                      <li>Minimum charge: $105</li>
                       <li>All vehicle types included at base rate</li>
                       <li>Non-running, enclosed & lift gate included</li>
                       <li>Only expedited delivery has surcharges</li>
