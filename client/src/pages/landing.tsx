@@ -1,10 +1,56 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Car, Shield, TrendingUp, Users, ArrowRight, Phone, Mail, MapPin, ShoppingCart, DollarSign, Calculator, LogIn, UserPlus } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Car, Shield, TrendingUp, Users, ArrowRight, Phone, Mail, MapPin, ShoppingCart, DollarSign, Calculator, LogIn, UserPlus, Loader2, AlertCircle } from "lucide-react";
 import { useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 
 export default function LandingPage() {
   const [activeTab, setActiveTab] = useState<'buy' | 'sell' | 'appraise' | null>(null);
+  const [isLoginOpen, setIsLoginOpen] = useState(false);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
+  const queryClient = useQueryClient();
+
+  const handlePasswordLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setError("");
+
+    try {
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setError(data.message || "Login failed");
+        setIsLoading(false);
+        return;
+      }
+
+      // Invalidate auth query and redirect
+      queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+      window.location.href = "/";
+    } catch (err) {
+      setError("An error occurred. Please try again.");
+      setIsLoading(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-slate-900 text-white">
@@ -59,14 +105,97 @@ export default function LandingPage() {
                 <UserPlus className="w-4 h-4 mr-2" />
                 Register
               </Button>
-              <Button 
-                onClick={() => window.location.href = '/api/login'}
-                className="bg-blue-600 hover:bg-blue-700"
-                data-testid="button-login"
-              >
-                <LogIn className="w-4 h-4 mr-2" />
-                Login
-              </Button>
+              <Dialog open={isLoginOpen} onOpenChange={setIsLoginOpen}>
+                <DialogTrigger asChild>
+                  <Button 
+                    className="bg-blue-600 hover:bg-blue-700"
+                    data-testid="button-login"
+                  >
+                    <LogIn className="w-4 h-4 mr-2" />
+                    Login
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-[425px] bg-slate-800 border-slate-700">
+                  <DialogHeader>
+                    <DialogTitle className="text-white">Sign In to Carsellia</DialogTitle>
+                    <DialogDescription className="text-slate-400">
+                      Enter your credentials to access your account
+                    </DialogDescription>
+                  </DialogHeader>
+                  <form onSubmit={handlePasswordLogin} className="space-y-4 mt-4">
+                    {error && (
+                      <div className="flex items-center gap-2 p-3 rounded-lg bg-red-500/20 border border-red-500/30 text-red-400">
+                        <AlertCircle className="w-4 h-4" />
+                        <span className="text-sm">{error}</span>
+                      </div>
+                    )}
+                    <div className="space-y-2">
+                      <Label htmlFor="email" className="text-white">Email</Label>
+                      <Input
+                        id="email"
+                        type="email"
+                        placeholder="your@email.com"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        required
+                        className="bg-slate-700 border-slate-600 text-white"
+                        data-testid="input-login-email"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="password" className="text-white">Password</Label>
+                      <Input
+                        id="password"
+                        type="password"
+                        placeholder="Your password"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        required
+                        className="bg-slate-700 border-slate-600 text-white"
+                        data-testid="input-login-password"
+                      />
+                    </div>
+                    <div className="flex flex-col gap-3 pt-2">
+                      <Button 
+                        type="submit" 
+                        className="w-full bg-blue-600 hover:bg-blue-700"
+                        disabled={isLoading}
+                        data-testid="button-submit-login"
+                      >
+                        {isLoading ? (
+                          <>
+                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                            Signing in...
+                          </>
+                        ) : (
+                          <>
+                            <LogIn className="w-4 h-4 mr-2" />
+                            Sign In
+                          </>
+                        )}
+                      </Button>
+                      <div className="relative">
+                        <div className="absolute inset-0 flex items-center">
+                          <span className="w-full border-t border-slate-600" />
+                        </div>
+                        <div className="relative flex justify-center text-xs uppercase">
+                          <span className="bg-slate-800 px-2 text-slate-400">Or continue with</span>
+                        </div>
+                      </div>
+                      <Button 
+                        type="button"
+                        variant="outline"
+                        onClick={() => window.location.href = '/api/login'}
+                        className="w-full border-slate-600 text-slate-300 hover:bg-slate-700 hover:text-white"
+                        data-testid="button-oauth-login"
+                      >
+                        <Shield className="w-4 h-4 mr-2" />
+                        Sign in with Replit
+                      </Button>
+                    </div>
+                  </form>
+                </DialogContent>
+              </Dialog>
             </div>
           </div>
         </div>

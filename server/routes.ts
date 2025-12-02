@@ -18,23 +18,99 @@ export async function registerRoutes(app: Express): Promise<Server> {
     return safeUser;
   };
 
-  // Auth routes
-  app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
+  // Password-based login endpoint
+  app.post('/api/auth/login', async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
-      const user = await storage.getUser(userId);
+      const { email, password } = req.body;
+      
+      if (!email || !password) {
+        return res.status(400).json({ message: "Email and password are required" });
+      }
+
+      const user = await storage.getUserByEmail(email);
+      
+      if (!user) {
+        return res.status(401).json({ message: "Invalid email or password" });
+      }
+
+      if (user.authType !== 'password' || !user.passwordHash) {
+        return res.status(401).json({ message: "This account uses OAuth login. Please use the Replit login button." });
+      }
+
+      if (user.isActive !== 'true') {
+        return res.status(401).json({ message: "Account is disabled. Please contact an administrator." });
+      }
+
+      const isValidPassword = await bcrypt.compare(password, user.passwordHash);
+      
+      if (!isValidPassword) {
+        return res.status(401).json({ message: "Invalid email or password" });
+      }
+
+      // Create session for password-based user
+      req.session.userId = user.id;
+      req.session.authType = 'password';
+      
+      // Update last login
+      await storage.updateUser(user.id, {});
+      
       res.json(sanitizeUser(user));
+    } catch (error) {
+      console.error("Error during login:", error);
+      res.status(500).json({ message: "Login failed" });
+    }
+  });
+
+  // Auth routes - now supports both OAuth and password sessions
+  app.get('/api/auth/user', async (req: any, res) => {
+    try {
+      // Check for password-based session first
+      if (req.session?.userId && req.session?.authType === 'password') {
+        const user = await storage.getUser(req.session.userId);
+        if (user && user.isActive === 'true') {
+          return res.json(sanitizeUser(user));
+        }
+      }
+      
+      // Check for OAuth session
+      if (req.isAuthenticated && req.isAuthenticated() && req.user?.claims?.sub) {
+        const userId = req.user.claims.sub;
+        const user = await storage.getUser(userId);
+        return res.json(sanitizeUser(user));
+      }
+      
+      res.status(401).json({ message: "Unauthorized" });
     } catch (error) {
       console.error("Error fetching user:", error);
       res.status(500).json({ message: "Failed to fetch user" });
     }
   });
 
+  // Helper to get current user ID from either session type
+  const getCurrentUserId = (req: any): string | null => {
+    if (req.session?.userId && req.session?.authType === 'password') {
+      return req.session.userId;
+    }
+    if (req.isAuthenticated && req.isAuthenticated() && req.user?.claims?.sub) {
+      return req.user.claims.sub;
+    }
+    return null;
+  };
+
+  // Middleware to check authentication for both session types
+  const isAuthenticatedAny = async (req: any, res: any, next: any) => {
+    const userId = getCurrentUserId(req);
+    if (!userId) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+    req.currentUserId = userId;
+    next();
+  };
+
   // Admin-only route to get all users
-  app.get('/api/admin/users', isAuthenticated, async (req: any, res) => {
+  app.get('/api/admin/users', isAuthenticatedAny, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
-      const user = await storage.getUser(userId);
+      const user = await storage.getUser(req.currentUserId);
       if (user?.role !== 'admin') {
         return res.status(403).json({ message: "Admin access required" });
       }
@@ -48,10 +124,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Admin-only route to update user role
-  app.patch('/api/admin/users/:id/role', isAuthenticated, async (req: any, res) => {
+  app.patch('/api/admin/users/:id/role', isAuthenticatedAny, async (req: any, res) => {
     try {
-      const currentUserId = req.user.claims.sub;
-      const currentUser = await storage.getUser(currentUserId);
+      const currentUser = await storage.getUser(req.currentUserId);
       if (currentUser?.role !== 'admin') {
         return res.status(403).json({ message: "Admin access required" });
       }
@@ -71,10 +146,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Admin-only route to create a new user with password
-  app.post('/api/admin/users', isAuthenticated, async (req: any, res) => {
+  app.post('/api/admin/users', isAuthenticatedAny, async (req: any, res) => {
     try {
-      const currentUserId = req.user.claims.sub;
-      const currentUser = await storage.getUser(currentUserId);
+      const currentUser = await storage.getUser(req.currentUserId);
       if (currentUser?.role !== 'admin') {
         return res.status(403).json({ message: "Admin access required" });
       }
@@ -104,10 +178,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Admin-only route to update a user
-  app.patch('/api/admin/users/:id', isAuthenticated, async (req: any, res) => {
+  app.patch('/api/admin/users/:id', isAuthenticatedAny, async (req: any, res) => {
     try {
-      const currentUserId = req.user.claims.sub;
-      const currentUser = await storage.getUser(currentUserId);
+      const currentUser = await storage.getUser(req.currentUserId);
       if (currentUser?.role !== 'admin') {
         return res.status(403).json({ message: "Admin access required" });
       }
@@ -130,10 +203,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Admin-only route to reset user password
-  app.post('/api/admin/users/:id/reset-password', isAuthenticated, async (req: any, res) => {
+  app.post('/api/admin/users/:id/reset-password', isAuthenticatedAny, async (req: any, res) => {
     try {
-      const currentUserId = req.user.claims.sub;
-      const currentUser = await storage.getUser(currentUserId);
+      const currentUser = await storage.getUser(req.currentUserId);
       if (currentUser?.role !== 'admin') {
         return res.status(403).json({ message: "Admin access required" });
       }
@@ -166,16 +238,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Admin-only route to delete a user
-  app.delete('/api/admin/users/:id', isAuthenticated, async (req: any, res) => {
+  app.delete('/api/admin/users/:id', isAuthenticatedAny, async (req: any, res) => {
     try {
-      const currentUserId = req.user.claims.sub;
-      const currentUser = await storage.getUser(currentUserId);
+      const currentUser = await storage.getUser(req.currentUserId);
       if (currentUser?.role !== 'admin') {
         return res.status(403).json({ message: "Admin access required" });
       }
 
       // Prevent deleting yourself
-      if (req.params.id === currentUserId) {
+      if (req.params.id === req.currentUserId) {
         return res.status(400).json({ message: "Cannot delete your own account" });
       }
 
