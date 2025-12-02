@@ -273,29 +273,6 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* How It Works */}
-      <section id="how-it-works" className="py-20">
-        <div className="max-w-7xl mx-auto px-4">
-          <h2 className="text-3xl font-bold text-center mb-12">How It Works</h2>
-          <div className="grid md:grid-cols-4 gap-6">
-            {[
-              { step: "1", title: "Register", desc: "Create your dealer account" },
-              { step: "2", title: "Add Inventory", desc: "Upload vehicles via CSV or manual entry" },
-              { step: "3", title: "Appraise", desc: "Get trade-in and market values" },
-              { step: "4", title: "Trade", desc: "List for retail or wholesale" },
-            ].map((item) => (
-              <div key={item.step} className="text-center">
-                <div className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center mx-auto mb-4 text-xl font-bold">
-                  {item.step}
-                </div>
-                <h3 className="font-semibold mb-2">{item.title}</h3>
-                <p className="text-slate-400 text-sm">{item.desc}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
       {/* Footer */}
       <footer className="bg-slate-800 py-12 border-t border-slate-700">
         <div className="max-w-7xl mx-auto px-4">
