@@ -26,7 +26,7 @@ Carsellia is a comprehensive, production-ready vehicle trading and dealership ma
 **Authentication:**
 - Replit Auth (OpenID Connect) with multi-provider support (Google, GitHub, Apple, Email/Password)
 - Session-based authentication with PostgreSQL session store
-- Role-based access control (Admin/Dealer/Data Analyst)
+- Role-based access control (Admin/Dealer/Data Analyst/Transportation)
 - Secure token refresh mechanism
 
 **Backend:**
@@ -50,6 +50,10 @@ Carsellia is a comprehensive, production-ready vehicle trading and dealership ma
     - inventory.tsx (Vehicle listing with advanced filters)
     - upload.tsx (Bulk CSV/URL/AI text import)
     - appraisal.tsx (Vehicle valuation tool)
+    - export.tsx (USA Export Profit Calculator)
+    - transport.tsx (Transport Estimate Calculator with Canadian distance matrix)
+    - transport-dashboard.tsx (Transportation Team operations dashboard)
+    - transport-orders.tsx (Transport order management)
     - landing.tsx (Public landing page)
     - admin-dashboard.tsx (Admin dashboard overview)
     - data-analyst-dashboard.tsx (Bulk upload hub for data team)
@@ -80,7 +84,7 @@ Carsellia is a comprehensive, production-ready vehicle trading and dealership ma
 - email: Unique email address
 - firstName, lastName: User profile
 - profileImageUrl: Avatar from auth provider
-- role: 'admin', 'dealer', or 'data_analyst'
+- role: 'admin', 'dealer', 'data_analyst', or 'transportation'
 - passwordHash: For admin-created users (null for OAuth)
 - passwordResetToken, passwordResetExpiry: Password reset support
 - isActive: Account status ('true'/'false')
@@ -103,6 +107,35 @@ Carsellia is a comprehensive, production-ready vehicle trading and dealership ma
 - Features array for vehicle amenities
 - Status tracking (available, sold, pending)
 - Carfax/listing links
+
+**Transportation Module Tables:**
+
+*Trucks Table (Fleet):*
+- id, unitNumber, make, model, year, capacity
+- currentLocation, status (available/en_route/maintenance)
+
+*Drivers Table:*
+- id, name, phone, email, licenseNumber, licenseExpiry
+- assignedTruckId, status (active/off_duty/on_leave)
+
+*Transport Quotes Table:*
+- id, quoteNumber, userId
+- Pickup/delivery locations (address, city, province, postal)
+- distanceKm, vehicle details (year, make, model, VIN, type)
+- Options: isRunning, isEnclosed, liftGateRequired, vehicleCount
+- Pricing: basePrice, surcharges, discount, totalPrice
+- serviceLevel (standard/expedited_2day/expedited_1day)
+- status (quoted/expired/converted), validUntil
+
+*Transport Orders Table:*
+- id, orderNumber, quoteId
+- Contact info for pickup/delivery
+- Dates: pickupDate, estimatedDeliveryDate, actual pickup/delivery
+- driverId, truckId, trackingUrl
+- status, paymentStatus, paymentAmount
+
+*Tracking Events Table:*
+- id, orderId, eventType, location, notes, createdAt
 
 ### API Architecture
 
@@ -141,12 +174,36 @@ Carsellia is a comprehensive, production-ready vehicle trading and dealership ma
 - Local component state for UI interactions
 
 **Role-Based Access Control (Updated):**
-- **Admins**: Full system access, user management (create/delete/reset passwords), all features
-- **Dealers**: Vehicle appraisal, view inventory & pricing, comparables, export calculator (NO upload/delete access)
-- **Data Analysts**: Upload vehicles, delete vehicles, publish data (NO appraisal/export access)
+- **Admins**: Full system access, user management (create/delete/reset passwords), all features including transport operations
+- **Dealers**: Vehicle appraisal, view inventory & pricing, comparables, export calculator, transport quotes (NO upload/delete access)
+- **Data Analysts**: Upload vehicles, delete vehicles, publish data (NO appraisal/export/transport access)
+- **Transportation**: Transport dashboard, order management, quote calculator, fleet tracking (NO appraisal/export/upload access)
 - Routes protected via role-specific guards in App.tsx
 - Server-side role verification on all admin endpoints
 - Sensitive fields (passwordHash, resetTokens) sanitized from API responses
+
+### Transportation Module
+
+**Transport Estimate Calculator (/transport):**
+- Canadian distance matrix between 15 major cities across provinces
+- Distance-based pricing tiers: $1.75/km (0-500km), $1.50/km (501-1000km), $1.25/km (1001-2000km), $1.10/km (2000+km)
+- Minimum charge: $350
+- Vehicle type surcharges: Sedan (base), SUV (+$75), Pickup (+$100), Full-Size (+$150), Luxury (+$200), Motorcycle (-$100)
+- Additional options: Non-running (+$150), Enclosed (+$300), Lift gate (+$75)
+- Multi-vehicle discounts: 5% (2-3), 10% (4+)
+- Service levels: Standard (1x, 5-7 days), 2-Day Expedited (1.5x), 1-Day Expedited (2x)
+- 8% fuel surcharge
+- Quote generation with 7-day validity
+
+**Transport Dashboard (/transport-dashboard):**
+- Operations overview with active orders, pending pickups, in-transit, completed counts
+- Fleet status showing trucks, current locations, assigned drivers
+- Recent quotes summary
+
+**Transport Orders (/transport-orders):**
+- Full order management with filters (status, date range, search)
+- Order tracking with status updates
+- Driver/truck assignment capabilities
 
 ### Performance Optimizations
 
