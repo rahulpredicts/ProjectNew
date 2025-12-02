@@ -13,7 +13,9 @@ import {
   FileDown,
   BookOpen,
   Settings,
-  User
+  User,
+  Truck,
+  ClipboardList
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
@@ -30,7 +32,7 @@ import {
 
 export function Layout({ children }: { children: React.ReactNode }) {
   const [location] = useLocation();
-  const { user, isAdmin, isDataAnalyst } = useAuth();
+  const { user, isAdmin, isDataAnalyst, isTransportation } = useAuth();
 
   const handleLogout = () => {
     window.location.href = '/api/logout';
@@ -43,6 +45,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
     { href: "/inventory", label: "All Inventory", icon: Package },
     { href: "/appraisal", label: "Appraise", icon: Calculator },
     { href: "/export", label: "Export Calculator", icon: FileDown },
+    { href: "/transport", label: "Transport Calculator", icon: Truck },
     { href: "/upload", label: "Add Vehicles", icon: PlusCircle },
     { href: "/canadian-retail", label: "Canadian Retail", icon: MapPin },
     { href: "/reference", label: "Reference", icon: BookOpen },
@@ -58,18 +61,28 @@ export function Layout({ children }: { children: React.ReactNode }) {
     { href: "/reference", label: "Reference", icon: BookOpen },
   ];
 
+  // Transportation Team navigation - Transport operations, quotes, orders
+  const transportationNavItems = [
+    { href: "/transport-dashboard", label: "Transport Dashboard", icon: Truck },
+    { href: "/transport", label: "Quote Calculator", icon: Calculator },
+    { href: "/transport-orders", label: "Orders", icon: ClipboardList },
+    { href: "/inventory", label: "All Inventory", icon: Package },
+    { href: "/reference", label: "Reference", icon: BookOpen },
+  ];
+
   // Dealer navigation - Appraisal, inventory viewing, pricing, comparables; NO upload/delete
   const dealerNavItems = [
     { href: "/", label: "Dashboard", icon: LayoutDashboard },
     { href: "/dealer-inventory", label: "Your Inventory", icon: Package },
     { href: "/appraisal", label: "Vehicle Appraisal", icon: Calculator },
     { href: "/export", label: "Export Calculator", icon: FileDown },
+    { href: "/transport", label: "Transport Quote", icon: Truck },
     { href: "/canadian-retail", label: "Canadian Retail", icon: MapPin },
     { href: "/reference", label: "Reference", icon: BookOpen },
     { href: "/settings", label: "Settings", icon: Settings },
   ];
 
-  const navItems = isAdmin ? adminNavItems : isDataAnalyst ? dataAnalystNavItems : dealerNavItems;
+  const navItems = isAdmin ? adminNavItems : isDataAnalyst ? dataAnalystNavItems : isTransportation ? transportationNavItems : dealerNavItems;
 
   return (
     <div className="min-h-screen bg-gray-50/50 flex flex-col md:flex-row">
@@ -84,7 +97,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
             <div>
               <h2 className="font-bold text-lg leading-none text-white">Carsellia</h2>
               <p className="text-xs text-slate-400 mt-1">
-                {isAdmin ? 'Admin Panel' : isDataAnalyst ? 'Data Analyst' : 'Dealer Portal'}
+                {isAdmin ? 'Admin Panel' : isDataAnalyst ? 'Data Analyst' : isTransportation ? 'Transport Team' : 'Dealer Portal'}
               </p>
             </div>
           </div>
@@ -139,6 +152,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 <Shield className="w-4 h-4 text-yellow-400" />
               ) : isDataAnalyst ? (
                 <Database className="w-4 h-4 text-purple-400" />
+              ) : isTransportation ? (
+                <Truck className="w-4 h-4 text-orange-400" />
               ) : (
                 <Users className="w-4 h-4 text-blue-400" />
               )}

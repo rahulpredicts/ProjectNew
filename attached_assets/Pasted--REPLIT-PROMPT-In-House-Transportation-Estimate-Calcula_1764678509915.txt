@@ -1,0 +1,987 @@
+# REPLIT PROMPT: In-House Transportation Estimate Calculator
+
+## Project Overview
+
+Build a powerful **Transportation Estimate Calculator** module for your dealership app. Since you own your own transport trucks, this calculator allows dealers to instantly quote and order vehicle transport directly from your system. Primary focus is Quebec ↔ Ontario routes with coverage across all of Canada, including **Standard**, **1-Day Expedited**, and **2-Day Expedited** delivery options.
+
+---
+
+## YOUR COMPETITIVE ADVANTAGE
+
+Unlike third-party transport brokers, you own your trucks. This means:
+- **Direct pricing** - No broker markups
+- **Guaranteed availability** - Your fleet, your schedule
+- **Faster service** - Expedited options with your own drivers
+- **Real-time tracking** - Know exactly where vehicles are
+- **Integrated booking** - Order directly from appraisal/export flow
+
+---
+
+## SECTION 1: CORE CALCULATOR INPUTS
+
+### 1.1 Primary Input Fields
+
+| Field | Type | Details |
+|-------|------|---------|
+| **Pickup Location** | Autocomplete | City/Address with postal code |
+| **Delivery Location** | Autocomplete | City/Address with postal code |
+| **Vehicle Type** | Dropdown | Sedan, SUV, Pickup Truck, Full-Size SUV, Luxury, Motorcycle, Other |
+| **Vehicle Condition** | Dropdown | Running/Operable, Non-Running (affects price) |
+| **Delivery Speed** | Radio Buttons | Standard / 2-Day Expedited / 1-Day Expedited |
+| **Pickup Date** | Date Picker | Desired pickup date |
+| **Number of Vehicles** | Number | 1-10 (for multi-vehicle discounts) |
+
+### 1.2 Optional Fields
+
+| Field | Default | Purpose |
+|-------|---------|---------|
+| VIN | — | Link to existing appraisal/export |
+| Special Instructions | — | Gate codes, contact info, notes |
+| Enclosed Transport | No | Premium option for luxury vehicles |
+| Lift Gate Required | No | For non-running vehicles |
+
+---
+
+## SECTION 2: CANADIAN DISTANCE MATRIX
+
+### 2.1 Key Route Distances (Driving KM)
+
+**Quebec ↔ Ontario (Primary Routes):**
+
+| From | To | Distance (km) | Standard Time | Notes |
+|------|-----|---------------|---------------|-------|
+| Montreal | Toronto | 540 | 5.5 hrs | Highway 401 |
+| Montreal | Ottawa | 200 | 2 hrs | Highway 417 |
+| Quebec City | Montreal | 255 | 2.5 hrs | Highway 20 |
+| Quebec City | Toronto | 800 | 8 hrs | Via Montreal |
+| Montreal | Hamilton | 600 | 6 hrs | Via 401 |
+| Montreal | London | 700 | 7 hrs | Via 401 |
+| Montreal | Windsor | 900 | 9 hrs | Via 401 |
+| Ottawa | Toronto | 450 | 4.5 hrs | Highway 7/401 |
+| Gatineau | Toronto | 460 | 4.5 hrs | Via Ottawa |
+| Trois-Rivières | Toronto | 650 | 6.5 hrs | Via Montreal |
+| Sherbrooke | Toronto | 600 | 6 hrs | Via Montreal |
+
+**Cross-Canada Routes:**
+
+| From | To | Distance (km) | Standard Time |
+|------|-----|---------------|---------------|
+| Toronto | Vancouver | 4,400 | 44+ hrs |
+| Montreal | Calgary | 3,750 | 38+ hrs |
+| Toronto | Calgary | 3,400 | 34+ hrs |
+| Toronto | Edmonton | 3,500 | 35+ hrs |
+| Toronto | Winnipeg | 2,100 | 21+ hrs |
+| Montreal | Winnipeg | 2,300 | 23+ hrs |
+| Toronto | Halifax | 1,800 | 18+ hrs |
+| Montreal | Halifax | 1,250 | 13+ hrs |
+| Vancouver | Calgary | 1,000 | 10+ hrs |
+| Calgary | Edmonton | 300 | 3 hrs |
+| Calgary | Winnipeg | 1,350 | 13+ hrs |
+| Edmonton | Vancouver | 1,200 | 12+ hrs |
+| Winnipeg | Regina | 570 | 5.5 hrs |
+| Regina | Calgary | 760 | 7.5 hrs |
+| Saskatoon | Calgary | 615 | 6 hrs |
+
+### 2.2 Distance Calculation Logic
+
+```javascript
+// Use Google Maps Distance Matrix API or similar for precise routing
+async function calculateDistance(origin, destination) {
+  // Returns: { distanceKm, durationHours, route }
+  
+  // Fallback to stored matrix if API unavailable
+  const storedDistance = distanceMatrix[origin]?.[destination];
+  if (storedDistance) return storedDistance;
+  
+  // API call for custom routes
+  const result = await mapsAPI.getDistance(origin, destination);
+  return {
+    distanceKm: result.distance.value / 1000,
+    durationHours: result.duration.value / 3600,
+    route: result.routes[0].summary
+  };
+}
+```
+
+---
+
+## SECTION 3: PRICING MODEL
+
+### 3.1 Base Rate Structure
+
+Your transport trucks operate with these economics:
+
+**Operating Costs (Per KM):**
+```
+Fuel Cost:          $0.45/km  (based on 35L/100km @ $1.65/L diesel)
+Driver Cost:        $0.35/km  (wages, benefits, per diem)
+Truck Wear/Maint:   $0.15/km  (tires, brakes, service)
+Insurance:          $0.08/km  (cargo + liability)
+Admin/Overhead:     $0.07/km  
+─────────────────────────────
+TOTAL COST:         $1.10/km
+```
+
+**Pricing Formula:**
+```
+Base Price = Distance (km) × Rate per KM
+           + Vehicle Type Surcharge
+           + Service Level Premium
+           + Special Requirements
+           - Multi-Vehicle Discount
+           + Fuel Surcharge Adjustment
+```
+
+### 3.2 Rate Per KM by Distance Tier
+
+| Distance Range | Standard Rate/km | Margin | Notes |
+|----------------|------------------|--------|-------|
+| 0-100 km | $3.50 | ~70% | Local/short haul premium |
+| 101-300 km | $2.75 | ~60% | Regional |
+| 301-500 km | $2.25 | ~50% | Inter-city |
+| 501-1000 km | $1.85 | ~40% | Long haul |
+| 1001-2000 km | $1.65 | ~35% | Cross-province |
+| 2001+ km | $1.45 | ~25% | Cross-country |
+
+**Minimum Charge:** $150 (for any transport)
+
+### 3.3 Vehicle Type Surcharges
+
+| Vehicle Type | Surcharge | Reason |
+|--------------|-----------|--------|
+| Sedan/Compact | $0 | Base rate |
+| Mid-Size SUV | +$50 | More space on trailer |
+| Full-Size SUV | +$100 | Larger footprint |
+| Pickup Truck | +$75 | Length consideration |
+| Full-Size Truck (F-250+) | +$150 | Weight + size |
+| Luxury Vehicle | +$100 | Extra care required |
+| Motorcycle | -$100 | Less space |
+| Non-Running Vehicle | +$150 | Winch/equipment needed |
+
+### 3.4 Service Level Pricing
+
+**STANDARD DELIVERY:**
+- Pickup within 3-5 business days
+- Delivery based on route (standard transit time)
+- Base rate applies
+- Most economical option
+
+**2-DAY EXPEDITED:**
+- Guaranteed pickup within 48 hours
+- Priority routing
+- **Premium: +30% of base rate**
+- Minimum premium: $75
+
+**1-DAY EXPEDITED (SAME/NEXT DAY):**
+- Guaranteed pickup within 24 hours
+- Dedicated driver assignment
+- Direct route (fewer/no stops)
+- **Premium: +50% of base rate**
+- Minimum premium: $150
+
+### 3.5 Additional Services & Fees
+
+| Service | Fee | Notes |
+|---------|-----|-------|
+| Enclosed Transport | +50% | For luxury/classic vehicles |
+| Lift Gate (non-running) | +$75 | Loading equipment |
+| After Hours Pickup | +$50 | Before 7am or after 7pm |
+| Weekend Pickup | +$75 | Saturday/Sunday |
+| Remote Location (<50k pop) | +$50-150 | Based on accessibility |
+| Waiting Time (>30 min) | $50/hr | At pickup or delivery |
+| Storage (if delivery delayed) | $25/day | Per vehicle |
+| Inside Delivery (parking) | +$25 | Navigating parkades |
+
+### 3.6 Multi-Vehicle Discounts
+
+| Vehicles | Discount |
+|----------|----------|
+| 2 vehicles | 10% off total |
+| 3 vehicles | 15% off total |
+| 4-5 vehicles | 20% off total |
+| 6-10 vehicles | 25% off total |
+| 10+ vehicles | Custom quote |
+
+### 3.7 Fuel Surcharge Adjustment
+
+```javascript
+// Adjust pricing based on current diesel prices
+const BASE_DIESEL_PRICE = 1.65; // CAD per litre (baseline)
+
+function calculateFuelSurcharge(currentDieselPrice, basePrice) {
+  const priceDiff = currentDieselPrice - BASE_DIESEL_PRICE;
+  const surchargePercent = (priceDiff / BASE_DIESEL_PRICE) * 0.35; // 35% of fuel cost impact
+  
+  if (surchargePercent > 0) {
+    return basePrice * surchargePercent;
+  }
+  return 0; // No discount if fuel is cheaper (absorb savings)
+}
+```
+
+---
+
+## SECTION 4: DELIVERY TIME CALCULATIONS
+
+### 4.1 Transit Time Rules
+
+**Driver Regulations (Canada):**
+- Maximum 13 hours driving per day
+- Required 8 hours off-duty per 24 hours
+- Maximum ~800-1000 km per driver per day
+
+**Transit Time Formula:**
+```javascript
+function calculateTransitTime(distanceKm, serviceLevel) {
+  const kmPerDay = 800; // Conservative estimate
+  const baseDays = Math.ceil(distanceKm / kmPerDay);
+  
+  switch(serviceLevel) {
+    case 'STANDARD':
+      return {
+        pickupWindow: '3-5 business days',
+        transitDays: baseDays,
+        totalDays: `${3 + baseDays} - ${5 + baseDays} business days`
+      };
+    
+    case 'EXPEDITED_2DAY':
+      return {
+        pickupWindow: 'Within 48 hours',
+        transitDays: baseDays,
+        totalDays: `${2 + baseDays} - ${3 + baseDays} days`
+      };
+    
+    case 'EXPEDITED_1DAY':
+      return {
+        pickupWindow: 'Within 24 hours',
+        transitDays: Math.max(baseDays - 1, 1), // Faster routing
+        totalDays: `${1 + Math.max(baseDays - 1, 1)} - ${2 + baseDays} days`
+      };
+  }
+}
+```
+
+### 4.2 Estimated Delivery Windows
+
+**Quebec ↔ Ontario (Most Common):**
+
+| Route | Standard | 2-Day Expedited | 1-Day Expedited |
+|-------|----------|-----------------|-----------------|
+| Montreal → Toronto | 4-6 days | 3-4 days | 1-2 days |
+| Montreal → Ottawa | 4-6 days | 2-3 days | Same/Next day |
+| Quebec City → Toronto | 5-7 days | 3-4 days | 2-3 days |
+| Toronto → Montreal | 4-6 days | 3-4 days | 1-2 days |
+| Ottawa → Toronto | 4-6 days | 2-3 days | 1-2 days |
+
+**Cross-Canada:**
+
+| Route | Standard | 2-Day Expedited | 1-Day Expedited |
+|-------|----------|-----------------|-----------------|
+| Toronto → Calgary | 7-10 days | 5-6 days | 4-5 days |
+| Montreal → Vancouver | 9-12 days | 6-7 days | 5-6 days |
+| Toronto → Winnipeg | 5-7 days | 4-5 days | 3-4 days |
+| Toronto → Halifax | 5-7 days | 4-5 days | 2-3 days |
+
+---
+
+## SECTION 5: QUOTE DISPLAY FORMAT
+
+### 5.1 Quote Summary Card
+
+```
+╔══════════════════════════════════════════════════════════════╗
+║              🚛 TRANSPORT QUOTE #TQ-2024-1247                 ║
+╠══════════════════════════════════════════════════════════════╣
+║ ROUTE:                                                        ║
+║   From: Montreal, QC                                          ║
+║   To:   Toronto, ON                                           ║
+║   Distance: 540 km                                            ║
+╠══════════════════════════════════════════════════════════════╣
+║ VEHICLE:                                                      ║
+║   2023 Toyota RAV4 XLE (SUV)                                 ║
+║   Condition: Running/Operable                                 ║
+╠══════════════════════════════════════════════════════════════╣
+║                    PRICING OPTIONS                            ║
+╠══════════════════════════════════════════════════════════════╣
+║                                                               ║
+║ ○ STANDARD DELIVERY                              $485 CAD    ║
+║   Pickup: 3-5 business days                                   ║
+║   Delivery: 4-6 business days total                          ║
+║                                                               ║
+║ ○ 2-DAY EXPEDITED                               $630 CAD    ║
+║   Pickup: Within 48 hours                        +$145        ║
+║   Delivery: 3-4 days total                                    ║
+║   ⚡ Guaranteed pickup by [DATE]                              ║
+║                                                               ║
+║ ● 1-DAY EXPEDITED                               $728 CAD    ║
+║   Pickup: Within 24 hours                        +$243        ║
+║   Delivery: 1-2 days total                                    ║
+║   ⚡⚡ FASTEST - Dedicated driver                             ║
+║                                                               ║
+╠══════════════════════════════════════════════════════════════╣
+║ PRICE BREAKDOWN (1-Day Expedited Selected):                   ║
+║   Base Rate (540km × $2.25):         $1,215.00               ║
+║   Distance Discount:                  -$850.00                ║
+║   Vehicle Surcharge (SUV):            +$50.00                 ║
+║   1-Day Expedited Premium (50%):      +$243.00               ║
+║   Fuel Surcharge:                     +$0.00                  ║
+║   ─────────────────────────────────────────────              ║
+║   SUBTOTAL:                           $658.00                 ║
+║   HST (13%):                          +$85.54                 ║
+║   ═════════════════════════════════════════════              ║
+║   TOTAL:                              $743.54 CAD            ║
+╠══════════════════════════════════════════════════════════════╣
+║ Quote Valid: 7 days | Quote ID: TQ-2024-1247                 ║
+║                                                               ║
+║  [📋 SAVE QUOTE]  [📧 EMAIL QUOTE]  [✅ BOOK NOW]            ║
+╚══════════════════════════════════════════════════════════════╝
+```
+
+### 5.2 Quick Quote Comparison View
+
+Display all three options side-by-side:
+
+| | Standard | 2-Day Expedited | 1-Day Expedited |
+|---|----------|-----------------|-----------------|
+| **Price** | $485 | $630 | $728 |
+| **Pickup** | 3-5 days | 48 hours | 24 hours |
+| **Total Time** | 4-6 days | 3-4 days | 1-2 days |
+| **Best For** | Budget | Balanced | Urgent |
+| | [Select] | [Select] | [Select ⭐] |
+
+---
+
+## SECTION 6: BOOKING WORKFLOW
+
+### 6.1 Booking Steps
+
+**Step 1: Quote Generated**
+- All pricing displayed
+- Customer selects service level
+- Quote saved to database
+
+**Step 2: Customer Information**
+```
+Pickup Contact:
+  - Name: _______________
+  - Phone: ______________
+  - Email: ______________
+  - Address: ____________
+  - Best Time: [ ] Morning [ ] Afternoon [ ] Evening
+  - Gate Code/Instructions: _______________
+
+Delivery Contact:
+  - Name: _______________
+  - Phone: ______________
+  - Address: ____________
+  - Best Time: [ ] Morning [ ] Afternoon [ ] Evening
+  - Instructions: _______________
+```
+
+**Step 3: Vehicle Details Confirmation**
+- Confirm make/model/year
+- Note any existing damage
+- Special handling requirements
+- Keys location
+
+**Step 4: Payment**
+- Credit card or invoice to dealer account
+- 50% deposit or full payment options
+- Terms & conditions acceptance
+
+**Step 5: Confirmation**
+- Booking reference number
+- Estimated pickup date/time
+- Driver assignment (when available)
+- Tracking link generated
+
+### 6.2 Booking Statuses
+
+| Status | Description | Customer Sees |
+|--------|-------------|---------------|
+| `QUOTED` | Quote generated, not booked | Quote saved |
+| `BOOKED` | Payment received, pending dispatch | Booking confirmed |
+| `ASSIGNED` | Driver assigned | Driver info + ETA |
+| `EN_ROUTE_PICKUP` | Driver heading to pickup | Live tracking |
+| `PICKED_UP` | Vehicle loaded | Pickup confirmed |
+| `IN_TRANSIT` | On the road | Live tracking |
+| `EN_ROUTE_DELIVERY` | Approaching destination | ETA notification |
+| `DELIVERED` | Vehicle delivered | Delivery confirmed |
+| `COMPLETED` | POD signed, closed | Receipt/invoice |
+| `CANCELLED` | Order cancelled | Refund processed |
+
+---
+
+## SECTION 7: REAL-TIME TRACKING
+
+### 7.1 Tracking Features
+
+Since you own your trucks, implement GPS tracking:
+
+```
+╔══════════════════════════════════════════════════════════════╗
+║           📍 LIVE TRACKING - Order #TR-2024-5678              ║
+╠══════════════════════════════════════════════════════════════╣
+║                                                               ║
+║  [MAP SHOWING TRUCK LOCATION ON ROUTE]                       ║
+║                                                               ║
+║  🚛 Current Location: Kingston, ON                           ║
+║  📍 175 km from destination                                  ║
+║  ⏱️  Estimated Arrival: Today, 4:30 PM                       ║
+║                                                               ║
+╠══════════════════════════════════════════════════════════════╣
+║ JOURNEY PROGRESS:                                             ║
+║                                                               ║
+║  ✅ Montreal, QC (Picked up 9:15 AM)                         ║
+║  ✅ Ottawa, ON (Passed 11:45 AM)                             ║
+║  🚛 Kingston, ON (Current - 1:30 PM)                         ║
+║  ○  Toronto, ON (ETA 4:30 PM)                                ║
+║                                                               ║
+╠══════════════════════════════════════════════════════════════╣
+║ Driver: Jean-Pierre M.  |  Truck: Unit #T-07                 ║
+║ Contact Dispatch: 1-800-XXX-XXXX                             ║
+╚══════════════════════════════════════════════════════════════╝
+```
+
+### 7.2 Notification System
+
+**Automated Notifications:**
+- Booking confirmed
+- Driver assigned (with name/photo/truck info)
+- En route to pickup (1 hour before)
+- Vehicle picked up (with photos)
+- Checkpoint updates (major cities)
+- Approaching delivery (1 hour before)
+- Vehicle delivered (with POD photos)
+
+**Notification Methods:**
+- SMS text messages
+- Email updates
+- In-app notifications
+- Push notifications (mobile)
+
+---
+
+## SECTION 8: FLEET MANAGEMENT INTEGRATION
+
+### 8.1 Truck/Driver Assignment
+
+```javascript
+// Dispatch system integration
+const fleetStatus = {
+  trucks: [
+    { id: 'T-01', capacity: 8, location: 'Montreal', available: true, driver: 'Jean-Pierre M.' },
+    { id: 'T-02', capacity: 8, location: 'Toronto', available: false, driver: 'Mike S.' },
+    { id: 'T-03', capacity: 6, location: 'Ottawa', available: true, driver: 'Sarah L.' },
+    { id: 'T-04', capacity: 10, location: 'Montreal', available: true, driver: 'David R.' },
+    // ...
+  ]
+};
+
+function findAvailableTruck(pickupLocation, pickupDate, serviceLevel) {
+  // Find closest available truck
+  // Consider current routes and schedules
+  // Priority to expedited orders
+}
+```
+
+### 8.2 Route Optimization
+
+For multi-pickup loads:
+- Optimize pickup sequence
+- Minimize total distance
+- Balance delivery priorities
+- Consider driver hours
+
+---
+
+## SECTION 9: PRICING EXAMPLES
+
+### 9.1 Quebec ↔ Ontario Routes
+
+**Montreal → Toronto (540 km)**
+| Service | Calculation | Price |
+|---------|-------------|-------|
+| Standard | 540km × $2.25 = $1,215 → Adjusted to $485 | $485 |
+| 2-Day Expedited | $485 + 30% ($145) | $630 |
+| 1-Day Expedited | $485 + 50% ($243) | $728 |
+
+**Quebec City → Toronto (800 km)**
+| Service | Calculation | Price |
+|---------|-------------|-------|
+| Standard | 800km × $1.85 = $1,480 → Adjusted to $650 | $650 |
+| 2-Day Expedited | $650 + 30% ($195) | $845 |
+| 1-Day Expedited | $650 + 50% ($325) | $975 |
+
+**Montreal → Ottawa (200 km)**
+| Service | Calculation | Price |
+|---------|-------------|-------|
+| Standard | 200km × $2.75 = $550 → Adjusted to $275 | $275 |
+| 2-Day Expedited | $275 + 30% ($83) | $358 |
+| 1-Day Expedited | $275 + 50% ($138) | $413 |
+
+### 9.2 Cross-Canada Routes
+
+**Toronto → Calgary (3,400 km)**
+| Service | Calculation | Price |
+|---------|-------------|-------|
+| Standard | 3400km × $1.45 = $4,930 → Adjusted to $2,200 | $2,200 |
+| 2-Day Expedited | $2,200 + 30% ($660) | $2,860 |
+| 1-Day Expedited | $2,200 + 50% ($1,100) | $3,300 |
+
+**Montreal → Vancouver (4,600 km)**
+| Service | Calculation | Price |
+|---------|-------------|-------|
+| Standard | 4600km × $1.45 = $6,670 → Adjusted to $2,800 | $2,800 |
+| 2-Day Expedited | $2,800 + 30% ($840) | $3,640 |
+| 1-Day Expedited | $2,800 + 50% ($1,400) | $4,200 |
+
+### 9.3 Multi-Vehicle Example
+
+**3 Vehicles: Montreal → Toronto**
+| Item | Calculation | Amount |
+|------|-------------|--------|
+| Vehicle 1 (Sedan) | $485 | $485 |
+| Vehicle 2 (SUV) | $485 + $50 | $535 |
+| Vehicle 3 (Pickup) | $485 + $75 | $560 |
+| Subtotal | | $1,580 |
+| Multi-Vehicle Discount (15%) | | -$237 |
+| **Total** | | **$1,343** |
+
+---
+
+## SECTION 10: ADMIN SETTINGS
+
+### 10.1 Configurable Parameters
+
+```
+TRANSPORT SETTINGS
+├── Pricing
+│   ├── Base Rates by Distance Tier
+│   ├── Vehicle Surcharges
+│   ├── Expedited Premiums (30%, 50%)
+│   ├── Multi-Vehicle Discounts
+│   └── Minimum Charge ($150)
+├── Fuel Surcharge
+│   ├── Baseline Diesel Price ($1.65/L)
+│   ├── Current Diesel Price (auto/manual)
+│   └── Surcharge Calculation Factor
+├── Operating Hours
+│   ├── Standard Pickup Hours (7am-7pm)
+│   ├── After Hours Fee ($50)
+│   └── Weekend Fee ($75)
+├── Fleet
+│   ├── Truck Inventory
+│   ├── Driver Assignments
+│   └── Capacity Settings
+└── Notifications
+    ├── SMS Templates
+    ├── Email Templates
+    └── Trigger Points
+```
+
+### 10.2 Seasonal Adjustments
+
+| Season | Adjustment | Reason |
+|--------|------------|--------|
+| Dec-Feb (Winter) | +10-15% | Slower travel, weather delays |
+| Mar-Apr (Spring) | Normal | Moderate conditions |
+| May-Aug (Summer) | -5% | High volume, efficiency |
+| Sep-Nov (Fall) | Normal | Standard operations |
+
+---
+
+## SECTION 11: REPORTS & ANALYTICS
+
+### 11.1 Transport Dashboard
+
+```
+╔══════════════════════════════════════════════════════════════╗
+║            🚛 TRANSPORT OPERATIONS DASHBOARD                  ║
+╠══════════════════════════════════════════════════════════════╣
+║ TODAY                                                         ║
+║   Active Transports:      12                                  ║
+║   Pickups Scheduled:      5                                   ║
+║   Deliveries Today:       7                                   ║
+║   Trucks on Road:         4 of 6                             ║
+╠══════════════════════════════════════════════════════════════╣
+║ MONTH TO DATE (November 2024)                                ║
+║   Total Transports:       147                                 ║
+║   Total Revenue:          $68,450                             ║
+║   Average per Transport:  $466                                ║
+║   On-Time Delivery Rate:  94.2%                              ║
+╠══════════════════════════════════════════════════════════════╣
+║ TOP ROUTES                                                    ║
+║   1. Montreal → Toronto      42 transports                   ║
+║   2. Toronto → Montreal      38 transports                   ║
+║   3. Ottawa → Toronto        23 transports                   ║
+║   4. Quebec City → Toronto   15 transports                   ║
+║   5. Montreal → Ottawa       12 transports                   ║
+╠══════════════════════════════════════════════════════════════╣
+║ SERVICE LEVEL BREAKDOWN                                       ║
+║   Standard:        68%   ($32,500)                           ║
+║   2-Day Expedited: 22%   ($21,400)                           ║
+║   1-Day Expedited: 10%   ($14,550)                           ║
+╚══════════════════════════════════════════════════════════════╝
+```
+
+### 11.2 Available Reports
+
+1. **Revenue by Route** - Which routes are most profitable
+2. **Service Level Analysis** - Standard vs Expedited usage
+3. **Fleet Utilization** - Truck usage and efficiency
+4. **On-Time Performance** - Delivery accuracy
+5. **Customer Analysis** - Top customers by volume
+6. **Cost Analysis** - Fuel, driver, maintenance costs
+7. **Seasonal Trends** - Volume patterns by month
+
+---
+
+## SECTION 12: ROLE-BASED ACCESS
+
+| Feature | Admin | Dealer | Driver | Dispatcher |
+|---------|-------|--------|--------|------------|
+| Get quotes | ✅ | ✅ | ❌ | ✅ |
+| Book transport | ✅ | ✅ | ❌ | ✅ |
+| View own orders | ✅ | ✅ | Own only | ✅ |
+| View all orders | ✅ | ❌ | ❌ | ✅ |
+| Assign drivers | ✅ | ❌ | ❌ | ✅ |
+| Update status | ✅ | ❌ | Own jobs | ✅ |
+| Edit pricing | ✅ | ❌ | ❌ | ❌ |
+| View reports | ✅ | Own only | ❌ | ✅ |
+| Manage fleet | ✅ | ❌ | ❌ | ✅ |
+
+---
+
+## SECTION 13: INTEGRATION POINTS
+
+### 13.1 Connect to Existing App Features
+
+**From Appraisal Module:**
+- "Order Transport" button on completed appraisal
+- Auto-populate vehicle details from VIN
+- Link transport order to appraisal record
+
+**From Export Calculator:**
+- "Book Transport to USA Border" option
+- Calculate Canadian leg + border delivery
+- Track as part of export pipeline
+
+**From Inventory:**
+- Bulk transport for lot transfers
+- Multi-vehicle load optimization
+- Inventory movement tracking
+
+### 13.2 External Integrations
+
+| System | Purpose |
+|--------|---------|
+| Google Maps API | Distance calculation, routing |
+| GPS Tracking System | Real-time truck location |
+| Payment Gateway | Credit card processing |
+| SMS Provider (Twilio) | Text notifications |
+| Email Service | Order confirmations |
+| Accounting System | Invoice sync |
+
+---
+
+## SECTION 14: MOBILE DRIVER APP FEATURES
+
+### 14.1 Driver App Screens
+
+**Home Screen:**
+- Today's assignments
+- Route overview
+- Contact dispatch button
+
+**Pickup Screen:**
+- Customer contact info
+- Vehicle details to verify
+- Damage inspection checklist
+- Photo capture (4 angles + odometer)
+- Digital signature capture
+- Confirm pickup button
+
+**In Transit:**
+- GPS auto-reporting
+- Checkpoint logging
+- Issue reporting
+- Break/fuel logging
+
+**Delivery Screen:**
+- Delivery contact info
+- Photo capture on arrival
+- Digital signature capture
+- Note any issues
+- Confirm delivery button
+
+### 14.2 Inspection Checklist
+
+```
+VEHICLE INSPECTION - PICKUP
+
+□ Front bumper/grille
+□ Hood
+□ Windshield
+□ Roof
+□ Rear bumper/trunk
+□ Driver side
+□ Passenger side
+□ All tires (condition)
+□ Interior (front)
+□ Interior (rear)
+□ Odometer reading: _______
+
+Existing Damage Notes:
+_________________________
+
+Photos Required: ✅ Front ✅ Rear ✅ Left ✅ Right ✅ Interior ✅ Odometer
+
+Customer Signature: _______________
+Driver Signature: _______________
+Date/Time: _______________
+```
+
+---
+
+## SECTION 15: TECHNICAL REQUIREMENTS
+
+### 15.1 Database Schema
+
+```sql
+-- Transport quotes
+CREATE TABLE transport_quotes (
+  id SERIAL PRIMARY KEY,
+  quote_number VARCHAR(20) UNIQUE,
+  user_id INTEGER REFERENCES users(id),
+  pickup_address TEXT,
+  pickup_city VARCHAR(100),
+  pickup_province VARCHAR(2),
+  pickup_postal VARCHAR(10),
+  delivery_address TEXT,
+  delivery_city VARCHAR(100),
+  delivery_province VARCHAR(2),
+  delivery_postal VARCHAR(10),
+  distance_km DECIMAL(10,2),
+  vehicle_year INTEGER,
+  vehicle_make VARCHAR(50),
+  vehicle_model VARCHAR(50),
+  vehicle_type VARCHAR(50),
+  vehicle_vin VARCHAR(17),
+  is_running BOOLEAN DEFAULT TRUE,
+  service_level VARCHAR(20), -- STANDARD, EXPEDITED_2DAY, EXPEDITED_1DAY
+  base_price DECIMAL(10,2),
+  surcharges DECIMAL(10,2),
+  discount DECIMAL(10,2),
+  total_price DECIMAL(10,2),
+  status VARCHAR(20) DEFAULT 'QUOTED',
+  valid_until TIMESTAMP,
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
+-- Transport orders
+CREATE TABLE transport_orders (
+  id SERIAL PRIMARY KEY,
+  order_number VARCHAR(20) UNIQUE,
+  quote_id INTEGER REFERENCES transport_quotes(id),
+  pickup_contact_name VARCHAR(100),
+  pickup_contact_phone VARCHAR(20),
+  pickup_contact_email VARCHAR(100),
+  pickup_instructions TEXT,
+  pickup_date DATE,
+  pickup_time_preference VARCHAR(20),
+  delivery_contact_name VARCHAR(100),
+  delivery_contact_phone VARCHAR(20),
+  delivery_contact_email VARCHAR(100),
+  delivery_instructions TEXT,
+  estimated_delivery_date DATE,
+  actual_pickup_datetime TIMESTAMP,
+  actual_delivery_datetime TIMESTAMP,
+  driver_id INTEGER REFERENCES drivers(id),
+  truck_id INTEGER REFERENCES trucks(id),
+  status VARCHAR(20) DEFAULT 'BOOKED',
+  tracking_url VARCHAR(255),
+  payment_status VARCHAR(20),
+  payment_amount DECIMAL(10,2),
+  created_at TIMESTAMP DEFAULT NOW(),
+  updated_at TIMESTAMP DEFAULT NOW()
+);
+
+-- Fleet trucks
+CREATE TABLE trucks (
+  id SERIAL PRIMARY KEY,
+  unit_number VARCHAR(10) UNIQUE,
+  make VARCHAR(50),
+  model VARCHAR(50),
+  year INTEGER,
+  capacity INTEGER, -- vehicles
+  current_location VARCHAR(100),
+  current_lat DECIMAL(10,8),
+  current_lng DECIMAL(11,8),
+  status VARCHAR(20), -- AVAILABLE, EN_ROUTE, MAINTENANCE
+  last_update TIMESTAMP
+);
+
+-- Drivers
+CREATE TABLE drivers (
+  id SERIAL PRIMARY KEY,
+  name VARCHAR(100),
+  phone VARCHAR(20),
+  email VARCHAR(100),
+  license_number VARCHAR(50),
+  license_expiry DATE,
+  assigned_truck_id INTEGER REFERENCES trucks(id),
+  status VARCHAR(20), -- ACTIVE, OFF_DUTY, ON_LEAVE
+  photo_url VARCHAR(255)
+);
+
+-- Tracking events
+CREATE TABLE tracking_events (
+  id SERIAL PRIMARY KEY,
+  order_id INTEGER REFERENCES transport_orders(id),
+  event_type VARCHAR(50),
+  location VARCHAR(100),
+  lat DECIMAL(10,8),
+  lng DECIMAL(11,8),
+  notes TEXT,
+  created_at TIMESTAMP DEFAULT NOW()
+);
+```
+
+### 15.2 API Endpoints
+
+```
+// Quotes
+POST   /api/transport/quote          - Generate new quote
+GET    /api/transport/quote/:id      - Get quote details
+PUT    /api/transport/quote/:id      - Update quote
+
+// Orders
+POST   /api/transport/order          - Create order from quote
+GET    /api/transport/order/:id      - Get order details
+GET    /api/transport/orders         - List orders (with filters)
+PUT    /api/transport/order/:id      - Update order status
+DELETE /api/transport/order/:id      - Cancel order
+
+// Tracking
+GET    /api/transport/track/:orderNumber  - Get tracking info
+POST   /api/transport/track/event         - Log tracking event
+
+// Fleet
+GET    /api/transport/fleet/trucks    - List all trucks
+GET    /api/transport/fleet/drivers   - List all drivers
+PUT    /api/transport/fleet/assign    - Assign driver to order
+
+// Admin
+GET    /api/transport/reports/:type   - Generate reports
+PUT    /api/transport/settings        - Update pricing settings
+```
+
+---
+
+## SECTION 16: UI/UX REQUIREMENTS
+
+### 16.1 Calculator Interface
+
+1. **Clean, Single Page Form**
+   - Progressive disclosure (basic → advanced)
+   - Real-time price updates as user types
+   - Mobile-responsive design
+
+2. **Visual Route Display**
+   - Map showing pickup → delivery route
+   - Distance and time displayed
+   - Highway route highlighted
+
+3. **Clear Price Comparison**
+   - All three service levels visible
+   - Savings/premium clearly shown
+   - "Most Popular" badge on 2-Day Expedited
+   - "Fastest" badge on 1-Day Expedited
+
+4. **One-Click Booking**
+   - Save quote for later
+   - Book instantly
+   - Email quote to customer
+
+### 16.2 Color Coding
+
+- **Standard**: Blue - Reliable, economical
+- **2-Day Expedited**: Orange - Balanced, popular
+- **1-Day Expedited**: Red - Urgent, premium
+- **Tracking Status**: Green (on-time), Yellow (delayed), Red (issue)
+
+---
+
+## SECTION 17: SAMPLE QUICK QUOTES
+
+### Popular Route Quick Reference
+
+Build a "Popular Routes" section with instant pricing:
+
+| Route | Distance | Standard | 2-Day | 1-Day |
+|-------|----------|----------|-------|-------|
+| Montreal → Toronto | 540 km | $485 | $630 | $728 |
+| Montreal → Ottawa | 200 km | $275 | $358 | $413 |
+| Quebec City → Toronto | 800 km | $650 | $845 | $975 |
+| Toronto → Montreal | 540 km | $485 | $630 | $728 |
+| Ottawa → Toronto | 450 km | $425 | $553 | $638 |
+| Montreal → Hamilton | 600 km | $525 | $683 | $788 |
+| Toronto → Ottawa | 450 km | $425 | $553 | $638 |
+| Montreal → London | 700 km | $595 | $774 | $893 |
+
+*Click any route for instant quote with your vehicle details*
+
+---
+
+## SECTION 18: ERROR HANDLING
+
+### Handle These Scenarios
+
+| Scenario | Response |
+|----------|----------|
+| Invalid postal code | Suggest correction, allow manual entry |
+| Route too long (>5000km) | "Custom quote required - contact dispatch" |
+| No trucks available (1-day) | Offer 2-day expedited as alternative |
+| Remote location | Add surcharge, extend timeline |
+| Non-serviceable area | "Outside service area" message |
+| Weekend/holiday booking | Show adjusted pricing + timeline |
+| Multiple vehicles > 10 | "Fleet quote required - contact dispatch" |
+
+---
+
+## SECTION 19: COMPETITIVE POSITIONING
+
+### Why Order Through Your System?
+
+Display these benefits on the calculator:
+
+✅ **Own Fleet** - No broker middlemen  
+✅ **Direct Pricing** - Best rates guaranteed  
+✅ **Real-Time Tracking** - Know exactly where your vehicle is  
+✅ **Expedited Options** - 1-day and 2-day rush available  
+✅ **Integrated Booking** - Order directly from appraisal  
+✅ **Dedicated Support** - Canadian dispatch team  
+✅ **Insured & Bonded** - Full coverage included  
+✅ **Professional Drivers** - Experienced car haulers  
+
+---
+
+## END OF TRANSPORT CALCULATOR PROMPT
+
+**Implementation Priority:**
+1. Core quote calculator with distance/pricing
+2. Three-tier service levels (Standard/2-Day/1-Day)
+3. Booking workflow
+4. Order tracking system
+5. Fleet management integration
+6. Driver mobile app
+7. Reports dashboard
+8. Admin settings panel
+
+**Key Success Metrics:**
+- Quote generation < 3 seconds
+- 95%+ on-time delivery rate
+- Expedited orders fulfilled within SLA
+- Clear pricing with no hidden fees
+- Seamless booking from appraisal flow
