@@ -147,8 +147,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
           </div>
         )}
         
-        {/* Navigation Links */}
-        <nav className="p-4 space-y-2 flex-1">
+        {/* Navigation Links - Scrollable */}
+        <nav className="p-4 space-y-2 flex-1 overflow-y-auto">
           {navItems.map((item) => {
             const isActive = location === item.href || (item.href !== '/' && location.startsWith(item.href));
             return (
@@ -169,8 +169,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
           })}
         </nav>
 
-        {/* Sign Out Button */}
-        <div className="p-4 border-t border-slate-800">
+        {/* Sign Out Button - Fixed at bottom */}
+        <div className="p-4 border-t border-slate-800 bg-slate-900 sticky bottom-0 shrink-0">
           <Button
             variant="destructive"
             className="w-full justify-center bg-red-600 hover:bg-red-700 text-white font-medium"
