@@ -14,7 +14,7 @@ export const sessions = pgTable(
   (table) => [index("IDX_session_expire").on(table.expire)],
 );
 
-// User storage table - Required for Replit Auth
+// User storage table - Supports both Replit Auth (OAuth) and admin-created password accounts
 export const users = pgTable("users", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   email: varchar("email").unique(),
@@ -22,12 +22,39 @@ export const users = pgTable("users", {
   lastName: varchar("last_name"),
   profileImageUrl: varchar("profile_image_url"),
   role: varchar("role").notNull().default('dealer'), // 'admin', 'dealer', or 'data_analyst'
+  passwordHash: varchar("password_hash"), // For admin-created users (null for OAuth users)
+  passwordResetToken: varchar("password_reset_token"), // For password reset functionality
+  passwordResetExpiry: timestamp("password_reset_expiry"), // Token expiration
+  isActive: varchar("is_active").notNull().default('true'), // Account status
+  authType: varchar("auth_type").notNull().default('oauth'), // 'oauth' or 'password'
+  lastLoginAt: timestamp("last_login_at"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
 export type UpsertUser = typeof users.$inferInsert;
 export type User = typeof users.$inferSelect;
+
+// Schema for admin creating new users
+export const createUserSchema = z.object({
+  email: z.string().email("Invalid email address"),
+  firstName: z.string().min(1, "First name is required"),
+  lastName: z.string().min(1, "Last name is required"),
+  role: z.enum(["admin", "dealer", "data_analyst"]),
+  password: z.string().min(8, "Password must be at least 8 characters"),
+});
+
+export type CreateUserInput = z.infer<typeof createUserSchema>;
+
+// Schema for updating user
+export const updateUserSchema = z.object({
+  firstName: z.string().optional(),
+  lastName: z.string().optional(),
+  role: z.enum(["admin", "dealer", "data_analyst"]).optional(),
+  isActive: z.enum(["true", "false"]).optional(),
+});
+
+export type UpdateUserInput = z.infer<typeof updateUserSchema>;
 
 export const dealerships = pgTable("dealerships", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
