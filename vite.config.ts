@@ -1,14 +1,10 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
-import tailwindcss from "@tailwindcss/vite";
 import path from "path";
-import runtimeErrorOverlay from "@replit/vite-plugin-runtime-error-modal";
 
 export default defineConfig({
   plugins: [
-    react(),
-    runtimeErrorOverlay(),
-    tailwindcss()
+    react()
   ],
   resolve: {
     alias: {
@@ -18,6 +14,9 @@ export default defineConfig({
     }
   },
   root: path.resolve(import.meta.dirname, "client"),
+  css: {
+    postcss: path.resolve(import.meta.dirname, "postcss.config.js")
+  },
   build: {
     outDir: path.resolve(import.meta.dirname, "dist/public"),
     emptyOutDir: true
